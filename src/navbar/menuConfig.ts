@@ -32,6 +32,17 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.compras,
         ],
     },
+
+    {
+        area: "Mostrador",
+        puesto: "Cajera",
+        items: [
+            MENU_BASE.cotizador,
+            MENU_BASE.consultaot,
+            MENU_BASE.clientes,
+            MENU_BASE.productos,
+        ],
+    },
     {
         area: "Administración",
         puesto: "Gerente Operativo",
