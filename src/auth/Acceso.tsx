@@ -7,7 +7,7 @@ const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         setError("");
@@ -15,11 +15,7 @@ const Login: React.FC = () => {
 
         try {
             await loginConUsername(username, password);
-
-            // Firebase actualizará automáticamente el estado en App.tsx
         } catch (err: any) {
-            console.error(err);
-
             if (err.message === "Usuario no encontrado") {
                 setError("Usuario no encontrado");
             } else if (err.message === "Usuario inactivo") {
@@ -34,82 +30,161 @@ const Login: React.FC = () => {
             } else {
                 setError("Error al iniciar sesión");
             }
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     return (
         <div
             style={{
                 height: "100vh",
+                background: "#eef1f5",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                background: "#f0f2f5",
+                padding: 20,
+                boxSizing: "border-box",
             }}
         >
-            <form
-                onSubmit={handleLogin}
+            <div
                 style={{
-                    background: "#fff",
-                    padding: 30,
-                    borderRadius: 10,
-                    width: 320,
-                    boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
                     display: "flex",
-                    flexDirection: "column",
-                    gap: 12,
+                    width: "900px",
+                    maxWidth: "100%",
+                    minHeight: "500px",
+                    background: "#ffffff",
+                    borderRadius: "18px",
+                    overflow: "hidden",
+                    boxShadow: "0 12px 35px rgba(0,0,0,0.15)",
                 }}
             >
-                <h2 style={{ textAlign: "center", marginBottom: 10 }}>
-                    Iniciar sesión
-                </h2>
-
-                <input
-                    type="text"
-                    placeholder="Usuario"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
+                {/* IZQUIERDA */}
+                <div
                     style={{
-                        padding: 10,
-                        borderRadius: 6,
-                        border: "1px solid #ccc",
-                    }}
-                />
-
-                <input
-                    type="password"
-                    placeholder="Contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    style={{
-                        padding: 10,
-                        borderRadius: 6,
-                        border: "1px solid #ccc",
-                    }}
-                />
-
-                {error && <div style={{ color: "red", fontSize: 14 }}>{error}</div>}
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    style={{
-                        padding: 10,
-                        borderRadius: 6,
-                        border: "none",
-                        background: "#007bff",
-                        color: "#fff",
-                        cursor: "pointer",
-                        fontWeight: "bold",
+                        flex: 1,
+                        background: "#ffffff",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        padding: "40px 32px",
+                        boxSizing: "border-box",
                     }}
                 >
-                    {loading ? "Entrando..." : "Entrar"}
-                </button>
-            </form>
+                    <form
+                        onSubmit={handleLogin}
+                        style={{
+                            width: "100%",
+                            maxWidth: "320px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "14px",
+                        }}
+                    >
+                        <div style={{ textAlign: "center", marginBottom: "10px" }}>
+
+                            <h1
+                                style={{
+                                    margin: 0,
+                                    fontSize: "34px",
+                                    fontWeight: 700,
+                                    color: "#111",
+                                }}
+                            >
+                                Bienvenido
+                            </h1>
+                        </div>
+
+                        <input
+                            type="text"
+                            placeholder="Usuario"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                            style={{
+                                padding: "12px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #d9d9d9",
+                                outline: "none",
+                                fontSize: "14px",
+                                width: "100%",
+                                boxSizing: "border-box",
+                            }}
+                        />
+
+                        <input
+                            type="password"
+                            placeholder="Contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            style={{
+                                padding: "12px 14px",
+                                borderRadius: "8px",
+                                border: "1px solid #d9d9d9",
+                                outline: "none",
+                                fontSize: "14px",
+                                width: "100%",
+                                boxSizing: "border-box",
+                            }}
+                        />
+
+                        {error && (
+                            <div
+                                style={{
+                                    color: "#d62828",
+                                    fontSize: "14px",
+                                    textAlign: "center",
+                                }}
+                            >
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            style={{
+                                marginTop: "6px",
+                                padding: "12px",
+                                borderRadius: "8px",
+                                border: "none",
+                                background: "#000000",
+                                color: "#ffffff",
+                                cursor: loading ? "not-allowed" : "pointer",
+                                fontWeight: "bold",
+                                fontSize: "15px",
+                                width: "100%",
+                                opacity: loading ? 0.7 : 1,
+                            }}
+                        >
+                            {loading ? "Entrando..." : "Iniciar sesión"}
+                        </button>
+                    </form>
+                </div>
+
+                {/* DERECHA */}
+                <div
+                    style={{
+                        flex: 1,
+                        background: "#000000",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        padding: "30px",
+                    }}
+                >
+                    <img
+                        src="/svg/logo_blanco.svg"
+                        alt="Logo blanco"
+                        style={{
+                            width: "260px",
+                            maxWidth: "80%",
+                            objectFit: "contain",
+                        }}
+                    />
+                </div>
+            </div>
         </div>
     );
 };
