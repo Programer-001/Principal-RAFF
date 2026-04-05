@@ -87,16 +87,37 @@ const Menu = ({ vista, setVista }: Props) => {
             </div>
 
             <nav className="menu-nav">
-                {itemsMenu.map((item) => (
-                    <button
-                        key={item.key}
-                        className={`menu-link ${vista === item.key ? "activo" : ""}`}
-                        onClick={() => setVista(item.key)}
-                    >
-                        {item.label}
-                    </button>
-                ))}
+                {itemsMenu.map((item) =>
+                    item.children && item.children.length > 0 ? (
+                        <div key={item.key} className="menu-dropdown">
+                            <button className="menu-link">
+                                {item.label}
+                            </button>
+
+                            <div className="menu-dropdown-content">
+                                {item.children.map((subitem) => (
+                                    <button
+                                        key={subitem.key}
+                                        className={`menu-sublink ${vista === subitem.key ? "activo" : ""}`}
+                                        onClick={() => setVista(subitem.key)}
+                                    >
+                                        {subitem.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            key={item.key}
+                            className={`menu-link ${vista === item.key ? "activo" : ""}`}
+                            onClick={() => setVista(item.key)}
+                        >
+                            {item.label}
+                        </button>
+                    )
+                )}
             </nav>
+
 
             <div className="menu-user-area">
                 <div className="menu-user-name">👤 {textoUsuario}</div>

@@ -19,6 +19,7 @@ import GestionOT from "./GestionOT";
 import Orden_compra from "./OrdenCompra/Orden_Compra";
 import Productos_editor from "./Productos/Productos";
 import Empleados from "./RH/Empleados"
+import Permisos from "./RH/Permisos"
 import Perfil from "./navbar/perfil";
 import "./styles.css";
 
@@ -34,6 +35,7 @@ function AppLayout() {
     if (pathname.startsWith("/compras")) return "compras";
       if (pathname.startsWith("/productos")) return "productos";
       if (pathname.startsWith("/empleados")) return "empleados";
+      if (pathname.startsWith("/permisos")) return "permisos";
       if (pathname.startsWith("/perfil")) return "perfil";
     return "cotizador";
   };
@@ -49,6 +51,7 @@ function AppLayout() {
       compras: "/compras",
         productos: "/productos",
         empleados: "/empleados",
+        permisos:"/permisos",
         perfil: "/perfil",
     };
 
@@ -68,6 +71,7 @@ function AppLayout() {
         <Route path="/compras" element={<Orden_compra />} />
         <Route path="/productos" element={<Productos_editor />} />
               <Route path="/empleados" element={<Empleados />} />
+              <Route path="/permisos" element={<Permisos />} />
               <Route path="/perfil" element={<Perfil />} />
       </Routes>
     </div>

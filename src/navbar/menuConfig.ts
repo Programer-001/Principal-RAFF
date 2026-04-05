@@ -1,6 +1,7 @@
 ﻿export type MenuItem = {
     key: string;
     label: string;
+    children?: MenuItem[];
 };
 
 type MenuPorRol = {
@@ -16,7 +17,14 @@ const MENU_BASE: Record<string, MenuItem> = {
     envios: { key: "envios", label: "Envíos" },
     compras: { key: "compras", label: "Orden de compras" },
     productos: { key: "productos", label: "Productos" },
-    empleados: { key: "empleados", label: "Empleados" },
+    rh: {
+        key: "rh",
+        label: "Recursos Humanos",
+        children: [
+            { key: "empleados", label: "Empleados" },
+            { key: "permisos", label: "Permisos" },
+        ],
+    },
 };
 
 const MENUS_POR_ROL: MenuPorRol[] = [
@@ -53,7 +61,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.envios,
             MENU_BASE.compras,
             MENU_BASE.productos,
-            MENU_BASE.empleados,
+            MENU_BASE.rh,
         ],
     },
     {

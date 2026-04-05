@@ -14,15 +14,16 @@
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
+/* azul */
 .btn-blue {
-  background-color: #2563eb; /* azul */
+  background-color: #2563eb; 
 }
 .btn-blue:hover {
   background-color: #1e40af;
 }
-
+/* verde */
 .btn-green {
-  background-color: #16a34a; /* verde */
+  background-color: #16a34a;
 }
 .btn-green:hover {
   background-color: #166534;
@@ -120,6 +121,26 @@
   padding: 5px;
 }
 
+/* 🔥 SOLO PARA LA COLUMNA DE ACCIONES */
+.caja-table td:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+    /* 🔥 BOTONES DE ACCIONES */
+    .caja-table td:last-child button {
+        width: auto !important;
+        min-width: 90px !important;
+        max-width: none !important;
+    }
+    /* OPCIONAL: botón imprimir estilo suave -> esta seccion es solo para permisos el boton de imprimir */
+    .caja-table td:last-child button:not(.btn) {
+            background: #f3f4f6;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
 /*Esta seccion es para los input o select que tengan <div><label>input o seelect*/
 .form-container {
   max-width: 700px;
@@ -264,3 +285,33 @@
   border-radius: 6px;
   font-size: 14px;
 }
+/*informacion de permisos días de empleados*/
+/* CONTENEDOR INFO */
+.info-permiso {
+    max-width: 700px;
+    margin: 15px auto;
+    padding: 15px 20px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #f9fafb;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+    /* TEXTO */
+    .info-permiso p {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    /* COLORES */
+    .info-permiso .positivo {
+        color: #16a34a;
+    }
+
+    .info-permiso .negativo {
+        color: #dc2626;
+    }
