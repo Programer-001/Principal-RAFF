@@ -1,0 +1,266 @@
+.App {
+  font-family: sans-serif;
+}
+
+/* Ajusta los botones existentes */
+.btn {
+  flex: 1; /* para que ambos botones tengan el mismo tamaño */
+  max-width: 200px; /* límite opcional */
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.btn-blue {
+  background-color: #2563eb; /* azul */
+}
+.btn-blue:hover {
+  background-color: #1e40af;
+}
+
+.btn-green {
+  background-color: #16a34a; /* verde */
+}
+.btn-green:hover {
+  background-color: #166534;
+}
+
+/* Rojo */
+.btn-red {
+  background-color: #e74c3c;
+}
+
+.btn-red:hover {
+  background-color: #c0392b;
+}
+/* Amarillo */
+.btn-yellow {
+  background-color: #f1c40f;
+}
+
+.btn-yellow:hover {
+  background-color: #d4ac0d;
+}
+
+/* Morado */
+.btn-purple {
+  background-color: #9b59b6;
+}
+
+.btn-purple:hover {
+  background-color: #8e44ad;
+}
+/* Naranja */
+.btn-orange {
+  background-color: #e67e22;
+}
+
+.btn-orange:hover {
+  background-color: #d35400;
+}
+
+/* ====== TABLA ====== */
+.caja-table {
+  width: 100%; /* ahora ocupa todo el ancho del div */
+  max-width: 850px; /* opcional: limita ancho máximo */
+  margin: 0 auto; /* centra la tabla dentro del div */
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.caja-table th {
+  background-color: #1e3a8a; /* azul oscuro */
+  color: white;
+  text-transform: uppercase;
+  padding: 8px;
+}
+
+.caja-table td {
+  padding: 8px;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+
+.caja-table tr:hover {
+  background-color: #627ccf; /* azul claro */
+  transition: background-color 0.2s ease;
+}
+
+.table-scroll {
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  max-height: 720px; /* o lo que necesites */
+  width: fit-content; /* Ajusta al contenido */
+  margin: 30px auto; /* Centra horizontalmente */
+  max-width: 100%; /* Evita que se salga en pantallas pequeñas */
+}
+/*Igual es para las tablas pero es cuando hay inputs, select o botones*/
+.caja-table td select,
+.caja-table td input,
+.caja-table td button {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 120px !important;
+  font-size: 0.85rem !important;
+  padding: 4px !important;
+  box-sizing: border-box !important;
+}
+
+/* 🔹 Encabezados fijos */
+.caja-table thead th {
+  position: sticky;
+  top: 0px;
+  background: #1e3a8a; /* Fondo sólido para que no se vea transparente */
+  z-index: 10;
+  padding: 5px;
+}
+
+/*Esta seccion es para los input o select que tengan <div><label>input o seelect*/
+.form-container {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.form-container h1 {
+  margin-bottom: 20px;
+}
+.form-container h2 {
+  margin-bottom: 18px;
+}
+.form-container h3 {
+  margin-bottom: 26px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  font-weight: 600;
+}
+
+.form-row input[type="number"],
+.form-row input[type="text"],
+.form-row input,
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  justify-self: start;
+}
+
+.textarea-row {
+  align-items: start;
+}
+
+.textarea-row textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.descripcion-row {
+  display: block;
+  width: 100%;
+}
+
+.descripcion-box {
+  width: 100%;
+  margin: 0;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  background: #f9f9f9;
+  box-sizing: border-box;
+}
+
+.descripcion-title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.descripcion-texto {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+/*para la barra de busqueda en general*/
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 250px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/*este es de cotizador.tsx donde esta OT, fecha y factura*/
+.encabezado-cotizador {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.encabezado-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.encabezado-centro {
+  justify-content: center;
+}
+
+.encabezado-factura {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.input-factura {
+  width: 90px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}

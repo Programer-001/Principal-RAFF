@@ -1,0 +1,69 @@
+/* FORMULARIO */
+.empleadoForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* adaptable */
+  gap: 15px;
+  padding: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.empleadoForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.inputEmpleado {
+  width: 100%;
+  height: 40px;
+  font-size: 12px;
+}
+
+.selectEmpleado {
+  width: 200px;
+  height: 40px;
+  font-size: 12px;
+  padding: 5px;
+}
+
+.botonEmpleado {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+.checkboxLabel {
+  display: flex;
+  align-items: center; /* centra verticalmente checkbox y texto */
+  gap: 8px; /* separa un poco el texto del checkbox */
+}
+
+/*Solo para buscar clientes*/
+.cliente-panel {
+  padding: 20px;
+}
+
+.seccion {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 4px;
+}
+
+.grid-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.campo-label {
+  font-weight: 600;
+}
+
+.botones {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}

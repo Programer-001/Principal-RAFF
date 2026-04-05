@@ -1,0 +1,17 @@
+{
+    "include": [ "src" ],
+    "compilerOptions": {
+        "target": "es2017",
+        "lib": [ "dom","es2020" ],
+        "jsx": "react-jsx",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "strict": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true
+    }
+}
