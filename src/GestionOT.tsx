@@ -272,6 +272,36 @@ const GestionOT = () => {
     });
   };
 
+    //------------WhatsApp-------------------------------------------------->>
+    const enviarWhatsAppCliente = () => {
+        const telefonoOriginal = otSeleccionada?.clienteSnapshot?.telefono || "";
+        const asesor =
+            otSeleccionada?.asesorSnapshot?.username ||
+            otSeleccionada?.asesorSnapshot?.nombre ||
+            "el asesor de ventas";
+
+        if (!telefonoOriginal) {
+            alert("Esta OT no tiene teléfono de cliente");
+            return;
+        }
+
+        // quitar todo lo que no sea número
+        let telefonoLimpio = telefonoOriginal.replace(/\D/g, "");
+
+        // Si viene a 10 dígitos, asumimos México y agregamos 52
+        if (telefonoLimpio.length === 10) {
+            telefonoLimpio = `52${telefonoLimpio}`;
+        }
+
+        // Mensaje opcional
+        const mensaje = encodeURIComponent(
+            `Hola, le habla ${asesor}. Le contacto sobre su orden de trabajo ${otSeleccionada?.otLabel || ""
+            }.`
+        );
+
+        const url = `https://wa.me/${telefonoLimpio}?text=${mensaje}`;
+        window.open(url, "_blank");
+    };
   //-------------------Boton editar----------------------------------------->>
 
   const navigate = useNavigate();
@@ -511,7 +541,13 @@ const GestionOT = () => {
 
               <button onClick={generarPDF}>PDF cliente</button>
 
-              <button onClick={generarPDFProduccion}>PDF Producción</button>
+                          <button onClick={generarPDFProduccion}>PDF Producción</button>
+
+                          {otSeleccionada.clienteSnapshot?.telefono && (
+                              <button onClick={enviarWhatsAppCliente}>
+                                  Mandar WhatsApp
+                              </button>
+                          )}
 
               {otSeleccionada.envio && (
                 <button
