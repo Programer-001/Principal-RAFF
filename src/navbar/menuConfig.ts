@@ -25,6 +25,21 @@ const MENU_BASE: Record<string, MenuItem> = {
             { key: "permisos", label: "Permisos" },
         ],
     },
+    facturacion: {
+        key: "facturacion",
+        label: "Sistema de caja",
+        children: [
+            { key: "caja", label: "Caja" },
+            { key: "cajacorteporfecha", label: "Registrar factura" },
+            { key: "mostrarcaja", label: "Consulta de factura" },
+            { key: "cortedia", label: "Corte del día" },
+            { key: "gastos", label: "Gastos" },
+            { key: "consultagastos", label: "Consulta de gastos" },
+            { key: "modificarpago", label: "Modificar pago" },
+            { key: "modificarcaja", label: "Editar factura del día" },
+            { key: "contardinero", label: "Contador de dinero" },
+        ],
+    },
 };
 
 const MENUS_POR_ROL: MenuPorRol[] = [
@@ -62,6 +77,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.compras,
             MENU_BASE.productos,
             MENU_BASE.rh,
+            MENU_BASE.facturacion,
         ],
     },
     {
