@@ -16,7 +16,7 @@ interface NotasProps {
 
 const MAX_NOTAS = 10;
 
-const Notas: React.FC<NotasProps> = ({ empleadoId, empleadoNombre }) => {
+const Notas: React.FC<NotasProps> = ({ empleadoId }) => {
     const db = getDatabase(app);
 
     const [notas, setNotas] = useState<Nota[]>([]);
@@ -24,6 +24,7 @@ const Notas: React.FC<NotasProps> = ({ empleadoId, empleadoNombre }) => {
     const [titulo, setTitulo] = useState("");
     const [contenido, setContenido] = useState("");
     const [guardando, setGuardando] = useState(false);
+    const [notaSeleccionadaId, setNotaSeleccionadaId] = useState<string | null>(null);
 
     const tituloLimpio = useMemo(() => titulo.trim(), [titulo]);
     const contenidoLimpio = useMemo(() => contenido.trim(), [contenido]);
@@ -71,6 +72,21 @@ const Notas: React.FC<NotasProps> = ({ empleadoId, empleadoNombre }) => {
         setTitulo("");
         setContenido("");
         setAbierta(false);
+        setNotaSeleccionadaId(null);
+    };
+
+    const abrirNuevaNota = () => {
+        setNotaSeleccionadaId(null);
+        setTitulo("");
+        setContenido("");
+        setAbierta(true);
+    };
+
+    const abrirNota = (nota: Nota) => {
+        setNotaSeleccionadaId(nota.id);
+        setTitulo(nota.titulo || "");
+        setContenido(nota.contenido || "");
+        setAbierta(true);
     };
 
     const guardarNota = async () => {
@@ -89,23 +105,29 @@ const Notas: React.FC<NotasProps> = ({ empleadoId, empleadoNombre }) => {
         try {
             setGuardando(true);
 
-            const notasOrdenadas = [...notas].sort((a, b) => b.createdAt - a.createdAt);
+            let noteId = notaSeleccionadaId;
 
-            if (notasOrdenadas.length >= MAX_NOTAS) {
-                alert("Este empleado ya tiene 10 notas. Elimina una para agregar otra.");
-                return;
+            if (!noteId) {
+                const notasOrdenadas = [...notas].sort((a, b) => b.createdAt - a.createdAt);
+
+                if (notasOrdenadas.length >= MAX_NOTAS) {
+                    alert("Este empleado ya tiene 10 notas. Elimina una para agregar otra.");
+                    return;
+                }
+
+                noteId = `nota_${Date.now()}`;
             }
 
-            const noteId = `nota_${Date.now()}`;
-
-            const nuevaNota: Nota = {
+            const notaAGuardar: Nota = {
                 id: noteId,
                 titulo: tituloLimpio,
                 contenido: contenidoLimpio,
-                createdAt: Date.now(),
+                createdAt: notaSeleccionadaId
+                    ? notas.find((n) => n.id === notaSeleccionadaId)?.createdAt || Date.now()
+                    : Date.now(),
             };
 
-            await set(ref(db, `notas_empleados/${empleadoId}/${noteId}`), nuevaNota);
+            await set(ref(db, `notas_empleados/${empleadoId}/${noteId}`), notaAGuardar);
 
             await cargarNotas();
             limpiarFormulario();
@@ -123,6 +145,11 @@ const Notas: React.FC<NotasProps> = ({ empleadoId, empleadoNombre }) => {
 
         try {
             await remove(ref(db, `notas_empleados/${empleadoId}/${nota.id}`));
+
+            if (notaSeleccionadaId === nota.id) {
+                limpiarFormulario();
+            }
+
             await cargarNotas();
         } catch (error) {
             console.error("Error al eliminar nota:", error);
@@ -131,76 +158,103 @@ const Notas: React.FC<NotasProps> = ({ empleadoId, empleadoNombre }) => {
     };
 
     return (
-        <div className="notas-wrapper">
-
-
-            <div className="notas-card">
-                {!abierta ? (
-                    <div className="nota-cerrada" onClick={() => setAbierta(true)}>
-                        Crear una nota...
-                    </div>
-                ) : (
-                    <div className="nota-abierta">
-                        <input
-                            className="nota-titulo-input"
-                            type="text"
-                            placeholder="Título"
-                            value={titulo}
-                            onChange={(e) => setTitulo(e.target.value)}
-                        />
-
-                        <textarea
-                            className="nota-contenido-input"
-                            placeholder="Crear una nota..."
-                            value={contenido}
-                            onChange={(e) => setContenido(e.target.value)}
-                            rows={5}
-                        />
-
-                        <div className="nota-acciones">
-                            <button
-                                type="button"
-                                className="btn-vineta"
-                                onClick={insertarVineta}
-                                title="Agregar viñeta"
-                            >
-                                • Viñeta
-                            </button>
-
-                            <button
-                                type="button"
-                                className="btn-cerrar-nota"
-                                onClick={guardarNota}
-                                disabled={guardando}
-                            >
-                                {guardando ? "Guardando..." : "Cerrar"}
-                            </button>
+        <div className="notas-layout">
+            {/* IZQUIERDA */}
+            <div className="notas-panel-izquierdo">
+                <div className="notas-card">
+                    {!abierta ? (
+                        <div className="nota-cerrada" onClick={abrirNuevaNota}>
+                            Crear una nota...
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="nota-abierta">
+                            <input
+                                className="nota-titulo-input"
+                                type="text"
+                                placeholder="Título"
+                                value={titulo}
+                                onChange={(e) => setTitulo(e.target.value)}
+                            />
+
+                            <textarea
+                                className="nota-contenido-input"
+                                placeholder="Crear una nota..."
+                                value={contenido}
+                                onChange={(e) => setContenido(e.target.value)}
+                                rows={8}
+                            />
+
+                            <div className="nota-acciones">
+                                <button
+                                    type="button"
+                                    className="btn-vineta"
+                                    onClick={insertarVineta}
+                                    title="Agregar viñeta"
+                                >
+                                    • Viñeta
+                                </button>
+
+                                <div className="nota-acciones-derecha">
+                                    <button
+                                        type="button"
+                                        className="btn-cerrar-nota"
+                                        onClick={limpiarFormulario}
+                                    >
+                                        Cancelar
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="btn-cerrar-nota"
+                                        onClick={guardarNota}
+                                        disabled={guardando}
+                                    >
+                                        {guardando ? "Guardando..." : "Guardar"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <div className="notas-lista">
-                {notas.length === 0 ? (
-                    <div className="sin-notas">No hay notas guardadas.</div>
-                ) : (
-                    notas.map((nota) => (
-                        <div key={nota.id} className="nota-item">
-                            <span className="nota-item-titulo" title={nota.titulo}>
-                                {nota.titulo}
-                            </span>
+            {/* DERECHA */}
+            <div className="notas-panel-derecho">
+                <div className="notas-panel-derecho-header">
+                    <h3>Notas guardadas</h3>
+                    <span>{notas.length}/{MAX_NOTAS}</span>
+                </div>
 
-                            <button
-                                type="button"
-                                className="nota-item-eliminar"
-                                onClick={() => eliminarNota(nota)}
-                                title="Eliminar nota"
+                <div className="notas-lista">
+                    {notas.length === 0 ? (
+                        <div className="sin-notas">No hay notas guardadas.</div>
+                    ) : (
+                        notas.map((nota) => (
+                            <div
+                                key={nota.id}
+                                className={`nota-item ${notaSeleccionadaId === nota.id ? "nota-item-activa" : ""}`}
+                                onClick={() => abrirNota(nota)}
+                                title="Abrir nota"
                             >
-                                ✕
-                            </button>
-                        </div>
-                    ))
-                )}
+                                <span className="nota-item-titulo">
+                                    {nota.titulo}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    className="nota-item-eliminar"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        eliminarNota(nota);
+                                    }}
+                                    title="Eliminar nota"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );

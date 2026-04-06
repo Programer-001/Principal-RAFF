@@ -358,6 +358,45 @@
     .home-bienvenida span {
         font-weight: 300;
     }
+/*----------------------------NOTAS----------------*/
+.notas-layout {
+    display: grid;
+    grid-template-columns: minmax(420px, 1fr) 340px;
+    gap: 20px;
+    align-items: start;
+}
+.notas-panel-izquierdo {
+    display: flex;
+    justify-content: center;
+}
+.notas-panel-izquierdo,
+.notas-panel-derecho {
+    min-width: 0;
+}
+
+.notas-panel-derecho {
+    position: sticky;
+    top: 20px;
+}
+
+.notas-panel-derecho-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 4px;
+}
+
+    .notas-panel-derecho-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .notas-panel-derecho-header span {
+        font-size: 14px;
+        color: #6b7280;
+    }
 
 .notas-card {
     background: #FEF3C7;
@@ -365,8 +404,10 @@
     border-radius: 12px;
     margin-bottom: 18px;
     overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 600px;
 }
-
 
 .nota-cerrada {
     min-height: 46px;
@@ -376,9 +417,12 @@
     color: #6b7280;
     cursor: pointer;
     font-size: 16px;
+
 }
 
-
+    .nota-cerrada:hover {
+        background: #FCD34D;
+    }
 
 .nota-abierta {
     padding: 14px 16px 12px;
@@ -397,7 +441,7 @@
 
 .nota-contenido-input {
     width: 100%;
-    min-height: 120px;
+    min-height: 180px;
     resize: vertical;
     border: none;
     outline: none;
@@ -413,22 +457,29 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+}
+
+.nota-acciones-derecha {
+    display: flex;
+    gap: 8px;
 }
 
 .btn-vineta,
 .btn-cerrar-nota {
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
     color: black;
     cursor: pointer;
     font-size: 15px;
     padding: 8px 10px;
     border-radius: 8px;
+    transition: all 0.2s ease;
 }
 
     .btn-vineta:hover,
     .btn-cerrar-nota:hover {
-        border-color: black;
+        border-color: #9ca3af;
         background: transparent;
     }
 
@@ -450,18 +501,32 @@
 }
 
 .nota-item {
-    background: #202124;
-    border: 1px solid #3c4043;
+    background: #FEF3C7;
+    border: 1px solid #FDE68A;
     border-radius: 10px;
     padding: 12px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+}
+
+    .nota-item:hover {
+        background: #FCD34D;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+    }
+
+.nota-item-activa {
+    border: 1px solid #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
 }
 
 .nota-item-titulo {
-    color: #e8eaed;
+    color: #111827;
     font-size: 15px;
     font-weight: 500;
     overflow: hidden;
@@ -472,14 +537,25 @@
 .nota-item-eliminar {
     border: none;
     background: transparent;
-    color: #f28b82;
+    color: #ef4444;
     cursor: pointer;
     font-size: 18px;
     font-weight: 700;
     padding: 4px 8px;
     border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
     .nota-item-eliminar:hover {
-        background: #2c2d31;
+        background: rgba(239, 68, 68, 0.1);
     }
+
+@media (max-width: 900px) {
+    .notas-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .notas-panel-derecho {
+        position: static;
+    }
+}
