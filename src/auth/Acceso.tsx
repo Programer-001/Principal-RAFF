@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { loginConUsername } from "./Login";
+import { useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -15,6 +17,7 @@ const Login: React.FC = () => {
 
         try {
             await loginConUsername(username, password);
+            navigate("/home", { replace: true });
         } catch (err: any) {
             if (err.message === "Usuario no encontrado") {
                 setError("Usuario no encontrado");
