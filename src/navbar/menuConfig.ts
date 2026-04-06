@@ -64,6 +64,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.consultaot,
             MENU_BASE.clientes,
             MENU_BASE.productos,
+            MENU_BASE.facturacion,
         ],
     },
     {
@@ -83,7 +84,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
     {
         area: "RH",
         puesto: "Auxiliar",
-        items: [MENU_BASE.empleados],
+        items: [MENU_BASE.rh],
     },
 ];
 
