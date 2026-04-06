@@ -41,6 +41,14 @@ const MENU_BASE: Record<string, MenuItem> = {
             { key: "contardinero", label: "Contador de dinero" },
         ],
     },
+
+    contabilidad: {
+        key: "contabilidad",
+        label: "Contabilidad",
+        children: [
+            { key: "lefor", label: "Etiquetas para LEFOR" },
+        ],
+    },
 };
 
 const MENUS_POR_ROL: MenuPorRol[] = [
@@ -80,6 +88,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.productos,
             MENU_BASE.rh,
             MENU_BASE.facturacion,
+            MENU_BASE.contabilidad,
         ],
     },
     
