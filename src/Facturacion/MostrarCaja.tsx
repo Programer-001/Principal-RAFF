@@ -128,7 +128,7 @@ const MostrarCaja: React.FC = () => {
             </div>
 
             {/* ================= TABLA ================= */}
-            <div className="caja-container">
+            <div className="form-container">
                 <h2 className="caja-title">📅 Mostrar Caja por Fecha</h2>
 
                 <div className="fechas-container">

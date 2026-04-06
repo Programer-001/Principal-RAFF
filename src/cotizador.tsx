@@ -437,8 +437,8 @@ const Cotizador = () => {
     setCotizadorActivo("tubular");
   }, [location.state]);
   //--------------------HTML-------------------------------------------------------------------------->>
-  return (
-    <div style={{ display: "flex", padding: 20, gap: 20 }}>
+    return (
+        <div className="cotizador-layout">
       {/* IZQUIERDA */}
       <div style={{ flex: 3 }}>
         <h1>Ordenes de Trabajo</h1>
@@ -700,16 +700,8 @@ const Cotizador = () => {
       </div>
 
       {/* RESUMEN */}
-      <div
-        style={{
-          width: 250,
-          border: "1px solid black",
-          padding: 12,
-          alignSelf: "flex-start",
-          background: "#fff",
-          fontFamily: "monospace",
-          fontSize: 14,
-        }}
+            <div
+                className="resumen-cotizador"
       >
         <h2>Resumen</h2>
         <h3>Orden de Trabajo</h3>

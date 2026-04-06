@@ -199,11 +199,11 @@ const CorteCaja: React.FC = () => {
         totalCreditoClientes;
 
     return (
-        <div className="caja-container">
+        <div className="form-container">
             <div className="caja-header">
-                <h1 className="caja-title">💵 Caja</h1>
+                <h1>💵 Caja</h1>
 
-                <div className="grid-info">
+                <div className="encabezado-cotizador">
                     <label>
                         <strong>Transacción:</strong> #{transaccion}
                     </label>
@@ -231,7 +231,7 @@ const CorteCaja: React.FC = () => {
                         <option value="credito">Crédito Clientes</option>
                         <option value="otro">Otro</option>
                     </select>
-
+                   
                     <input
                         type="text"
                         placeholder="Factura"

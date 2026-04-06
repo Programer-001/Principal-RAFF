@@ -2,6 +2,14 @@
   font-family: sans-serif;
 }
 
+/* Contenedor de botones en una sola fila */
+.btn-container {
+    display: flex;
+    justify-content: center; /* centra horizontalmente */
+    gap: 1rem; /* espacio entre botones */
+    margin-top: 10px;
+}
+
 /* Ajusta los botones existentes */
 .btn {
   flex: 1; /* para que ambos botones tengan el mismo tamaño */
@@ -164,7 +172,15 @@
   gap: 12px;
   margin-bottom: 12px;
 }
-
+.form-row-inline {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.form-row select {
+    max-width: 100%;
+}
 .form-row label {
   font-weight: 600;
 }
@@ -559,3 +575,124 @@
         position: static;
     }
 }
+/* ====== COTIZADOR ====== */
+/*Esta es el Resume de lado derecho o izquierdo para siempre baje con la pagina*/
+.resumen-caja {
+    width: 240px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 10px #0003;
+    position: sticky;
+    top: 20px;
+    margin: 20px;
+    margin-left: auto;
+}
+
+    .resumen-caja h3 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .resumen-caja p,
+    .resumen-caja h4 {
+        margin: 6px 0;
+    }
+
+/* ====== CAJA ====== */
+.grid-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* tres columnas iguales */
+    gap: 1rem; /* separación entre campos */
+    align-items: center; /* alinea verticalmente */
+    margin-bottom: 1rem;
+}
+
+    .grid-inputs input,
+    .grid-inputs select {
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+
+/* Estilo base para todos los inputs */
+.input-caja1 {
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border 0.2s;
+}
+
+/* Cuando hay error */
+.input-caja1-error {
+    border: 2px solid red;
+}
+
+.caja-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    max-width: 920px; /* ⭐ ancho total de tu layout */
+    margin: 0 auto; /* ⭐ centrado en la pantalla */
+    width: 100%;
+}
+/*====Resumen de mostrar caja=======*/
+
+/*Esta es el Resume de lado derecho o izquierdo para siempre baje con la pagina*/
+.resumen-cotizador {
+    width: 240px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 10px #0003;
+    position: sticky;
+    top: 20px;
+    margin: 20px;
+    margin-left: auto;
+}
+    .resumen-cotizador h2 {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .resumen-cotizador h3 {
+        text-align: center;
+        margin-bottom: 8px;
+
+    }
+
+    .resumen-cotizador p,
+    .resumen-cotizador h4 {
+        margin: 6px 0;
+    }
+
+/*Caja fija de filtrar pagos (divide la pagina en dos)*/
+
+.cotizador-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    max-width: 1200px; /* ⭐ ancho total de tu layout */
+    margin: 0 auto; /* ⭐ centrado en la pantalla */
+    width: 95%;
+}
+.fechas-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* ✅ Centra todo horizontalmente */
+    gap: 15px; /* separa los elementos */
+    flex-wrap: wrap; /* permite que se acomoden si la pantalla es pequeña */
+    margin-bottom: 15px; /* un poco de espacio con lo de abajo */
+}
+
+    .fechas-container label {
+        font-weight: 700;
+    }
+
+    .fechas-container input[type="date"] {
+        border: 1px solid #ccc;
+        padding: 5px 8px;
+        border-radius: 6px;
+    }
