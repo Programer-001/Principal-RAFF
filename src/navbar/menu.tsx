@@ -78,7 +78,11 @@ const Menu = ({ vista, setVista }: Props) => {
 
     return (
         <header className="menu-header">
-            <div className="menu-logo-area">
+            <div
+                className="menu-logo-area"
+                onClick={() => setVista("home")}
+                style={{ cursor: "pointer" }}
+            >
                 <img
                     src="/svg/logo_negro.svg"
                     alt="Logo empresa"
