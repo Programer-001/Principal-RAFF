@@ -433,7 +433,7 @@ const GestionOT = () => {
             ✕
           </button>
 
-          <div style={{ maxWidth: 700 }}>
+          <div style={{ width: "80%" }}>
             <div style={{ marginBottom: 10 }}>
               <h1>{otSeleccionada.otLabel || otSeleccionada.firebaseKey} </h1>
             </div>
