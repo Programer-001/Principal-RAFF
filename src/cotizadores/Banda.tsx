@@ -582,7 +582,8 @@ ${agregar(`MUESTRA: ${muestra.toUpperCase()}`, !!muestra)}
         💰 Precio total: ${precioCalculado.toFixed(2)} MXN
       </h3>
 
-      <button
+          <button
+              className="btn btn-blue"
         onClick={() => {
           onGuardar({
             id: data?.id || Date.now().toString(),

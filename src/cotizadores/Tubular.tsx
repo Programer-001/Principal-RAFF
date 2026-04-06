@@ -735,56 +735,61 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
           </div>
 
           {/* ---------------------------------------------Fin del DIV de cotizador-------------------------------------------------------------->> */}
-        </div>
+              </div>
+              <h2>Subtotal Tubular: $ {totalConDescuento.toFixed(2)}</h2>
+              {/*<h1>Total: $ {totalconiva.toFixed(2)}</h1>
+              <h3>Descuento aplicado: {(descuento * 100).toFixed(0)}%</h3>*/}
+              <button
+                  className="btn btn-blue"
+                  onClick={() => {
+                      onGuardar({
+                          id: data?.id || Date.now().toString(),
+                          tipo: "tubular",
+                          descripcion: descripcion,
+                          //totalConDescuento PORQUE EL IVA SE CALCULA EN EL RESUMEN DE ORDENES DE TRABAJO, cotizador.tsx
+                          total: Number(totalConDescuento.toFixed(2)),
+                          datos: {
+                              // 🔹 básicos
+                              diametro,
+                              longitud,
+                              cantidadResistencias,
+                              voltaje,
+                              potencia,
+
+                              // 🔹 selección
+                              seleccionados,
+
+                              // 🔹 cables
+                              tipoSoldarCable,
+                              totalCable,
+
+                              // 🔹 extras
+                              totalDesoldartornillo,
+                              totalTapon,
+                              totalBarrenos,
+                              totalTermoposo,
+                              totalPlaca,
+                              tipoPlaca,
+                              totalPuentes,
+
+                              // 🔹 otros
+                              totalExpress,
+                              totalTubo,
+                              // 🔹 muestra
+                              muestra,
+                          },
+                      });
+                      resetForm();
+                      setDirty(false);
+                  }}
+              >
+                  {data ? "ACTUALIZAR" : "AGREGAR"}
+              </button >
       </div>
       {/* -------------------------------------------------------------------------------------------------------------->> */}
 
     
-      <button
-        onClick={() => {
-          onGuardar({
-            id: data?.id || Date.now().toString(),
-            tipo: "tubular",
-            descripcion: descripcion,
-            //totalConDescuento PORQUE EL IVA SE CALCULA EN EL RESUMEN DE ORDENES DE TRABAJO, cotizador.tsx
-            total: Number(totalConDescuento.toFixed(2)),
-            datos: {
-              // 🔹 básicos
-              diametro,
-              longitud,
-              cantidadResistencias,
-              voltaje,
-              potencia,
 
-              // 🔹 selección
-              seleccionados,
-
-              // 🔹 cables
-              tipoSoldarCable,
-              totalCable,
-
-              // 🔹 extras
-              totalDesoldartornillo,
-              totalTapon,
-              totalBarrenos,
-              totalTermoposo,
-              totalPlaca,
-              tipoPlaca,
-              totalPuentes,
-
-              // 🔹 otros
-              totalExpress,
-              totalTubo,
-              // 🔹 muestra
-              muestra,
-            },
-          });
-          resetForm();
-          setDirty(false);
-        }}
-      >
-        {data ? "ACTUALIZAR" : "AGREGAR"}
-          </button>
           {/* -------------------------------------------------------VARIABLES CUADRO----------------------------------------------------->> */}
           <div style={{ marginBottom: 10 }}>
               <label style={{ cursor: "pointer", fontWeight: "bold" }}>
