@@ -16,6 +16,8 @@ interface OTClienteData {
   telefono?: string;
   envio: boolean;
 
+  asesor?: string;
+
   conceptos: Concepto[];
 
   subtotal: number;
@@ -69,27 +71,28 @@ export const generarPDFOTCliente = async (data: OTClienteData) => {
   // =========================
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("ORDEN DE TRABAJO (CLIENTE)", 20, 60);
+  doc.text(`ORDEN DE TRABAJO ${data.otLabel} (CLIENTE)`, 20, 60);
 
-  // =========================
-  // DATOS OT
-  // =========================
-  doc.setFontSize(11);
+    // =========================
+    // DATOS OT
+    // =========================
+    doc.setFontSize(11);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("OT:", 20, 70);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.otLabel, 35, 70);
+    // MISMO RENGLÓN
+    doc.setFont("helvetica", "bold");
+    doc.text("Asesor:", 20, 70);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.asesor || "--", 40, 70);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Factura:", 90, 70);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.factura ? String(data.factura) : "--", 115, 70);
+    doc.setFont("helvetica", "bold");
+    doc.text("Factura:", 90, 70);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.factura ? String(data.factura) : "--", 115, 70);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Fecha:", 150, 70);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.fecha, 165, 70);
+    doc.setFont("helvetica", "bold");
+    doc.text("Fecha:", 150, 70);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.fecha, 165, 70);
 
   // =========================
   // CLIENTE

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 //firebase
 import { getDatabase, ref, get, set } from "firebase/database";
-import { app } from "./firebase/config";
+import { app, auth, db } from "./firebase/config";
 // 🔹 Componentes
 import { useLocation, useNavigate } from "react-router-dom";
 import Tubular from "./cotizadores/Tubular";
@@ -53,11 +53,21 @@ export interface ItemCotizado {
   partida?: string;
 }
 
+interface AsesorSnapshot {
+    id?: string;
+    uid?: string;
+    nombre?: string;
+    username?: string;
+    area?: string;
+    puesto?: string;
+}
+
 const Cotizador = () => {
   // 🔹 Estado general
   const [ot, setOt] = useState("");
 
   const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [asesor, setAsesor] = useState<AsesorSnapshot | null>(null);
   const [buscar, setBuscar] = useState("");
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [envio, setEnvio] = useState<"si" | "no">("no");
@@ -180,7 +190,52 @@ const Cotizador = () => {
 
     setCotizadorActivo(nuevo);
   };
+    //-----------------CARGAR EMPLEADO QUE HIZO OT------------------------------>>
+    useEffect(() => {
+        const cargarAsesorActual = async () => {
+            try {
+                const usuario = auth.currentUser;
 
+                if (!usuario?.uid) {
+                    setAsesor(null);
+                    return;
+                }
+
+                const snapshot = await get(ref(db, "RH/Empleados"));
+
+                if (!snapshot.exists()) {
+                    setAsesor(null);
+                    return;
+                }
+
+                const empleados = snapshot.val();
+                let encontrado: AsesorSnapshot | null = null;
+
+                for (const key in empleados) {
+                    const emp = empleados[key];
+
+                    if (emp?.uid === usuario.uid) {
+                        encontrado = {
+                            id: emp.id || key,
+                            uid: emp.uid || usuario.uid,
+                            nombre: emp.nombre || "",
+                            username: emp.username || "",
+                            area: emp.area || "",
+                            puesto: emp.puesto || "",
+                        };
+                        break;
+                    }
+                }
+
+                setAsesor(encontrado);
+            } catch (error) {
+                console.error("Error cargando asesor actual:", error);
+                setAsesor(null);
+            }
+        };
+
+        cargarAsesorActual();
+    }, []);
   // 🔹 Subtotal
   const totalGeneral = cotizaciones.reduce((acc, c) => acc + c.total, 0);
   // 🔹 Descuento
@@ -241,6 +296,18 @@ const Cotizador = () => {
         clienteId: cliente?.id || null,
         clienteSnapshot: cliente || { nombre: "PUBLICO GENERAL" },
         credito: cliente?.credito?.activo || false,
+
+        asesorId: asesor?.id || null,
+          asesorSnapshot: asesor
+              ? {
+                  id: asesor.id || null,
+                  uid: asesor.uid || null,
+                  nombre: asesor.nombre || "",
+                  username: asesor.username || "",
+                  area: asesor.area || "",
+                  puesto: asesor.puesto || "",
+              }
+              : null,
 
         envio: envio === "si",
         envioFolio: envio === "si" ? envioFolioReservado : "",

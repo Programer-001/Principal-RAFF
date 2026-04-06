@@ -16,6 +16,7 @@ interface OTProduccionData {
   otLabel: string;
   fecha: string;
   clienteNombre: string;
+  asesor?: string;
   envio: boolean;
   grupos: GrupoProduccion[];
 }
@@ -67,34 +68,36 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
   // =========================
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("ORDEN DE TRABAJO (PRODUCCIÓN)", 20, 58);
+    doc.text(`ORDEN DE TRABAJO ${data.otLabel} (PRODUCCIÓN)`, 20, 58);
 
-  // =========================
-  // DATOS GENERALES
-  // =========================
-  doc.setFontSize(11);
+    // =========================
+    // DATOS GENERALES
+    // =========================
+    doc.setFontSize(11);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("OT:", 20, 68);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.otLabel, 32, 68);
+    // Fila 1
+    doc.setFont("helvetica", "bold");
+    doc.text("Compañero:", 20, 70);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.asesor || "--", 48, 70);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Fecha:", 90, 68);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.fecha, 107, 68);
+    doc.setFont("helvetica", "bold");
+    doc.text("Fecha:", 90, 68);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.fecha, 107, 68);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Cliente:", 20, 76);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.clienteNombre, 38, 76);
+    // Fila 2
+    doc.setFont("helvetica", "bold");
+    doc.text("Cliente:", 20, 76);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.clienteNombre, 38, 76);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Envío:", 150, 76);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.envio ? "Sí" : "No", 165, 76);
+    doc.setFont("helvetica", "bold");
+    doc.text("Envío:", 150, 76);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.envio ? "Sí" : "No", 165, 76);
 
-  let y = 86;
+    let y = 86;
   const marginX = 20;
   const boxWidth = pageWidth - marginX * 2;
 

@@ -11,6 +11,14 @@ interface ClienteSnapshot {
   razonSocial?: string;
   telefono?: string;
 }
+interface AsesorSnapshot {
+    id?: string;
+    uid?: string;
+    nombre?: string;
+    username?: string;
+    area?: string;
+    puesto?: string;
+}
 
 interface TrabajoItem {
   partida?: string;
@@ -37,6 +45,8 @@ interface OrdenTrabajo {
   envioFolio?: string;
   envioGenerado?: boolean;
   envioEnviado?: boolean;
+  asesorId?: string | null;
+  asesorSnapshot?: AsesorSnapshot | null;
 }
 
 type OrdenTrabajoConClave = OrdenTrabajo & {
@@ -190,7 +200,11 @@ const GestionOT = () => {
     generarPDFOTCliente({
       otLabel: otSeleccionada.otLabel || otSeleccionada.firebaseKey,
       factura: otSeleccionada.factura ?? undefined,
-      fecha: formatearFecha(otSeleccionada.fecha),
+        fecha: formatearFecha(otSeleccionada.fecha),
+        asesor:
+            otSeleccionada.asesorSnapshot?.username ||
+            otSeleccionada.asesorSnapshot?.nombre ||
+            "",
       clienteNombre:
         otSeleccionada.clienteSnapshot?.nombre ||
         otSeleccionada.clienteSnapshot?.razonSocial ||
@@ -244,7 +258,11 @@ const GestionOT = () => {
 
     await generarPDFOTProduccion({
       otLabel: otSeleccionada.otLabel || otSeleccionada.firebaseKey,
-      fecha: formatearFecha(otSeleccionada.fecha),
+        fecha: formatearFecha(otSeleccionada.fecha),
+        asesor:
+            otSeleccionada.asesorSnapshot?.username ||
+            otSeleccionada.asesorSnapshot?.nombre ||
+            "",
       clienteNombre:
         otSeleccionada.clienteSnapshot?.nombre ||
         otSeleccionada.clienteSnapshot?.razonSocial ||
@@ -400,7 +418,13 @@ const GestionOT = () => {
               otSeleccionada.factura === undefined
                 ? "--"
                 : otSeleccionada.factura}
-            </div>
+                      </div>
+            <div style={{ marginBottom: 10 }}>
+                       <b>Asesor de ventas:</b>{" "}
+                          {otSeleccionada.asesorSnapshot?.username ||
+                              otSeleccionada.asesorSnapshot?.nombre ||
+                              "--"}
+                      </div>
 
             <div style={{ marginBottom: 10 }}>
               <b>Cliente:</b>{" "}
