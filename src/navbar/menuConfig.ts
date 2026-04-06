@@ -11,6 +11,7 @@ type MenuPorRol = {
 };
 
 const MENU_BASE: Record<string, MenuItem> = {
+    home: { key: "home", label: "Inicio" },
     cotizador: { key: "cotizador", label: "Cotizador" },
     consultaot: { key: "consultaot", label: "Consulta OT" },
     clientes: { key: "clientes", label: "Clientes" },
@@ -30,8 +31,8 @@ const MENU_BASE: Record<string, MenuItem> = {
         label: "Sistema de caja",
         children: [
             { key: "caja", label: "Caja" },
-            { key: "cajacorteporfecha", label: "Registrar factura" },
             { key: "mostrarcaja", label: "Consulta de factura" },
+            { key: "cajacorteporfecha", label: "Registrar factura" },
             { key: "cortedia", label: "Corte del día" },
             { key: "gastos", label: "Gastos" },
             { key: "consultagastos", label: "Consulta de gastos" },
@@ -81,6 +82,20 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.facturacion,
         ],
     },
+    
+    {
+        area: "Administración",
+        puesto: "Gerente Administrativo",
+        items: [
+            MENU_BASE.consultaot,
+            MENU_BASE.clientes,
+            MENU_BASE.compras,
+            MENU_BASE.productos,
+            MENU_BASE.rh,
+            MENU_BASE.facturacion,
+        ],
+    },
+
     {
         area: "RH",
         puesto: "Auxiliar",
@@ -88,7 +103,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
     },
 ];
 
-const MENU_DEFAULT: MenuItem[] = [MENU_BASE.cotizador];
+const MENU_DEFAULT: MenuItem[] = [MENU_BASE.home];
 
 function normalizarTexto(texto?: string): string {
     return (texto || "")

@@ -315,3 +315,171 @@
     .info-permiso .negativo {
         color: #dc2626;
     }
+/* ====== HOME ====== */
+.home-container > * {
+    width: 90%;
+    padding: 30px;
+    box-sizing: border-box;
+    position: relative; /* necesario */
+    z-index: 1;
+}
+    /* Marca de agua */
+.home-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/public/svg/logo_negro.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 400px; /* ajusta tamaño */
+
+    opacity: 0.08; /* 🔥 transparencia */
+    pointer-events: none; /* no estorba clicks */
+    z-index: 0;
+}
+
+.home-loading {
+    padding: 30px;
+    font-size: 18px;
+}
+
+.notas-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.home-bienvenida {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+    .home-bienvenida span {
+        font-weight: 300;
+    }
+
+.notas-card {
+    background: #FEF3C7;
+    border: 1px solid #FDE68A;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+
+
+.nota-cerrada {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+
+
+.nota-abierta {
+    padding: 14px 16px 12px;
+}
+
+.nota-titulo-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #111827;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.nota-contenido-input {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #111827;
+    font-size: 16px;
+    line-height: 1.5;
+    font-family: inherit;
+}
+
+.nota-acciones {
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-vineta,
+.btn-cerrar-nota {
+    border: none;
+    background: transparent;
+    color: black;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+    .btn-vineta:hover,
+    .btn-cerrar-nota:hover {
+        border-color: black;
+        background: transparent;
+    }
+
+    .btn-cerrar-nota:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+.notas-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sin-notas {
+    color: #9aa0a6;
+    font-size: 15px;
+    padding: 8px 2px;
+}
+
+.nota-item {
+    background: #202124;
+    border: 1px solid #3c4043;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.nota-item-titulo {
+    color: #e8eaed;
+    font-size: 15px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nota-item-eliminar {
+    border: none;
+    background: transparent;
+    color: #f28b82;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+    .nota-item-eliminar:hover {
+        background: #2c2d31;
+    }

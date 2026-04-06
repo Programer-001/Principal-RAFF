@@ -30,6 +30,7 @@ import Gastos from "./Facturacion/gastos"
 import ModificarPago from "./Facturacion/ModificarPago"
 import MostrarCaja from "./Facturacion/MostrarCaja"
 import Perfil from "./navbar/perfil";
+import Home from "./Home/Home"
 import "./styles.css";
 
 function AppLayout() {
@@ -55,7 +56,8 @@ function AppLayout() {
       if (pathname.startsWith("/modificarpago")) return "gastos";
       if (pathname.startsWith("/mostrarcaja")) return "mostrarcaja";
       if (pathname.startsWith("/perfil")) return "perfil";
-    return "cotizador";
+      if (pathname.startsWith("/home")) return "home";
+    return "home";
   };
 
   const vista = rutaAVista(location.pathname);
@@ -80,11 +82,12 @@ function AppLayout() {
         modificarpago: "/modificarpago",
         mostrarcaja:"/mostrarcaja",
         perfil: "/perfil",
+        home: "/home",
 
         
     };
 
-    navigate(mapa[v] || "/cotizador");
+    navigate(mapa[v] || "/home");
   };
 
   return (
@@ -111,6 +114,7 @@ function AppLayout() {
               <Route path="/modificarpago" element={<ModificarPago />} />
               <Route path="/mostrarcaja" element={<MostrarCaja />} />
               <Route path="/perfil" element={<Perfil />} />
+              <Route path="/home" element={<Home />} />
       </Routes>
     </div>
   );
