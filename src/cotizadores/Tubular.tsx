@@ -39,7 +39,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   const [cantidadResistencias, setCantidadResistencias] = useState(0);
   const [voltaje, setVoltaje] = useState<number>(0);
   const [potencia, setPotencia] = useState<number>(0);
-  const [muestra, setMuestra] = useState(data?.datos?.muestra || "");
+    const [muestra, setMuestra] = useState(data?.datos?.muestra || "");
+    const [mostrarDetalle, setMostrarDetalle] = useState(false);
   //-------------------------------------------------------------------------------->>
   const [catalogos, setCatalogos] = useState<any>({});
   const [seleccionados, setSeleccionados] = useState<any>({});
@@ -738,56 +739,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
       </div>
       {/* -------------------------------------------------------------------------------------------------------------->> */}
 
-      <h3>
-        Voltaje: {voltaje || "--"}V
-        <br />
-        Potencia: {potencia || "--"}W
-        <br />
-        Cantidad de resistencias: {cantidadResistencias || "--"}
-        <br />
-        Total Tubular: {totalTubo ? `$ ${totalTubo.toFixed(2)}` : "--"}
-        <br />
-        Precio por cm:{" "}
-        {diametro ? obtenerPrecioPorCm(diametro, longitud) : "--"}
-        <br />
-        Tornillo: {seleccionados["tornillo"]?.precio ?? "--"}
-        <br />
-        Borne: {seleccionados["borne"]?.precio ?? "--"}
-        <br />
-        Desoldar de base: {seleccionados["desoldar_base"]?.precio ?? "--"}
-        <br />
-        Dobleces: {seleccionados["dobleces"]?.precio ?? "--"}
-        <br />
-        Soldadura en resistencia:{" "}
-        {seleccionados["soldadura_resistencia"]?.precio ?? "--"}
-        <br />
-        Soldar cable: {tipoSoldarCable || "--"}
-        <br />
-        Total cable: {totalCable ? `$ ${totalCable.toFixed(2)}` : "--"}
-        <br />
-        Desoldar tornillo:{" "}
-        {totalDesoldartornillo ? `$ ${totalDesoldartornillo}` : "--"}
-        <br />
-        Tapon macho: {totalTapon ? `$ ${totalTapon}` : "--"}
-        <br />
-        Barrenos: {totalBarrenos ? `$ ${totalBarrenos}` : "--"}
-        <br />
-        Termoposo: {totalTermoposo ? `$ ${totalTermoposo}` : "--"}
-        <br />
-        Tipo{tipoPlaca}: {totalPlaca ? `$ ${totalPlaca.toFixed(2)}` : "--"}
-        <br />
-        Puentes: {totalPuentes ? `$ ${totalPuentes}` : "--"}
-        <br />
-        Sello: {seleccionados["sellos"]?.precio ?? "--"}
-        <br />
-        Otros Servicios: {seleccionados["servicios"]?.precio ?? "--"}
-        <br />
-        Servicio express: % {totalExpress.toFixed(2)}
-      </h3>
-      <h2>Subtotal Tubular: $ {totalConDescuento.toFixed(2)}</h2>
-      <br />
-      <h1>Total con descuento: $ {totalconiva.toFixed(2)}</h1>
-      <h3>Descuento aplicado: {(descuento * 100).toFixed(0)}%</h3>
+    
       <button
         onClick={() => {
           onGuardar({
@@ -832,7 +784,68 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
         }}
       >
         {data ? "ACTUALIZAR" : "AGREGAR"}
-      </button>
+          </button>
+          {/* -------------------------------------------------------VARIABLES CUADRO----------------------------------------------------->> */}
+          <div style={{ marginBottom: 10 }}>
+              <label style={{ cursor: "pointer", fontWeight: "bold" }}>
+                  <input
+                      type="checkbox"
+                      checked={mostrarDetalle}
+                      onChange={(e) => setMostrarDetalle(e.target.checked)}
+                      style={{ marginRight: 8 }}
+                  />
+                  Mostrar detalle técnico
+              </label>
+          </div>
+          {mostrarDetalle && (
+              <h3>
+                  Voltaje: {voltaje || "--"}V
+                  <br />
+                  Potencia: {potencia || "--"}W
+                  <br />
+                  Cantidad de resistencias: {cantidadResistencias || "--"}
+                  <br />
+                  Total Tubular: {totalTubo ? `$ ${totalTubo.toFixed(2)}` : "--"}
+                  <br />
+                  Precio por cm:{" "}
+                  {diametro ? obtenerPrecioPorCm(diametro, longitud) : "--"}
+                  <br />
+                  Tornillo: {seleccionados["tornillo"]?.precio ?? "--"}
+                  <br />
+                  Borne: {seleccionados["borne"]?.precio ?? "--"}
+                  <br />
+                  Desoldar de base: {seleccionados["desoldar_base"]?.precio ?? "--"}
+                  <br />
+                  Dobleces: {seleccionados["dobleces"]?.precio ?? "--"}
+                  <br />
+                  Soldadura en resistencia:{" "}
+                  {seleccionados["soldadura_resistencia"]?.precio ?? "--"}
+                  <br />
+                  Soldar cable: {tipoSoldarCable || "--"}
+                  <br />
+                  Total cable: {totalCable ? `$ ${totalCable.toFixed(2)}` : "--"}
+                  <br />
+                  Desoldar tornillo:{" "}
+                  {totalDesoldartornillo ? `$ ${totalDesoldartornillo}` : "--"}
+                  <br />
+                  Tapon macho: {totalTapon ? `$ ${totalTapon}` : "--"}
+                  <br />
+                  Barrenos: {totalBarrenos ? `$ ${totalBarrenos}` : "--"}
+                  <br />
+                  Termoposo: {totalTermoposo ? `$ ${totalTermoposo}` : "--"}
+                  <br />
+                  Tipo{tipoPlaca}: {totalPlaca ? `$ ${totalPlaca.toFixed(2)}` : "--"}
+                  <br />
+                  Puentes: {totalPuentes ? `$ ${totalPuentes}` : "--"}
+                  <br />
+                  Sello: {seleccionados["sellos"]?.precio ?? "--"}
+                  <br />
+                  Otros Servicios: {seleccionados["servicios"]?.precio ?? "--"}
+                  <br />
+                  Servicio express: % {totalExpress.toFixed(2)}
+              </h3>
+          )}
+          {/* --------------------------------------------FIN DE CUADRO VARIABLES------------------------------------------------------------------>> */}
     </>
   );
 };
