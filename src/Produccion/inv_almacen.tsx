@@ -58,9 +58,9 @@ const InvAlmacen: React.FC = () => {
         const offAlmacen = onValue(almacenRef, (snapshot) => {
             const data = snapshot.val() || {};
 
-            const lista: ItemAlmacen[] = Object.values(data)
-                .map((item: any) => ({
-                    id: item.id || "",
+            const lista: ItemAlmacen[] = Object.entries(data)
+                .map(([firebaseKey, item]: [string, any]) => ({
+                    id: item.id || firebaseKey || "",
                     descripcion: item.descripcion || item.DESCRIPCION || "",
                     cantidad: Number(item.cantidad ?? item.CANTIDAD ?? 0),
                     fecha: item.fecha || item.FECHA || "",
@@ -80,9 +80,9 @@ const InvAlmacen: React.FC = () => {
         const offResistencias = onValue(resistenciasRef, (snapshot) => {
             const data = snapshot.val() || {};
 
-            const lista: ItemResistencia[] = Object.values(data)
-                .map((item: any) => ({
-                    id: item.id || "",
+            const lista: ItemResistencia[] = Object.entries(data)
+                .map(([firebaseKey, item]: [string, any]) => ({
+                    id: item.id || firebaseKey || "",
                     tipo: item.TIPO || item.tipo || "",
                     cantidad: Number(item.CANTIDAD ?? item.cantidad ?? 0),
                     fecha: item.FECHA || item.fecha || "",
@@ -124,7 +124,7 @@ const InvAlmacen: React.FC = () => {
         };
     };
 
-    const generarSiguienteId = (items: { id: string }[], prefijo: string) => {
+    const generarSiguienteId = (items: { id: string }[], prefijo: string, digitos = 4) => {
         const numeros = items
             .map((item) => item.id || "")
             .filter((id) => id.startsWith(prefijo))
@@ -132,7 +132,7 @@ const InvAlmacen: React.FC = () => {
             .filter((n) => !isNaN(n));
 
         const siguiente = numeros.length ? Math.max(...numeros) + 1 : 1;
-        return `${prefijo}${String(siguiente).padStart(5, "0")}`;
+        return `${prefijo}${String(siguiente).padStart(digitos, "0")}`;
     };
 
     const guardarMovimiento = async (payload: any) => {
@@ -186,7 +186,7 @@ const InvAlmacen: React.FC = () => {
             return;
         }
 
-        const nuevoId = generarSiguienteId(almacen, "AL_");
+        const nuevoId = generarSiguienteId(almacen, "AL", 4);
         const itemRef = ref(db, `produccion/almacen_inventario/${nuevoId}`);
 
         await set(itemRef, {
@@ -278,7 +278,7 @@ const InvAlmacen: React.FC = () => {
             return;
         }
 
-        const nuevoId = generarSiguienteId(resistencias, "RES_");
+        const nuevoId = generarSiguienteId(resistencias, "RES", 4);
         const itemRef = ref(db, `produccion/resistencias_stock/${nuevoId}`);
 
         await set(itemRef, {
@@ -331,6 +331,8 @@ const InvAlmacen: React.FC = () => {
         const itemRef = ref(db, `produccion/resistencias_stock/${item.id}`);
 
         await update(itemRef, {
+            id: item.id,
+            TIPO: item.tipo,
             CANTIDAD: cantidadNueva,
             FECHA: fechaHoy(),
             ACTIVO: true,

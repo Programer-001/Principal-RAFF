@@ -35,24 +35,28 @@ interface Cliente {
 }
 
 interface Envio {
-  folio: string;
-  fecha: string;
-  clienteId?: string | null;
-  clienteNombre: string;
-  telefono?: string;
-  empresa?: string;
-  direccion: string;
-  colonia?: string;
-  ciudad?: string;
-  estado?: string;
-  cp?: string;
-  paqueteria?: string;
-  guia?: string;
-  notas?: string;
-  productos?: any[];
-  enviado?: boolean;
-  otKey?: string;
-  otLabel?: string;
+    folio: string;
+    fecha: string;
+    clienteId?: string | null;
+    clienteNombre: string;
+    telefono?: string;
+    empresa?: string;
+    direccion: string;
+    colonia?: string;
+    ciudad?: string;
+    estado?: string;
+    cp?: string;
+    paqueteria?: string;
+    guia?: string;
+    notas?: string;
+    productos?: any[];
+    enviado?: boolean;
+    otKey?: string;
+    otLabel?: string;
+
+    convenio?: boolean;
+    convenioTexto?: string;
+    atencionRecibe?: string;
 }
 
 interface Producto {
@@ -81,7 +85,12 @@ const Envios: React.FC = () => {
   const [notas, setNotas] = useState("");
   const [paqueteria, setPaqueteria] = useState("");
   const [guia, setGuia] = useState("");
-  const [enviado, setEnviado] = useState(false);
+    const [enviado, setEnviado] = useState(false);
+
+    const [convenio, setConvenio] = useState(false);
+    const [convenioTexto, setConvenioTexto] = useState("");
+    const [atencionRecibe, setAtencionRecibe] = useState("");
+
   const toggleEnviado = () => {
     setEnviado((prev) => !prev);
   };
@@ -110,7 +119,10 @@ const Envios: React.FC = () => {
     setEnviado(false);
     setOtKey("");
     setOtLabel("");
-    setEnvioFolioReservado("");
+      setEnvioFolioReservado("");
+      setConvenio(false);
+      setConvenioTexto("");
+      setAtencionRecibe("");
   };
 
   // 🔎 BUSCAR CLIENTES
@@ -156,16 +168,19 @@ const Envios: React.FC = () => {
     return () => unsubscribe();
   }, [db]);
 
-  useEffect(() => {
-    if (envioSeleccionado) {
-      setEnviado(envioSeleccionado.enviado || false);
-      setProductos(
-        envioSeleccionado.productos || [
-          { descripcion: "", cantidad: 1, unidad: "Paquete" },
-        ]
-      );
-    }
-  }, [envioSeleccionado]);
+    useEffect(() => {
+        if (envioSeleccionado) {
+            setEnviado(envioSeleccionado.enviado || false);
+            setConvenio(envioSeleccionado.convenio || false);
+            setConvenioTexto(envioSeleccionado.convenioTexto || "");
+            setAtencionRecibe(envioSeleccionado.atencionRecibe || "");
+            setProductos(
+                envioSeleccionado.productos || [
+                    { descripcion: "", cantidad: 1, unidad: "Paquete" },
+                ]
+            );
+        }
+    }, [envioSeleccionado]);
 
   // 📦 GUARDAR O ACTUALIZAR ENVÍO
   const guardarEnvio = async () => {
@@ -213,7 +228,10 @@ const Envios: React.FC = () => {
         notas,
         fecha: fechaMexico,
         enviado: enviadoActual,
-        productos: productos,
+          productos: productos,
+          convenio,
+          convenioTexto: convenio ? convenioTexto : "",
+          atencionRecibe,
       };
 
       // Guardar envío
@@ -251,29 +269,32 @@ const Envios: React.FC = () => {
   };
 
   // BOTON PDF
-  const handleGenerarPDF = () => {
-    if (!envioSeleccionado) {
-      alert("Selecciona un envío primero");
-      return;
-    }
+    const handleGenerarPDF = () => {
+        if (!envioSeleccionado) {
+            alert("Selecciona un envío primero");
+            return;
+        }
 
-    generarPDFEnvio({
-      folio: envioSeleccionado.folio,
-      destinoNombre: envioSeleccionado.clienteNombre,
-      destinoCalle: envioSeleccionado.direccion,
-      destinoNumero: "",
-      destinoInterior: cliente?.numeroInterior || "",
-      destinoColonia: envioSeleccionado.colonia || "",
-      destinoCP: envioSeleccionado.cp || "",
-      destinoMunicipio: envioSeleccionado.ciudad || "",
-      destinoEstado: envioSeleccionado.estado || "",
-      destinoTelefono: envioSeleccionado.telefono || "",
-      paqueteria: envioSeleccionado.paqueteria || "",
-      guiapaqueteria: envioSeleccionado.guia || "",
-      notaspaquete: envioSeleccionado.notas || "",
-      productos: envioSeleccionado.productos || [],
-    });
-  };
+        generarPDFEnvio({
+            folio: envioSeleccionado.folio,
+            destinoNombre: envioSeleccionado.clienteNombre,
+            destinoCalle: envioSeleccionado.direccion,
+            destinoNumero: "",
+            destinoInterior: cliente?.numeroInterior || "",
+            destinoColonia: envioSeleccionado.colonia || "",
+            destinoCP: envioSeleccionado.cp || "",
+            destinoMunicipio: envioSeleccionado.ciudad || "",
+            destinoEstado: envioSeleccionado.estado || "",
+            destinoTelefono: envioSeleccionado.telefono || "",
+            paqueteria: envioSeleccionado.paqueteria || "",
+            guiapaqueteria: envioSeleccionado.guia || "",
+            convenio: envioSeleccionado.convenio || false,
+            convenioTexto: envioSeleccionado.convenioTexto || "",
+            atencionRecibe: envioSeleccionado.atencionRecibe || "",
+            notaspaquete: envioSeleccionado.notas || "",
+            productos: envioSeleccionado.productos || [],
+        });
+    };
   // ❌ BORRAR ENVÍO
   const borrarEnvio = async () => {
     if (!envioSeleccionado) return;
@@ -640,7 +661,14 @@ const Envios: React.FC = () => {
                 <label>SAT:</label>
                 <p className="descripcion-texto">32121600</p>
               </div>
-
+                          <div className="form-row">
+                              <label>Quien recibe (At´n):</label>
+                              <input
+                                  value={atencionRecibe}
+                                  onChange={(e) => setAtencionRecibe(e.target.value)}
+                                  placeholder="Nombre de quien recibe"
+                              />
+                          </div>
               <div className="form-row">
                 <label>Paquetería:</label>
                 <select
@@ -670,7 +698,30 @@ const Envios: React.FC = () => {
                   placeholder="Número de guía"
                 />
               </div>
+                          <div className="form-row checkbox-row">
+                              <label>Convenio:</label>
+                              <input
+                                  type="checkbox"
+                                  checked={convenio}
+                                  onChange={(e) => {
+                                      setConvenio(e.target.checked);
+                                      if (!e.target.checked) {
+                                          setConvenioTexto("");
+                                      }
+                                  }}
+                              />
+                          </div>
 
+                          {convenio && (
+                              <div className="form-row">
+                                  <label>Número de convenio:</label>
+                                  <input
+                                      value={convenioTexto}
+                                      onChange={(e) => setConvenioTexto(e.target.value)}
+                                      placeholder="Escribe el convenio"
+                                  />
+                              </div>
+                          )}
               <div className="form-row textarea-row">
                 <label>Notas:</label>
                 <textarea
