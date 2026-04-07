@@ -42,6 +42,14 @@ const MENU_BASE: Record<string, MenuItem> = {
         ],
     },
 
+    produccion: {
+        key: "produccion",
+        label: "Produccion",
+        children: [
+            { key: "gestionproduccion", label: "Operacion" },
+        ],
+    },
+
     contabilidad: {
         key: "contabilidad",
         label: "Contabilidad",
@@ -89,6 +97,8 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.rh,
             MENU_BASE.facturacion,
             MENU_BASE.contabilidad,
+            MENU_BASE.produccion,
+
         ],
     },
     

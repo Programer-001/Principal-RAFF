@@ -30,6 +30,7 @@ import Gastos from "./Facturacion/gastos";
 import ModificarPago from "./Facturacion/ModificarPago";
 import MostrarCaja from "./Facturacion/MostrarCaja";
 import Lefor from "./Contabilidad/lefor"
+import GestionProduccion from "./Produccion/GestionProduccion"
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -56,6 +57,7 @@ function AppLayout() {
         if (pathname.startsWith("/gastos")) return "gastos";
         if (pathname.startsWith("/modificarpago")) return "modificarpago";
         if (pathname.startsWith("/mostrarcaja")) return "mostrarcaja";
+        if (pathname.startsWith("/gestionproduccion")) return "gestionproduccion";
         if (pathname.startsWith("/lefor")) return "lefor";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
@@ -83,7 +85,8 @@ function AppLayout() {
             gastos: "/gastos",
             modificarpago: "/modificarpago",
             mostrarcaja: "/mostrarcaja",
-            lefor:"/lefor",
+            lefor: "/lefor",
+            gestionproduccion:"/gestionproduccion",
             perfil: "/perfil",
             home: "/home",
         };
@@ -116,6 +119,7 @@ function AppLayout() {
                 <Route path="/modificarpago" element={<ModificarPago />} />
                 <Route path="/mostrarcaja" element={<MostrarCaja />} />
                 <Route path="/lefor" element={<Lefor />} />
+                <Route path="/gestionproduccion" element={<GestionProduccion />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>
