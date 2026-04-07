@@ -115,6 +115,14 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.facturacion,
         ],
     },
+    {
+        area: "Almacen",
+        puesto: "Almacenista",
+        items: [
+            MENU_BASE.produccion,
+
+        ],
+    },
 
     {
         area: "RH",
