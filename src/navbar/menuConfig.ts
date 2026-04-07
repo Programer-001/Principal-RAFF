@@ -44,9 +44,10 @@ const MENU_BASE: Record<string, MenuItem> = {
 
     produccion: {
         key: "produccion",
-        label: "Produccion",
+        label: "Produccion", 
         children: [
             { key: "gestionproduccion", label: "Operacion" },
+            { key: "invalmacen", label: "Almacen" },
         ],
     },
 

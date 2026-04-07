@@ -696,3 +696,216 @@
         padding: 5px 8px;
         border-radius: 6px;
     }
+
+/* =========================
+   INVENTARIO ALMACEN
+========================= */
+.inv-page {
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.inv-layout {
+    display: grid;
+    grid-template-columns: minmax(680px, 1fr) 360px;
+    gap: 20px;
+    align-items: start;
+}
+
+.inv-left-column {
+    display: grid;
+    gap: 20px;
+    min-width: 0;
+}
+
+.inv-right-column {
+    min-width: 0;
+}
+
+.inv-card,
+.inv-panel {
+    background: #ffffff;
+    border: 1px solid #dcdfe4;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 16px;
+}
+
+.inv-card-header,
+.inv-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+    .inv-card-header h2,
+    .inv-panel-header h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .inv-card-header span {
+        display: inline-block;
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+.inv-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.inv-table-scroll {
+    max-height: 320px;
+    overflow: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 560px;
+}
+
+    .inv-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f8fafc;
+        color: #111827;
+        font-size: 14px;
+        font-weight: 700;
+        text-align: left;
+        padding: 12px 10px;
+        border-bottom: 1px solid #d1d5db;
+    }
+
+    .inv-table tbody td {
+        padding: 10px;
+        border-bottom: 1px solid #eceff3;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .inv-table tbody tr:hover {
+        background: #f9fbfd;
+    }
+
+.inv-empty {
+    text-align: center;
+    color: #6b7280;
+    padding: 20px !important;
+}
+
+.inv-panel {
+    position: sticky;
+    top: 20px;
+}
+
+.inv-panel-placeholder {
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #6b7280;
+    border: 1px dashed #cfd6df;
+    border-radius: 12px;
+    padding: 20px;
+    background: #fafafa;
+    line-height: 1.6;
+}
+
+.inv-form {
+    display: grid;
+    gap: 10px;
+}
+
+    .inv-form h3 {
+        margin: 0 0 6px 0;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .inv-form label {
+        font-weight: 600;
+        font-size: 14px;
+        color: #1f2937;
+    }
+
+    .inv-form input,
+    .inv-form select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        border: 1px solid #cfd6df;
+        border-radius: 10px;
+        font-size: 14px;
+        background: #fff;
+    }
+
+        .inv-form input:focus,
+        .inv-form select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+/* =========================
+   COLORES DE STOCK
+========================= */
+.stock-bajo {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.stock-medio {
+    color: #b45309;
+    font-weight: 700;
+}
+
+.stock-alto {
+    color: #15803d;
+    font-weight: 700;
+}
+
+.stock-dot {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+    .stock-dot.stock-bajo {
+        background: #ef4444;
+    }
+
+    .stock-dot.stock-medio {
+        background: #f59e0b;
+    }
+
+    .stock-dot.stock-alto {
+        background: #22c55e;
+    }
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1150px) {
+    .inv-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .inv-panel {
+        position: static;
+    }
+}

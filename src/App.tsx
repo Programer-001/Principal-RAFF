@@ -30,7 +30,8 @@ import Gastos from "./Facturacion/gastos";
 import ModificarPago from "./Facturacion/ModificarPago";
 import MostrarCaja from "./Facturacion/MostrarCaja";
 import Lefor from "./Contabilidad/lefor"
-import GestionProduccion from "./Produccion/GestionProduccion"
+import GestionProduccion from "./Produccion/GestionProduccion";
+import InvAlmacen from "./Produccion/inv_almacen";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -58,6 +59,7 @@ function AppLayout() {
         if (pathname.startsWith("/modificarpago")) return "modificarpago";
         if (pathname.startsWith("/mostrarcaja")) return "mostrarcaja";
         if (pathname.startsWith("/gestionproduccion")) return "gestionproduccion";
+        if (pathname.startsWith("/invalmacen")) return "invalmacen";
         if (pathname.startsWith("/lefor")) return "lefor";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
@@ -86,7 +88,8 @@ function AppLayout() {
             modificarpago: "/modificarpago",
             mostrarcaja: "/mostrarcaja",
             lefor: "/lefor",
-            gestionproduccion:"/gestionproduccion",
+            gestionproduccion: "/gestionproduccion",
+            invalmacen: "/invalmacen",
             perfil: "/perfil",
             home: "/home",
         };
@@ -120,6 +123,7 @@ function AppLayout() {
                 <Route path="/mostrarcaja" element={<MostrarCaja />} />
                 <Route path="/lefor" element={<Lefor />} />
                 <Route path="/gestionproduccion" element={<GestionProduccion />} />
+                <Route path="/invalmacen" element={<InvAlmacen />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>
