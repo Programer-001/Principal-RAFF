@@ -42,6 +42,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     const [muestra, setMuestra] = useState(data?.datos?.muestra || "");
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
     const [aleta, setAleta] = useState(false);
+    const [datosAdicionales, setDatosAdicionales] = useState("");
   //-------------------------------------------------------------------------------->>
   const [catalogos, setCatalogos] = useState<any>({});
   const [seleccionados, setSeleccionados] = useState<any>({});
@@ -247,7 +248,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     setDesoldarTornillo(false);
     setPuentes(false);
     setTermoposoBase(false);
-    setMuestra("");
+      setMuestra("");
+      setDatosAdicionales("");
   };
 
   //descripcion
@@ -271,12 +273,13 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     return ` / ${label}: ${valor}${cantidad ? ` (${cantidad})` : ""}`;
   };
 
-  const descripcion = `
-  ${cantidadResistencias || 0} RESISTENCIA ${diametro || ""} DE ${
-    longitud || 0
-  } CM
+    const descripcion = `
+  ${cantidadResistencias || 0} RESISTENCIA ${diametro || ""} DE ${longitud || 0
+        } CM
   / ${voltaje || 0}V - ${potencia || 0}W
   / TUBO: ${diametro || ""}
+
+  ${aleta ? " / CON ALETA" : ""}
   
   ${textoDobleces ? `/ ${textoDobleces}` : ""}
   
@@ -287,17 +290,15 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   
   ${agregar("SOLDAR CABLE", tipoSoldarCable)}
   ${agregarCantidad("CABLE", tipoCableParaSoldar, cantidadCable)}
-  ${
-    cantidadCable && longitudCable
-      ? ` / LONGITUD CABLE: ${longitudCable} CM`
-      : ""
-  }
+  ${cantidadCable && longitudCable
+            ? ` / LONGITUD CABLE: ${longitudCable} CM`
+            : ""
+        }
   
-  ${
-    desoldarTornillo && cantidadDesoldar
-      ? ` / DESOLDAR TORNILLO (${cantidadDesoldar})`
-      : ""
-  }
+  ${desoldarTornillo && cantidadDesoldar
+            ? ` / DESOLDAR TORNILLO (${cantidadDesoldar})`
+            : ""
+        }
   
   ${agregarCantidad("TAPÓN", tipoTapon, cantidadTapon)}
   ${agregarCantidad("BARRENOS", tipoBarrenos, cantidadBarrenos)}
@@ -312,11 +313,12 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   ${agregar("SERVICIOS", seleccionados["servicios"]?.tipo)}
   
   ${servicioExpress ? " / SERVICIO EXPRESS" : ""}
-  ${muestra === "si" ? `/ DEJO MUESTRA` : ""} 
-  `
-    .replace(/\n/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  ${muestra === "si" ? ` / DEJO MUESTRA` : ""}
+  ${datosAdicionales ? ` / DATOS ADICIONALES: ${datosAdicionales}` : ""}
+`
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
   //----------------------useEffect-----------------------------------
   // Reset cable
   useEffect(() => {
@@ -384,7 +386,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
 
       // 🔹 placa
       setTipoPlaca(d.tipoPlaca || "");
-      setMuestra(data.datos?.muestra || "");
+        setMuestra(data.datos?.muestra || "");
+        setDatosAdicionales(d.datosAdicionales || "");
     }
   }, [data]);
   //-----------------------log---------------------
@@ -721,7 +724,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
             />
           </div>
 
-          <div>
+
             {/* MUESTRA */}
             <div className="form-row">
               <label>Muestra </label>
@@ -735,8 +738,15 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
                 <option value="si">Sí</option>
                 <option value="no">No</option>
               </select>
-            </div>
-          </div>
+                  </div>
+                  <div className="form-row textarea-row">
+                      <label>Datos Adicionales: </label>
+                      <textarea
+                          value={datosAdicionales}
+                          onChange={(e) => setDatosAdicionales(e.target.value)}
+                          placeholder="Ej. salida a 90°"
+                      />
+                  </div>
 
           {/* DERECHA (DESCRIPCIÓN) */}
 
@@ -794,6 +804,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
                               totalExpress,
                               totalTubo,
                               muestra,
+                              datosAdicionales,
                           },
                       });
                       resetForm();
