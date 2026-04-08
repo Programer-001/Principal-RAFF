@@ -57,9 +57,11 @@ interface Envio {
     convenio?: boolean;
     convenioTexto?: string;
     atencionRecibe?: string;
+    tipoEntrega?: string;
+    formaPagoEnvio?: string;
 }
 
-interface Producto {
+interface Producto {    
   descripcion: string;
   cantidad: number;
   unidad: string;
@@ -90,6 +92,8 @@ const Envios: React.FC = () => {
     const [convenio, setConvenio] = useState(false);
     const [convenioTexto, setConvenioTexto] = useState("");
     const [atencionRecibe, setAtencionRecibe] = useState("");
+    const [tipoEntrega, setTipoEntrega] = useState("");
+    const [formaPagoEnvio, setFormaPagoEnvio] = useState("");
 
   const toggleEnviado = () => {
     setEnviado((prev) => !prev);
@@ -123,6 +127,8 @@ const Envios: React.FC = () => {
       setConvenio(false);
       setConvenioTexto("");
       setAtencionRecibe("");
+      setTipoEntrega("");
+      setFormaPagoEnvio("");
   };
 
   // 🔎 BUSCAR CLIENTES
@@ -174,6 +180,8 @@ const Envios: React.FC = () => {
             setConvenio(envioSeleccionado.convenio || false);
             setConvenioTexto(envioSeleccionado.convenioTexto || "");
             setAtencionRecibe(envioSeleccionado.atencionRecibe || "");
+            setTipoEntrega(envioSeleccionado.tipoEntrega || "");
+            setFormaPagoEnvio(envioSeleccionado.formaPagoEnvio || "");
             setProductos(
                 envioSeleccionado.productos || [
                     { descripcion: "", cantidad: 1, unidad: "Paquete" },
@@ -232,6 +240,8 @@ const Envios: React.FC = () => {
           convenio,
           convenioTexto: convenio ? convenioTexto : "",
           atencionRecibe,
+          tipoEntrega,
+          formaPagoEnvio,
       };
 
       // Guardar envío
@@ -291,6 +301,8 @@ const Envios: React.FC = () => {
             convenio: envioSeleccionado.convenio || false,
             convenioTexto: envioSeleccionado.convenioTexto || "",
             atencionRecibe: envioSeleccionado.atencionRecibe || "",
+            tipoEntrega: envioSeleccionado.tipoEntrega || "",
+            formaPagoEnvio: envioSeleccionado.formaPagoEnvio || "",
             notaspaquete: envioSeleccionado.notas || "",
             productos: envioSeleccionado.productos || [],
         });
@@ -697,7 +709,29 @@ const Envios: React.FC = () => {
                   onChange={(e) => setGuia(e.target.value)}
                   placeholder="Número de guía"
                 />
-              </div>
+                          </div>
+                          <div className="form-row">
+                              <label>Tipo de entrega:</label>
+                              <select
+                                  value={tipoEntrega}
+                                  onChange={(e) => setTipoEntrega(e.target.value)}
+                              >
+                                  <option value="">Seleccionar</option>
+                                  <option value="Domicilio">Entrega a domicilio</option>
+                                  <option value="Ocurre">Ocurre (recoger en sucursal)</option>
+                              </select>
+                          </div>
+                          <div className="form-row">
+                              <label>Forma de envío:</label>
+                              <select
+                                  value={formaPagoEnvio}
+                                  onChange={(e) => setFormaPagoEnvio(e.target.value)}
+                              >
+                                  <option value="">Seleccionar</option>
+                                  <option value="Prepagado">Prepagado</option>
+                                  <option value="Por cobrar">Por cobrar</option>
+                              </select>
+                          </div>
                           <div className="form-row checkbox-row">
                               <label>Convenio:</label>
                               <input
@@ -886,11 +920,13 @@ const Envios: React.FC = () => {
                 telefono: e.telefono || "",
               });
 
-              setPaqueteria(e.paqueteria || "");
-              setGuia(e.guia || "");
-              setNotas(e.notas || "");
-              setEnviado(e.enviado || false);
-              setEnvioSeleccionado(e);
+                setPaqueteria(e.paqueteria || "");
+                setGuia(e.guia || "");
+                setNotas(e.notas || "");
+                setEnviado(e.enviado || false);
+                setTipoEntrega(e.tipoEntrega || "");
+                setFormaPagoEnvio(e.formaPagoEnvio || "");
+                setEnvioSeleccionado(e);
             }}
             style={{
               padding: 10,
@@ -930,11 +966,13 @@ const Envios: React.FC = () => {
                 telefono: e.telefono || "",
               });
 
-              setPaqueteria(e.paqueteria || "");
-              setGuia(e.guia || "");
-              setNotas(e.notas || "");
-              setEnviado(e.enviado || false);
-              setEnvioSeleccionado(e);
+                setPaqueteria(e.paqueteria || "");
+                setGuia(e.guia || "");
+                setNotas(e.notas || "");
+                setEnviado(e.enviado || false);
+                setTipoEntrega(e.tipoEntrega || "");
+                setFormaPagoEnvio(e.formaPagoEnvio || "");
+                setEnvioSeleccionado(e);
             }}
             style={{
               padding: 10,

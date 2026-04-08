@@ -19,6 +19,8 @@ interface EnvioData {
     convenio?: boolean;
     convenioTexto?: string;
     atencionRecibe?: string;
+    tipoEntrega?: string;
+    formaPagoEnvio?: string;
     notaspaquete: string;
     productos: {
         descripcion: string;
@@ -188,6 +190,22 @@ export const generarPDFEnvio = async (envio: EnvioData) => {
         doc.text("Guía:", 20, y);
         doc.setFont("helvetica", "normal");
         doc.text(envio.guiapaqueteria, 50, y);
+        y += 7;
+    }
+
+    if (envio.tipoEntrega) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Tipo de entrega:", 20, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(envio.tipoEntrega, 50, y);
+        y += 7;
+    }
+
+    if (envio.formaPagoEnvio) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Forma de envío:", 20, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(envio.formaPagoEnvio, 50, y);
         y += 7;
     }
 

@@ -5,6 +5,7 @@ import { getDatabase, ref, get, remove, update, onValue } from "firebase/databas
 import { app } from "../firebase/config";
 import { generarPDFOTCliente } from "../plantillas/plantillaOTCliente";
 import { generarPDFOTProduccion } from "../plantillas/plantillaOTProduccion";
+import { calcularMaterialesTubular, MaterialItem } from "../datos/Armado_Resistencia";
 
 interface ClienteSnapshot {
     nombre?: string;
@@ -30,6 +31,9 @@ interface TrabajoItem {
     trabajador?: string;
     fechaInicio?: string;
     fechaFin?: string;
+    materialSolicitado?: boolean;
+    materialEntregado?: boolean;
+    materialEntregaFecha?: string;
 }
 
 interface EmpleadoProduccion {
@@ -80,7 +84,9 @@ const GestionProduccion: React.FC = () => {
     const [trabajador, setTrabajador] = useState("");
     const [fechaInicio, setFechaInicio] = useState("");
     const [fechaFin, setFechaFin] = useState("");
-    const [estado, setEstado] = useState("en_fila");
+    const [estado, setEstado] = useState("");
+    const [mostrarMateriales, setMostrarMateriales] = useState(false);
+    const [materialesCalculados, setMaterialesCalculados] = useState<MaterialItem[]>([]);
 
     // =========================
     // FORMATEAR NÚMERO OT
@@ -88,7 +94,7 @@ const GestionProduccion: React.FC = () => {
     // =========================
     const formatearNumeroOT = (valor: string) => {
         const soloNumeros = valor.replace(/\D/g, "");
-        return soloNumeros.padStart(5, "0");
+        return soloNumeros.padStart(5, "0");    
     };
 
     // =========================
@@ -393,6 +399,213 @@ const GestionProduccion: React.FC = () => {
             console.error("Error al quitar de taller:", error);
             alert("No se pudo quitar la OT de producción");
         }
+    };
+
+    // =========================
+    // ABRIR SOLICITUD DE MATERIAL
+    // =========================
+    const abrirSolicitudMaterial = () => {
+        if (!partidaSeleccionada) return;
+
+        if (partidaSeleccionada.materialEntregado === true) {
+            alert("Material entregado");
+            return;
+        }
+
+        const descripcion = partidaSeleccionada.descripcion || "";
+        const resultado = calcularMaterialesTubular(descripcion);
+
+        if (!resultado.familia) {
+            alert("No se pudo identificar si es tubular 5/16 o 7/16");
+            return;
+        }
+
+        setMaterialesCalculados(resultado.materiales);
+        setMostrarMateriales(true);
+    };
+
+    // =========================
+    // CERRAR SOLICITUD DE MATERIAL
+    // =========================
+    const cerrarSolicitudMaterial = () => {
+        setMostrarMateriales(false);
+    };
+
+    // =========================
+    // ENTREGAR MATERIAL
+    // =========================
+    const entregarMaterial = async () => {
+        if (!otSeleccionada || !partidaSeleccionada || !partidaSeleccionada.key) return;
+
+        if (partidaSeleccionada.materialEntregado === true) {
+            alert("Material entregado");
+            setMostrarMateriales(false);
+            return;
+        }
+
+        const confirmar = window.confirm(
+            `¿Deseas entregar material para la partida ${partidaSeleccionada.partida || ""}?`
+        );
+
+        if (!confirmar) return;
+
+        try {
+            const db = getDatabase(app);
+            const fechaEntrega = new Date().toISOString();
+
+            // 1. Leer inventario
+            const inventarioRef = ref(db, "produccion/almacen_inventario");
+            const inventarioSnap = await get(inventarioRef);
+
+            if (!inventarioSnap.exists()) {
+                alert("No existe el inventario en produccion/almacen_inventario");
+                return;
+            }
+
+            const inventarioData = inventarioSnap.val();
+
+            // 2. Validar existencias antes de descontar
+            const faltantes: string[] = [];
+            const movimientosParaDescontar: Array<{
+                key: string;
+                nuevaCantidad: number;
+                descripcion: string;
+            }> = [];
+
+            for (const material of materialesCalculados) {
+                const nombreBuscado = normalizarNombreMaterial(material.nombre);
+
+                const encontradaKey = Object.keys(inventarioData).find((key) => {
+                    const item = inventarioData[key];
+                    const descripcion = (item.descripcion || "")
+                        .toUpperCase()
+                        .trim()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "");
+
+                    return descripcion === nombreBuscado;
+                });
+
+                if (!encontradaKey) {
+                    faltantes.push(`${material.nombre}: no existe en inventario`);
+                    continue;
+                }
+
+                const itemInventario = inventarioData[encontradaKey];
+                const cantidadActual = Number(itemInventario.cantidad || 0);
+                const requerida = Number(material.cantidad || 0);
+
+                if (cantidadActual < requerida) {
+                    faltantes.push(
+                        `${material.nombre}: faltan ${requerida - cantidadActual}`
+                    );
+                    continue;
+                }
+
+                movimientosParaDescontar.push({
+                    key: encontradaKey,
+                    nuevaCantidad: cantidadActual - requerida,
+                    descripcion: itemInventario.descripcion || material.nombre,
+                });
+            }
+
+            // 3. Si hay faltantes, no descontar nada
+            if (faltantes.length > 0) {
+                alert(
+                    "No se puede entregar material.\n\n" +
+                    faltantes.join("\n")
+                );
+                return;
+            }
+
+            // 4. Descontar inventario
+            for (const mov of movimientosParaDescontar) {
+                await update(
+                    ref(db, `produccion/almacen_inventario/${mov.key}`),
+                    {
+                        cantidad: mov.nuevaCantidad,
+                    }
+                );
+            }
+
+            // 5. Marcar partida como entregada
+            await update(
+                ref(
+                    db,
+                    `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`
+                ),
+                {
+                    materialSolicitado: true,
+                    materialEntregado: true,
+                    materialEntregaFecha: fechaEntrega,
+                }
+            );
+
+            // 6. Refrescar estado local de partida seleccionada
+            setPartidaSeleccionada((prev) => {
+                if (!prev) return prev;
+
+                return {
+                    ...prev,
+                    materialSolicitado: true,
+                    materialEntregado: true,
+                    materialEntregaFecha: fechaEntrega,
+                };
+            });
+
+            // 7. Refrescar OT local
+            setOtSeleccionada((prev) => {
+                if (!prev || !prev.trabajos) return prev;
+
+                return {
+                    ...prev,
+                    trabajos: {
+                        ...prev.trabajos,
+                        [partidaSeleccionada.key!]: {
+                            ...prev.trabajos[partidaSeleccionada.key!],
+                            materialSolicitado: true,
+                            materialEntregado: true,
+                            materialEntregaFecha: fechaEntrega,
+                        },
+                    },
+                };
+            });
+
+            setMostrarMateriales(false);
+            alert("Material entregado y descontado del inventario");
+        } catch (error) {
+            console.error("Error al entregar material:", error);
+            alert("No se pudo registrar la entrega de material");
+        }
+    };
+    // =========================
+    // NORMALIZAR MATERIAL
+    // =========================
+    const normalizarNombreMaterial = (nombre: string) => {
+        const texto = (nombre || "")
+            .toUpperCase()
+            .trim()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+        const equivalencias: Record<string, string> = {
+            "AISLADOR #17": "AISLADORES #17",
+            "CAPUCHON 3/8": "CAPUCHON 3/8",
+            "CAPUCHON 1/2": "CAPUCHON 1/2",
+            "TORNILLO 3/16": "TORNILLO 3/16",
+            "VARILLA 3MM": "VARILLA 3MM",
+            "VARILLA DE ACERO INOX": "VARILLA DE ACERO INOX",
+            "BIRLO DE TECHO 3/16": "BIRLO DE TECHO 3/16",
+            "TUERCA HEXAGONAL 3/16": "TUERCA HEXAGONAL 3/16",
+            "TORNILLO DE ACERO INOXIDABLE 1/2": "TORNILLO DE ACERO INOXIDABLE 1/2",
+            "TORNILLO DE ACERO INOXIDABLE 3/4": "TORNILLO DE ACERO INOXIDABLE 3/4",
+            "TORNILLO DE ACERO INOXIDABLE 5/8": "TORNILLO DE ACERO INOXIDABLE 5/8",
+            "TORNILLO DE FIERRO 1/2": "TORNILLO DE FIERRO 1/2",
+            "TORNILLO DE FIERRO 5/8": "TORNILLO DE FIERRO 5/8",
+            "TORNILLO DE FIERRO 3/4": "TORNILLO DE FIERRO 3/4",
+        };
+
+        return equivalencias[texto] || texto;
     };
     return (
 
@@ -788,10 +1001,124 @@ const GestionProduccion: React.FC = () => {
                                     Crear PDF
                                 </button>
 
+                                {(partidaSeleccionada.tipo || "").toLowerCase() === "tubular" && (
+                                    <button onClick={abrirSolicitudMaterial}>
+                                        {partidaSeleccionada.materialEntregado
+                                            ? "Material entregado"
+                                            : "Solicitar material"}
+                                    </button>
+                                )}
+
                                 <button onClick={guardarPartida}>
                                     Guardar
                                 </button>
                             </div>
+
+                            {mostrarMateriales && (
+                                <div
+                                    style={{
+                                        marginTop: 20,
+                                        border: "1px solid #d1d5db",
+                                        borderRadius: 10,
+                                        padding: 16,
+                                        background: "#ffffff",
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            marginBottom: 12,
+                                        }}
+                                    >
+                                        <h4 style={{ margin: 0 }}>Solicitud de material</h4>
+
+                                        <button
+                                            onClick={cerrarSolicitudMaterial}
+                                            style={{
+                                                background: "#ef4444",
+                                                color: "#fff",
+                                                border: "none",
+                                                borderRadius: "50%",
+                                                width: 28,
+                                                height: 28,
+                                                cursor: "pointer",
+                                                fontWeight: "bold",
+                                            }}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+
+                                    <div style={{ marginBottom: 12 }}>
+                                        <b>Partida:</b> {partidaSeleccionada.partida || "--"}
+                                    </div>
+
+                                    <div style={{ marginBottom: 12 }}>
+                                        <b>Descripción:</b>
+                                        <div
+                                            style={{
+                                                marginTop: 6,
+                                                padding: 10,
+                                                border: "1px solid #e5e7eb",
+                                                borderRadius: 8,
+                                                background: "#f9fafb",
+                                                whiteSpace: "pre-line",
+                                            }}
+                                        >
+                                            {partidaSeleccionada.descripcion || "--"}
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            border: "1px solid #ddd",
+                                            borderRadius: 8,
+                                            overflow: "hidden",
+                                            background: "#fff",
+                                            marginBottom: 16,
+                                        }}
+                                    >
+                                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                            <thead>
+                                                <tr style={{ background: "#f5f5f5" }}>
+                                                    <th style={thStyle}>Material</th>
+                                                    <th style={thStyle}>Cantidad requerida</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {materialesCalculados.length === 0 ? (
+                                                    <tr>
+                                                        <td style={tdStyle} colSpan={2}>
+                                                            No se encontraron materiales para esta partida
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    materialesCalculados.map((item, index) => (
+                                                        <tr key={`${item.nombre}-${index}`}>
+                                                            <td style={tdStyle}>{item.nombre}</td>
+                                                            <td style={tdStyle}>{item.cantidad}</td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                                        <button
+                                            onClick={entregarMaterial}
+                                            disabled={partidaSeleccionada.materialEntregado === true}
+                                        >
+                                            {partidaSeleccionada.materialEntregado
+                                                ? "Ya entregado"
+                                                : "Entregar material"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            {/*fin1*/}
                         </div>
                     )}
                 </div>

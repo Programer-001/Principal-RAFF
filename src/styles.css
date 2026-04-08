@@ -701,6 +701,8 @@
    INVENTARIO ALMACEN
 ========================= */
 .inv-page {
+    display: flex;
+    justify-content: center;
     padding: 20px;
     width: 100%;
     box-sizing: border-box;
@@ -708,7 +710,8 @@
 
 .inv-layout {
     display: grid;
-    grid-template-columns: minmax(680px, 1fr) 360px;
+    width: 98%;
+    grid-template-columns: minmax(480px, 1fr) 560px;
     gap: 20px;
     align-items: start;
 }
@@ -739,6 +742,11 @@
     align-items: flex-start;
     gap: 12px;
     margin-bottom: 14px;
+}
+.inv-form h3 {
+    margin: 0 0 12px 0;
+    font-size: 22px;
+    font-weight: 700;
 }
 
     .inv-card-header h2,
@@ -897,6 +905,51 @@
         background: #22c55e;
     }
 
+
+.solicitud-item-card {
+    border: 1px solid #dcdfe4;
+    border-radius: 10px;
+    padding: 12px;
+    background: #fafafa;
+    margin-bottom: 12px;
+}
+
+.solicitud-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.solicitud-item-id {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+.fila-roja {
+    border: 2px solid #dc2626;
+    background: #fef2f2;
+}
+
+.fila-verde {
+    border: 2px solid #16a34a;
+    background: #f0fdf4;
+}
+
+.check-linea {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+.solicitud-item-top .btn.btn-red {
+    width: 110px;
+    min-width: 110px;
+    height: 36px;
+    padding: 0 12px;
+    flex-shrink: 0;
+}
 /* =========================
    RESPONSIVE
 ========================= */
