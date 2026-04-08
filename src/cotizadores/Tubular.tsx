@@ -41,6 +41,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   const [potencia, setPotencia] = useState<number>(0);
     const [muestra, setMuestra] = useState(data?.datos?.muestra || "");
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
+    const [aleta, setAleta] = useState(false);
   //-------------------------------------------------------------------------------->>
   const [catalogos, setCatalogos] = useState<any>({});
   const [seleccionados, setSeleccionados] = useState<any>({});
@@ -126,12 +127,10 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     return longitud * (precio_aleta / 100);
   };
   //variable que guarga el precio del tubo
-  const totalTubo =
-    diametro && longitud
-      ? diametro === "Aletada"
-        ? calcularAletada(longitud) // 🔥 AQUÍ entra Aletada
-        : obtenerPrecioPorCm(diametro, longitud) * longitud
-      : 0;
+    const totalTubo =
+        diametro && longitud
+            ? obtenerPrecioPorCm(diametro, longitud) * longitud
+            : 0;
   //opciones para entrar a soldar cable
   const tipoSoldarCable = seleccionados["soldar_cable_resistencia"]?.tipo || "";
 
@@ -183,7 +182,10 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   const totalTapon =
     tipoTapon !== "NO" && tipoTapon !== ""
       ? (Number(cantidadTapon) || 0) * (Number(precioTapon) || 0)
-      : 0;
+            : 0;
+
+    //Calcular aletada por metros
+    const totalAleta = aleta ? calcularAletada(longitud) : 0;
   //---------------------------TOTAL------------------------------------->>
 
   const precioBorne = Number(seleccionados["borne"]?.precio) || 0;
@@ -198,7 +200,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   const descuento = obtenerDescuento(cantidadResistencias, descuentosTubular);
   let totalResistencia =
     Number(cantidadResistencias) *
-      (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo) +
+      (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo + totalAleta ) +
     precioSoldadura +
     precioDesoldarbase +
     totalCable +
@@ -208,7 +210,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     totalTermoposo +
     totalPlaca +
     totalPuentes +
-    precioSello +
+      precioSello +
     precioServicios;
   // aplicar descuento
   const totalConDescuento = totalResistencia * (1 - descuento);
@@ -240,7 +242,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     setPrecioPlaca(0);
     setCantidadPlaca(0);
 
-    setServicioExpress(false);
+      setServicioExpress(false);
+      setAleta(false);
     setDesoldarTornillo(false);
     setPuentes(false);
     setTermoposoBase(false);
@@ -372,7 +375,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
       setLongitudCable(d.longitudCable || 0);
       setCantidadCable(d.cantidadCable || 0);
 
-      // 🔹 flags
+        // 🔹 flags
+        setAleta(!!d.aleta);
       setDesoldarTornillo(!!d.totalDesoldartornillo);
       setPuentes(!!d.totalPuentes);
       setTermoposoBase(!!d.totalTermoposo);
@@ -474,7 +478,6 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
               </option>
               <option value="5/16 cobre">5/16 cobre</option>
               <option value="7/16 cobre">7/16 cobre</option>
-              <option value="Aletada">Aletada</option>
             </select>
           </div>
           {/* Borne */}
@@ -531,7 +534,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
                 <div className="form-row">
                   <label>Longitud de cable para soldar</label>
                   <input
-                    type="number"
+                type="number"
+                value={longitudCable === 0 ? "" : longitudCable}
                     onChange={(e) => setLongitudCable(Number(e.target.value))}
                   />
                 </div>
@@ -539,7 +543,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
                 <div className="form-row">
                   <label>Cantidad de cables</label>
                   <input
-                    type="number"
+                  type="number"
+                  value={cantidadCable === 0 ? "" : cantidadCable}
                     onChange={(e) => setCantidadCable(Number(e.target.value))}
                   />
                 </div>
@@ -690,8 +695,16 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
           <div className="form-row">
             <label>Sellos</label>
             {renderSelect("sellos")}
-          </div>
-
+                  </div>
+        {/* Aleta */}
+        <div className="form-row checkbox-row">
+            <label>Aleta (según longitud)</label>
+            <input
+                type="checkbox"
+                checked={aleta}
+                onChange={() => setAleta(!aleta)}
+            />
+        </div>
           {/* Otros Servicios */}
           <div className="form-row">
             <label>Otros Servicios</label>
@@ -761,6 +774,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
 
                               // 🔹 cables
                               tipoSoldarCable,
+                              longitudCable,
+                              cantidadCable,
                               totalCable,
 
                               // 🔹 extras
@@ -772,10 +787,12 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
                               tipoPlaca,
                               totalPuentes,
 
+                              aleta,
+                              totalAleta,
+
                               // 🔹 otros
                               totalExpress,
                               totalTubo,
-                              // 🔹 muestra
                               muestra,
                           },
                       });
@@ -844,6 +861,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
                   Puentes: {totalPuentes ? `$ ${totalPuentes}` : "--"}
                   <br />
                   Sello: {seleccionados["sellos"]?.precio ?? "--"}
+                  <br />
+                  Aleta: {totalAleta ? `$ ${totalAleta.toFixed(2)}` : "--"}
                   <br />
                   Otros Servicios: {seleccionados["servicios"]?.precio ?? "--"}
                   <br />

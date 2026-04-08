@@ -10,7 +10,6 @@ export type TipoResistencia =
   | "7/16 tp 316 circunferencial"
   | "5/16 cobre"
   | "7/16 cobre"
-  | "Aletada";
 
 export interface RangoPrecio {
   min: number;
@@ -178,7 +177,7 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
             { min: 551, max: 1000, precio: 8.5 },
         ],
   // 🔹 Aletada
-  Aletada: [],
+  //Aletada: [],
 };
 
 export interface RangoDescuento {
