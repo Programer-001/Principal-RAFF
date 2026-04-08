@@ -32,7 +32,7 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
     { min: 401, max: 450, precio: 6.2 },
     { min: 451, max: 500, precio: 6.1 },
     { min: 501, max: 550, precio: 6.0 },
-    { min: 551, max: 600, precio: 6.0 },
+    { min: 551, max: 1000, precio: 6.0 },
   ],
 
   // 🔹 5/16 tp 304 circunferencial
@@ -48,7 +48,7 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
     { min: 401, max: 450, precio: 6.9 },
     { min: 451, max: 500, precio: 6.8 },
     { min: 501, max: 550, precio: 6.7 },
-    { min: 551, max: 600, precio: 6.6 },
+    { min: 551, max: 1000, precio: 6.6 },
   ],
 
   // 🔹 5/16 tp 316
@@ -64,7 +64,7 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
     { min: 401, max: 450, precio: 7.2 },
     { min: 451, max: 500, precio: 7.1 },
     { min: 501, max: 550, precio: 7.0 },
-    { min: 551, max: 600, precio: 7.0 },
+    { min: 551, max: 1000, precio: 7.0 },
   ],
 
   // 🔹 5/16 tp 316 circunferencial
@@ -80,7 +80,7 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
     { min: 401, max: 450, precio: 8.0 },
     { min: 451, max: 500, precio: 7.9 },
     { min: 501, max: 550, precio: 7.8 },
-    { min: 551, max: 600, precio: 7.7 },
+    { min: 551, max: 1000, precio: 7.7 },
   ],
 
   // 🔹 7/16 tp 304
@@ -96,7 +96,7 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
     { min: 401, max: 450, precio: 7.2 },
     { min: 451, max: 500, precio: 7.1 },
     { min: 501, max: 550, precio: 7.0 },
-    { min: 551, max: 600, precio: 7.0 },
+    { min: 551, max: 1000, precio: 7.0 },
   ],
 
   // 🔹 7/16 tp 304 circunferencial
@@ -112,7 +112,7 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
     { min: 401, max: 450, precio: 8.7 },
     { min: 451, max: 500, precio: 8.6 },
     { min: 501, max: 550, precio: 8.5 },
-    { min: 551, max: 600, precio: 8.5 },
+    { min: 551, max: 1000, precio: 8.5 },
   ],
 
   // 🔹 7/16 tp 316
@@ -128,7 +128,7 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
     { min: 401, max: 450, precio: 8.7 },
     { min: 451, max: 500, precio: 8.6 },
     { min: 501, max: 550, precio: 8.5 },
-    { min: 551, max: 600, precio: 8.5 },
+    { min: 551, max: 1000, precio: 8.5 },
   ],
 
   // 🔹 7/16 tp 316 circunferencial
@@ -144,12 +144,39 @@ export const tablasPrecios: Record<TipoResistencia, RangoPrecio[]> = {
     { min: 401, max: 450, precio: 9.1 },
     { min: 451, max: 500, precio: 9.0 },
     { min: 501, max: 550, precio: 8.9 },
-    { min: 551, max: 600, precio: 8.8 },
+    { min: 551, max: 1000, precio: 8.8 },
   ],
 
   // 🔹 COBRE (pendiente si tienes tabla real)
-  "5/16 cobre": [],
-  "7/16 cobre": [],
+    "5/16 cobre": [
+        { min: 0, max: 50, precio: 7.0 },
+        { min: 51, max: 100, precio: 6.9 },
+        { min: 101, max: 150, precio: 6.8 },
+        { min: 151, max: 200, precio: 6.7 },
+        { min: 201, max: 250, precio: 6.6 },
+        { min: 251, max: 300, precio: 6.5 },
+        { min: 301, max: 350, precio: 6.4 },
+        { min: 351, max: 400, precio: 6.3 },
+        { min: 401, max: 450, precio: 6.2 },
+        { min: 451, max: 500, precio: 6.1 },
+        { min: 501, max: 550, precio: 6.0 },
+        { min: 551, max: 1000, precio: 6.0 },
+    ],
+    "7/16 cobre":
+        [
+            { min: 0, max: 50, precio: 9.5 },
+            { min: 51, max: 100, precio: 9.4 },
+            { min: 101, max: 150, precio: 9.3 },
+            { min: 151, max: 200, precio: 9.2 },
+            { min: 201, max: 250, precio: 9.1 },
+            { min: 251, max: 300, precio: 9.0 },
+            { min: 301, max: 350, precio: 8.9 },
+            { min: 351, max: 400, precio: 8.8 },
+            { min: 401, max: 450, precio: 8.7 },
+            { min: 451, max: 500, precio: 8.6 },
+            { min: 501, max: 550, precio: 8.5 },
+            { min: 551, max: 1000, precio: 8.5 },
+        ],
   // 🔹 Aletada
   Aletada: [],
 };

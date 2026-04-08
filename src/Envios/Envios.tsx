@@ -873,17 +873,19 @@ const Envios: React.FC = () => {
             {/* MAPA */}
             {direccionCompleta && (
               <div style={{ marginTop: 30 }}>
-                <h3>Ubicación del destino</h3>
+                              <h3>Ubicación del destino</h3>
+                              <div style={{ display: "flex", justifyContent: "center" }}>
                 <iframe
                   title="mapa-envio"
-                  width="100%"
+                  width="70%"
                   height="300"
                   style={{ border: 0 }}
                   loading="lazy"
                   src={`https://www.google.com/maps?q=${encodeURIComponent(
                     direccionCompleta
                   )}&output=embed`}
-                />
+                                  />
+                              </div>
               </div>
             )}
           </>
