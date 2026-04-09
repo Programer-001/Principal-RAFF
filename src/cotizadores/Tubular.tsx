@@ -739,6 +739,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
                 <option value="no">No</option>
               </select>
                   </div>
+                  {/* DATOS ADICIONALES */}
                   <div className="form-row textarea-row">
                       <label>Datos Adicionales: </label>
                       <textarea
@@ -760,8 +761,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
           {/* ---------------------------------------------Fin del DIV de cotizador-------------------------------------------------------------->> */}
               </div>
               <h2>Subtotal Tubular: $ {totalConDescuento.toFixed(2)}</h2>
-              {/*<h1>Total: $ {totalconiva.toFixed(2)}</h1>
-              <h3>Descuento aplicado: {(descuento * 100).toFixed(0)}%</h3>*/}
+              <h1>Total: $ {totalconiva.toFixed(2)}</h1>
+              {/*<h3>Descuento aplicado: {(descuento * 100).toFixed(0)}%</h3>*/}
               <button
                   className="btn btn-blue"
                   onClick={() => {

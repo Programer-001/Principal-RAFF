@@ -22,7 +22,8 @@ const CartuchoBaja = ({ data, onGuardar, setDirty }: Props) => {
   const [datosAdicionales, setDatosAdicionales] = useState("");
   const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<any[]>([]);
   const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
-    useState<any>(null);
+        useState<any>(null);
+
 
   //-------------------------------------useEffect-------------------------------------------->>
   useEffect(() => {

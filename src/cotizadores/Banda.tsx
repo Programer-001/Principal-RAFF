@@ -56,7 +56,9 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
   const [longitudTermoparCm, setLongitudTermoparCm] = useState<number>(0);
 
   //--- Tira
-  const [longitudTiraCm, setLongitudTiraCm] = useState<number>(0);
+    const [longitudTiraCm, setLongitudTiraCm] = useState<number>(0);
+    //Datos adicionales
+    const [datosAdicionales, setDatosAdicionales] = useState("");
 
   useEffect(() => {
     if (data) {
@@ -88,9 +90,18 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
       setLongitudTermoparCm(data.datos.longitudTermoparCm || 0);
 
       setLongitudTiraCm(data.datos.longitudTiraCm || 0);
-      setMuestra(data.datos.muestra || "");
+        setMuestra(data.datos.muestra || "");
+        setDatosAdicionales(data.datos.datosAdicionales || "");
+
     }
   }, [data]);
+    useEffect(() => {
+        if (voltaje >= 440) {
+            setFabricar440(true);
+        } else {
+            setFabricar440(false);
+        }
+    }, [voltaje]);
 
   const calcularTotalBanda = () => {
     let resultado = 0;
@@ -194,7 +205,9 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
     setLongitudTermoparCm(0);
 
     // Tira
-    setLongitudTiraCm(0);
+      setLongitudTiraCm(0);
+      // Datos adicionales
+      setDatosAdicionales("");
   };
 
   const agregar = (texto: string, condicion: boolean) => {
@@ -239,6 +252,7 @@ ${agregar(`SERVICIO EXPRESS`, express)}
 ${agregar(`EXCEDENTE DE BANDA`, excedente)}
 ${agregar(`SERVICIO EXPRESS GENERAL`, servicioExpress)}
 ${agregar(`MUESTRA: ${muestra.toUpperCase()}`, !!muestra)}
+${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicionales)}
 `
     .replace(/\n/g, " ")
     .replace(/\s+/g, " ")
@@ -299,7 +313,8 @@ ${agregar(`MUESTRA: ${muestra.toUpperCase()}`, !!muestra)}
             setTipoTermoparSeleccionado("");
             setLongitudTermoparCm(0);
 
-            setMuestra("");
+              setMuestra("");
+              setDatosAdicionales("");
           }}
         >
           <option value={0}>Seleccione...</option>
@@ -469,7 +484,7 @@ ${agregar(`MUESTRA: ${muestra.toUpperCase()}`, !!muestra)}
             <input
               type="checkbox"
               checked={fabricar440}
-              onChange={(e) => setFabricar440(e.target.checked)}
+              disabled
             />
           </div>
 
@@ -557,19 +572,30 @@ ${agregar(`MUESTRA: ${muestra.toUpperCase()}`, !!muestra)}
             />
           </div>
 
-          <div className="form-row">
-            <label>Muestra</label>
-            <select
-              value={muestra}
-              onChange={(e) => setMuestra(e.target.value)}
-            >
-              <option value="">Seleccione...</option>
-              <option value="si">Sí</option>
-              <option value="no">No</option>
-            </select>
-          </div>
+
         </>
-      )}
+          )}
+          {/*hasta aqui lo de ocultar opciones*/}
+          <div className="form-row">
+              <label>Muestra</label>
+              <select
+                  value={muestra}
+                  onChange={(e) => setMuestra(e.target.value)}
+              >
+                  <option value="">Seleccione...</option>
+                  <option value="si">Sí</option>
+                  <option value="no">No</option>
+              </select>
+          </div>
+          {/* DATOS ADICIONALES */}
+          <div className="form-row textarea-row">
+              <label>Datos Adicionales: </label>
+              <textarea
+                  value={datosAdicionales}
+                  onChange={(e) => setDatosAdicionales(e.target.value)}
+                  placeholder="Ej. salida a 90°"
+              />
+          </div>
 
       <div className="form-row textarea-row full-width descripcion-row">
         <div className="descripcion-box">
@@ -579,7 +605,7 @@ ${agregar(`MUESTRA: ${muestra.toUpperCase()}`, !!muestra)}
       </div>
 
       <h3 style={{ marginTop: "20px" }}>
-        💰 Precio total: ${precioCalculado.toFixed(2)} MXN
+        💰  Subtotal: ${precioCalculado.toFixed(2)} MXN
       </h3>
 
           <button
@@ -615,6 +641,7 @@ ${agregar(`MUESTRA: ${muestra.toUpperCase()}`, !!muestra)}
               longitudTermoparCm,
               longitudTiraCm,
               muestra,
+              datosAdicionales,
             },
           });
 
