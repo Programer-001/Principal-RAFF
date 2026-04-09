@@ -321,7 +321,8 @@ const Cotizador = () => {
         trabajos: trabajosObj,
       };
 
-      await set(ref(db, `ordenes_trabajo/${claveOt}`), ordenTrabajo);
+        await set(ref(db, `ordenes_trabajo/${claveOt}`), ordenTrabajo);
+        sessionStorage.removeItem(DRAFT_KEY);
 
       alert(
         modoEdicionOT
@@ -367,8 +368,9 @@ const Cotizador = () => {
       "¿Seguro que deseas borrar toda la orden de trabajo actual?"
     );
 
-    if (!confirmar) return;
+      if (!confirmar) return;
 
+    sessionStorage.removeItem(DRAFT_KEY);
     setCotizaciones([]);
     setCliente(null);
     setBuscar("");
@@ -436,6 +438,109 @@ const Cotizador = () => {
     setFormDirty(false);
     setCotizadorActivo("tubular");
   }, [location.state]);
+
+
+    //---------------------------GUARDAR BORRADOR DE CLIENTE CUANDO USEMOS EL COTIZADOR------------------------------------------>>
+    const guardarBorradorCotizador = () => {
+        const draft = {
+            clienteId: cliente?.id || null,
+            clienteSnapshot: cliente || null,
+
+            ot,
+            factura,
+            fecha,
+            envio,
+            cotizaciones,
+            cotizadorActivo,
+            itemEditando,
+            modoEdicionOT,
+            firebaseKeyOT,
+            formDirty,
+            envioFolioOT,
+            envioGeneradoOT,
+            envioEnviadoOT,
+        };
+
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    };
+
+    // RESTAURAR SESION 
+    const restaurarBorradorCotizador = async (clienteActualizadoId?: string) => {
+        const raw = sessionStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+
+        try {
+            const draft = JSON.parse(raw);
+
+            setOt(draft.ot || "");
+            setFactura(draft.factura ?? "");
+            setFecha(draft.fecha || "");
+            setEnvio(draft.envio || "no");
+            setCotizaciones(draft.cotizaciones || []);
+            setCotizadorActivo(draft.cotizadorActivo || "tubular");
+            setItemEditando(draft.itemEditando || null);
+            setModoEdicionOT(draft.modoEdicionOT || false);
+            setFirebaseKeyOT(draft.firebaseKeyOT || "");
+            setFormDirty(draft.formDirty || false);
+            setEnvioFolioOT(draft.envioFolioOT || "");
+            setEnvioGeneradoOT(draft.envioGeneradoOT || false);
+            setEnvioEnviadoOT(draft.envioEnviadoOT || false);
+
+            const idFinal = clienteActualizadoId || draft.clienteId;
+
+            if (idFinal && idFinal !== "TEMP") {
+                const snapshot = await get(ref(db, `Clientes/${idFinal}`));
+
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+
+                    setCliente({
+                        id: idFinal,
+                        nombre: data.nombre || "",
+                        razonSocial: data.razonSocial || "",
+                        rfc: data.rfc || "",
+                        direccion: data.direccion || "",
+                        numeroExterior: data.numeroExterior || "",
+                        numeroInterior: data.numeroInterior || "",
+                        colonia: data.colonia || "",
+                        municipio: data.municipio || "",
+                        estado: data.estado || "",
+                        cp: data.cp || "",
+                        telefono: data.telefono || "",
+                        email: data.email || "",
+                        empresa: data.empresa || "",
+                        giro: data.giro || "",
+                        regimenFiscal: data.regimenFiscal || "",
+                        notas: data.notas || "",
+                        descuento: data.descuentoDefault ?? 0,
+                        credito: data.credito || {
+                            activo: false,
+                            limite: 0,
+                            dias: 0,
+                        },
+                        busqueda:
+                            data.busqueda ||
+                            `${data.nombre || ""} ${data.razonSocial || ""}`.toUpperCase(),
+                    });
+                } else {
+                    setCliente(null);
+                }
+            } else {
+                setCliente(draft.clienteSnapshot || null);
+            }
+        } catch (error) {
+            console.error("Error restaurando borrador:", error);
+        }
+    };
+
+    useEffect(() => {
+        const state = location.state as any;
+
+        if (state?.modo === "regresoDesdeEditarCliente") {
+            restaurarBorradorCotizador(state.clienteActualizadoId);
+        }
+    }, [location.state]);
+
   //--------------------HTML-------------------------------------------------------------------------->>
     return (
         <div className="cotizador-layout">
@@ -579,7 +684,36 @@ const Cotizador = () => {
               <div>
                 <b>Crédito:</b> {cliente.credito?.activo ? "ACTIVO" : "NO"}
               </div>
-            </div>
+                        </div>
+                        {/* EDITAR CLIENTE EN OPCION CLIENTE SIN BORRAR NADA */}
+                        <div style={{ marginTop: 10 }}>
+                            <button
+                                onClick={() => {
+                                    if (!cliente?.id || cliente.id === "TEMP") {
+                                        alert("Este cliente temporal no se puede editar.");
+                                        return;
+                                    }
+
+                                    guardarBorradorCotizador();
+
+                                    console.log("Voy a clientes con:", {
+                                        modo: "editarDesdeCotizador",
+                                        clienteId: cliente.id,
+                                        volverA: "/cotizador",
+                                    });
+
+                                    navigate("/clientes", {
+                                        state: {
+                                            modo: "editarDesdeCotizador",
+                                            clienteId: cliente.id,
+                                            volverA: "/cotizador",
+                                        },
+                                    });
+                                }}
+                            >
+                                Editar cliente
+                            </button>
+                        </div>
 
             {/* ENVÍO */}
             <div style={{ marginTop: 10 }}>

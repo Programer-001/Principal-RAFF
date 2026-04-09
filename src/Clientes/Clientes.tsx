@@ -1,5 +1,6 @@
 //src/Cientes/Clientess.tsx
 import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getDatabase, ref, get, update, remove } from "firebase/database";
 import { app } from "../firebase/config";
 import "../css/formulario.css";
@@ -43,7 +44,16 @@ const ITEMS_PER_PAGE = 20;
 
 const BuscarClientes: React.FC = () => {
   const db = getDatabase(app);
-
+  //PARA EDICION DESDE COTIZADOR -> VARIABLES
+  const location = useLocation();
+    const navigate = useNavigate();
+    const state = location.state as any;
+    const vieneDeCotizador = state?.modo === "editarDesdeCotizador";
+    const clienteIdDesdeCotizador = state?.clienteId;
+    const volverA = state?.volverA || "/cotizador";
+    console.log("location.state en Clientes:", location.state);
+    console.log("clienteIdDesdeCotizador:", clienteIdDesdeCotizador);
+    // VARIABLES DEL CLIENTES
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -83,7 +93,6 @@ const BuscarClientes: React.FC = () => {
       setPage(1);
       return;
     }
-
     const timeout = setTimeout(async () => {
       const resultados = await buscarClientes(search.trim());
       setClientes(resultados);
@@ -92,26 +101,62 @@ const BuscarClientes: React.FC = () => {
 
     return () => clearTimeout(timeout);
   }, [search]);
+    //COTIZADOR->CLIENTE
+    useEffect(() => {
+        const abrirClienteDirecto = async () => {
+            console.log("Entró a abrirClienteDirecto");
+            console.log("clienteIdDesdeCotizador:", clienteIdDesdeCotizador);
+            if (!clienteIdDesdeCotizador) return;
 
+            const snap = await get(ref(db, `Clientes/${clienteIdDesdeCotizador}`));
+            if (!snap.exists()) return;
+
+            const data = snap.val();
+
+            setSelectedCliente({
+                id: clienteIdDesdeCotizador,
+                ...data,
+            });
+
+            setModoEditar(true);
+            cargarEnviosCliente(clienteIdDesdeCotizador);
+        };
+
+        abrirClienteDirecto();
+    }, [clienteIdDesdeCotizador]);
+    //----------------------------------------------------->>
   const datosPaginados = clientes.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
 
   // 💾 GUARDAR CLIENTE
-  const guardarCliente = async () => {
-    if (!selectedCliente) return;
+    const guardarCliente = async () => {
+        if (!selectedCliente) return;
 
-    const { id, ...datos } = selectedCliente;
-    if (!datos.credito?.activo) {
-      delete datos.credito;
-    }
-    await update(ref(db, `Clientes/${id}`), datos);
+        const { id, ...datos } = selectedCliente;
 
-    alert("Cliente actualizado");
+        if (!datos.credito?.activo) {
+            delete datos.credito;
+        }
 
-    setModoEditar(false);
-  };
+        await update(ref(db, `Clientes/${id}`), datos);
+
+        alert("Cliente actualizado");
+
+        // 🔥 SI VIENE DEL COTIZADOR → REGRESAR
+        if (vieneDeCotizador) {
+            navigate(volverA, {
+                state: {
+                    modo: "regresoDesdeEditarCliente",
+                    clienteActualizadoId: id,
+                },
+            });
+            return;
+        }
+
+        setModoEditar(false);
+    };
 
   // ❌ ELIMINAR CLIENTE
   const eliminarCliente = async (cliente: Cliente) => {
@@ -499,15 +544,25 @@ const BuscarClientes: React.FC = () => {
                 Eliminar
               </button>
 
-              <button
-                className="btn btn-purple"
-                onClick={() => {
-                  setSelectedCliente(null);
-                  setModoEditar(false);
-                }}
-              >
-                Cerrar
-              </button>
+                          <button
+                              className="btn btn-purple"
+                              onClick={() => {
+                                  if (vieneDeCotizador) {
+                                      navigate(volverA, {
+                                          state: {
+                                              modo: "regresoDesdeEditarCliente",
+                                              clienteActualizadoId: selectedCliente?.id || null,
+                                          },
+                                      });
+                                      return;
+                                  }
+
+                                  setSelectedCliente(null);
+                                  setModoEditar(false);
+                              }}
+                          >
+                              Cerrar
+                          </button>
             </div>
           </div>
 

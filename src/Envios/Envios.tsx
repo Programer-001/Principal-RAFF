@@ -835,15 +835,14 @@ const Envios: React.FC = () => {
             </div>
             {/* FIN DIV TABLA */}
 
-            {/* BOTONES */}
-            <div style={{ marginTop: 15 }}>
+                      {/* BOTONES */}
+                      <div className="btn-container">
               <button onClick={guardarEnvio} className="btn btn-green">
                 {envioSeleccionado
                   ? "Actualizar envío"
                   : "Guardar y generar etiqueta"}
               </button>
               <button
-                style={{ margin: 15 }}
                 className="btn btn-yellow"
                 onClick={handleGenerarPDF}
               >
@@ -855,7 +854,6 @@ const Envios: React.FC = () => {
               {envioSeleccionado && (
                 <button
                   className="btn btn-red"
-                  style={{ marginLeft: 10 }}
                   onClick={borrarEnvio}
                 >
                   Borrar envío
@@ -863,7 +861,6 @@ const Envios: React.FC = () => {
               )}
               <button
                 className="btn btn-purple"
-                style={{ marginLeft: 10 }}
                 onClick={resetFormulario}
               >
                 Cancelar

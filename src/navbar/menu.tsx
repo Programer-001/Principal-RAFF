@@ -62,7 +62,14 @@ const Menu = ({ vista, setVista }: Props) => {
     }, []);
 
     const cerrarSesion = async () => {
-        await signOut(auth);
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+            await signOut(auth);
+            setVista("home");
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+        }
     };
 
     const textoUsuario =
