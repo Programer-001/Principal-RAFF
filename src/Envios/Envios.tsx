@@ -220,7 +220,7 @@ const Envios: React.FC = () => {
       const envio: Envio = {
         ...envioSeleccionado,
         folio,
-        clienteId,
+        clienteId: cliente.id ?? null,
         otKey: otKey || "",
         otLabel: otLabel || "",
         clienteNombre: cliente.nombre || cliente.razonSocial || "",
