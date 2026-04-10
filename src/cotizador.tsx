@@ -83,7 +83,10 @@ const Cotizador = () => {
   const [formDirty, setFormDirty] = useState(false);
   const [envioFolioOT, setEnvioFolioOT] = useState("");
   const [envioGeneradoOT, setEnvioGeneradoOT] = useState(false);
-  const [envioEnviadoOT, setEnvioEnviadoOT] = useState(false);
+    const [envioEnviadoOT, setEnvioEnviadoOT] = useState(false);
+    //estas dos variables son para controlar el cambio de GestionOT, en TipoDocumento y pago, para que al regresar al cotizador se mantenga el estado del cliente seleccionado y las cotizaciones agregadas, incluso si se editó el cliente en GestionOT, se actualice la información del cliente en el cotizador al regresar.
+    const [tipoDocumento, setTipoDocumento] = useState<"cotizacion" | "orden_trabajo">("cotizacion");
+    const [pagado, setPagado] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const DRAFT_KEY = "cotizador_historial";
@@ -319,6 +322,8 @@ const Cotizador = () => {
         totalConDescuento: totalConDescuento,
         totalConIva: totalConIva,
         trabajos: trabajosObj,
+        tipoDocumento,
+        pagado,
       };
 
         await set(ref(db, `ordenes_trabajo/${claveOt}`), ordenTrabajo);
@@ -406,7 +411,10 @@ const Cotizador = () => {
     setEnvio(otData.envio ? "si" : "no");
     setEnvioFolioOT(otData.envioFolio || "");
     setEnvioGeneradoOT(otData.envioGenerado || false);
-    setEnvioEnviadoOT(otData.envioEnviado || false);
+      setEnvioEnviadoOT(otData.envioEnviado || false);
+
+    setTipoDocumento(otData.tipoDocumento === "orden_trabajo" ? "orden_trabajo" : "cotizacion");
+    setPagado(!!otData.pagado);
 
     setModoEdicionOT(true);
     setFirebaseKeyOT(otData.firebaseKey || "");

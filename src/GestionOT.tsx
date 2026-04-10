@@ -200,7 +200,11 @@ const GestionOT = () => {
     useEffect(() => {
         if (!otSeleccionada) return;
 
-        setTipoDocumento(otSeleccionada.tipoDocumento || "cotizacion");
+        if (otSeleccionada.tipoDocumento === "orden_trabajo") {
+            setTipoDocumento("orden_trabajo");
+        } else {
+            setTipoDocumento("cotizacion");
+        }
 
         setFacturaInput(
             otSeleccionada.factura === null || otSeleccionada.factura === undefined
