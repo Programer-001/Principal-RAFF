@@ -58,6 +58,14 @@ const MENU_BASE: Record<string, MenuItem> = {
             { key: "lefor", label: "Etiquetas para LEFOR" },
         ],
     },
+
+    administracion: {
+        key: "administracion",
+        label: "Administracion",
+        children: [
+            { key: "comisiones", label: "Comisiones Produccion" },
+        ],
+    },
 };
 
 const MENUS_POR_ROL: MenuPorRol[] = [
@@ -99,6 +107,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.facturacion,
             MENU_BASE.contabilidad,
             MENU_BASE.produccion,
+            MENU_BASE.administracion,
 
         ],
     },
@@ -113,6 +122,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.productos,
             MENU_BASE.rh,
             MENU_BASE.facturacion,
+            MENU_BASE.administracion,
         ],
     },
     {

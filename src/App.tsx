@@ -32,6 +32,7 @@ import MostrarCaja from "./Facturacion/MostrarCaja";
 import Lefor from "./Contabilidad/lefor"
 import GestionProduccion from "./Produccion/GestionProduccion";
 import InvAlmacen from "./Produccion/inv_almacen";
+import Comisiones from "./Administracion/comisiones";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -61,6 +62,7 @@ function AppLayout() {
         if (pathname.startsWith("/gestionproduccion")) return "gestionproduccion";
         if (pathname.startsWith("/invalmacen")) return "invalmacen";
         if (pathname.startsWith("/lefor")) return "lefor";
+        if (pathname.startsWith("/comisiones")) return "comisiones";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
         return "home";
@@ -90,6 +92,7 @@ function AppLayout() {
             lefor: "/lefor",
             gestionproduccion: "/gestionproduccion",
             invalmacen: "/invalmacen",
+            comisiones:"/comisiones",
             perfil: "/perfil",
             home: "/home",
         };
@@ -124,6 +127,7 @@ function AppLayout() {
                 <Route path="/lefor" element={<Lefor />} />
                 <Route path="/gestionproduccion" element={<GestionProduccion />} />
                 <Route path="/invalmacen" element={<InvAlmacen />} />
+                <Route path="/comisiones" element={<Comisiones />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>
