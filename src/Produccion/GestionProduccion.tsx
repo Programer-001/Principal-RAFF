@@ -589,11 +589,11 @@ const GestionProduccion: React.FC = () => {
             .replace(/[\u0300-\u036f]/g, "");
 
         const equivalencias: Record<string, string> = {
-            "AISLADOR #17": "AISLADORES #17",
+            "AISLADOR #17": "AISLADOR #17",
             "CAPUCHON 3/8": "CAPUCHON 3/8",
             "CAPUCHON 1/2": "CAPUCHON 1/2",
             "TORNILLO 3/16": "TORNILLO 3/16",
-            "VARILLA 3MM": "VARILLA 3MM",
+            "VARILLA 3MM": "VARILLA 3MM X 10 CM",
             "VARILLA DE ACERO INOX": "VARILLA DE ACERO INOX",
             "BIRLO DE TECHO 3/16": "BIRLO DE TECHO 3/16",
             "TUERCA HEXAGONAL 3/16": "TUERCA HEXAGONAL 3/16",
@@ -983,12 +983,12 @@ const GestionProduccion: React.FC = () => {
                                         borderRadius: 6,
                                     }}
                                 >
-                                    <option value="en_fila">En fila</option>
-                                    <option value="en_proceso">En proceso</option>
-                                    <option value="inspeccion">Inspección</option>
-                                    <option value="contactado">Contactado</option>
-                                    <option value="terminada">Terminada</option>
-                                    <option value="lista_entrega">Lista para entrega</option>
+                                    <option value="En fila">En fila</option>
+                                    <option value="En proceso">En proceso</option>
+                                    <option value="Inspeccion">Inspección</option>
+                                    <option value="Contactado">Contactado</option>
+                                    <option value="Terminada">Terminada</option>
+                                    <option value="Lista para entrega">Lista para entrega</option>
                                 </select>
                             </div>
 
