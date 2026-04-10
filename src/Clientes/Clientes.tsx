@@ -247,35 +247,46 @@ const BuscarClientes: React.FC = () => {
     <div className="caja-container">
       <h2>Consulta de Clientes</h2>
 
-      <input
-        type="text"
-        placeholder="Buscar nombre, razón social o RFC"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="search-input"
-          />
-          <button
-              className="btn btn-green"
-              onClick={() => {
-                  setSelectedCliente({
-                      id: "",
-                      nombre: "",
-                      razonSocial: "",
-                      rfc: "",
-                      direccion: "",
-                      numeroExterior: "",
-                      colonia: "",
-                      municipio: "",
-                      estado: "",
-                      telefono: "",
-                      email: "",
-                  });
-                  setModoEditar(true);
-                  setModoNuevo(true);
-              }}
-          >
-              Nuevo Cliente
-          </button>
+          <div className="search-bar">
+              <input
+                  type="text"
+                  placeholder="Buscar nombre, razón social o RFC"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="search-input"
+              />
+
+              <button
+                  className="btn btn-green"
+                  onClick={() => {
+                      setSelectedCliente({
+                          id: "",
+                          nombre: "",
+                          razonSocial: "",
+                          rfc: "",
+                          direccion: "",
+                          numeroExterior: "",
+                          numeroInterior: "",
+                          colonia: "",
+                          municipio: "",
+                          estado: "",
+                          cp: "",
+                          telefono: "",
+                          email: "",
+                          empresa: "",
+                          giro: "",
+                          regimenFiscal: "",
+                          notas: "",
+                          descuentoDefault: 0,
+                      });
+                      setModoEditar(true);
+                      setModoNuevo(true);
+                      setEnviosCliente([]);
+                  }}
+              >
+                  + Nuevo Cliente
+              </button>
+          </div>
 
       {/* RESULTADOS */}
 
@@ -584,49 +595,73 @@ const BuscarClientes: React.FC = () => {
 
             {/* BOTONES */}
 
-            <div className="botones">
-              {!modoEditar && (
-                <button
-                  onClick={() => setModoEditar(true)}
-                  className="btn btn-blue"
-                >
-                  Editar
-                </button>
-              )}
+                      <div className="botones">
+                          {modoNuevo ? (
+                              <>
+                                  <button onClick={guardarClienteNuevo} className="btn btn-green">
+                                      Agregar
+                                  </button>
 
-              {modoEditar && (
-                <button onClick={guardarCliente} className="btn btn-green">
-                  Guardar
-                </button>
-              )}
+                                  <button
+                                      className="btn btn-purple"
+                                      onClick={() => {
+                                          setSelectedCliente(null);
+                                          setModoEditar(false);
+                                          setModoNuevo(false);
+                                          setEnviosCliente([]);
+                                      }}
+                                  >
+                                      Cancelar
+                                  </button>
+                              </>
+                          ) : (
+                              <>
+                                  {!modoEditar && (
+                                      <button
+                                          onClick={() => setModoEditar(true)}
+                                          className="btn btn-blue"
+                                      >
+                                          Editar
+                                      </button>
+                                  )}
 
-              <button
-                className="btn btn-red"
-                onClick={() => eliminarCliente(selectedCliente)}
-              >
-                Eliminar
-              </button>
+                                  {modoEditar && (
+                                      <button onClick={guardarCliente} className="btn btn-green">
+                                          Guardar
+                                      </button>
+                                  )}
 
-                          <button
-                              className="btn btn-purple"
-                              onClick={() => {
-                                  if (vieneDeCotizador) {
-                                      navigate(volverA, {
-                                          state: {
-                                              modo: "regresoDesdeEditarCliente",
-                                              clienteActualizadoId: selectedCliente?.id || null,
-                                          },
-                                      });
-                                      return;
-                                  }
+                                  <button
+                                      className="btn btn-red"
+                                      onClick={() => eliminarCliente(selectedCliente)}
+                                  >
+                                      Eliminar
+                                  </button>
 
-                                  setSelectedCliente(null);
-                                  setModoEditar(false);
-                              }}
-                          >
-                              Cerrar
-                          </button>
-            </div>
+                                  <button
+                                      className="btn btn-purple"
+                                      onClick={() => {
+                                          if (vieneDeCotizador) {
+                                              navigate(volverA, {
+                                                  state: {
+                                                      modo: "regresoDesdeEditarCliente",
+                                                      clienteActualizadoId: selectedCliente?.id || null,
+                                                  },
+                                              });
+                                              return;
+                                          }
+
+                                          setSelectedCliente(null);
+                                          setModoEditar(false);
+                                          setModoNuevo(false);
+                                          setEnviosCliente([]);
+                                      }}
+                                  >
+                                      Cerrar
+                                  </button>
+                              </>
+                          )}
+                      </div>
           </div>
 
           {/* MAPA */}

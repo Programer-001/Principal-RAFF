@@ -293,9 +293,9 @@ const Cotizador = () => {
         otLabel: `OT-${nuevoOt}`,
         factura: factura || null,
         fecha: fecha,
-        clienteId: cliente?.id || null,
-        clienteSnapshot: cliente || { nombre: "PUBLICO GENERAL" },
-        credito: cliente?.credito?.activo || false,
+          clienteId: cliente?.id && cliente.id !== "TEMP" ? cliente.id : null,
+          clienteSnapshot: cliente || { nombre: "PUBLICO GENERAL" },
+          credito: cliente?.id !== "TEMP" ? cliente?.credito?.activo || false : false,
 
         asesorId: asesor?.id || null,
           asesorSnapshot: asesor
@@ -526,7 +526,15 @@ const Cotizador = () => {
                     setCliente(null);
                 }
             } else {
-                setCliente(draft.clienteSnapshot || null);
+                if (draft.clienteSnapshot?.id === "TEMP") {
+                    setCliente({
+                        ...draft.clienteSnapshot,
+                        descuento: 0,
+                        credito: undefined,
+                    });
+                } else {
+                    setCliente(draft.clienteSnapshot || null);
+                }
             }
         } catch (error) {
             console.error("Error restaurando borrador:", error);
@@ -541,6 +549,8 @@ const Cotizador = () => {
         }
     }, [location.state]);
 
+    //CLIENTE TEMPORAL
+    const esClienteTemporal = cliente?.id === "TEMP";
   //--------------------HTML-------------------------------------------------------------------------->>
     return (
         <div className="cotizador-layout">
@@ -576,35 +586,40 @@ const Cotizador = () => {
         </div>
 
         {/* BUSCADOR */}
-        <div className="search-bar">
-          <input
-            className="search-input"
-            placeholder="Buscar cliente"
-            value={buscar}
-            onChange={(e) => setBuscar(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <button onClick={buscarClientes}>Buscar</button>
+        {!cliente && (
+            <div className="search-bar">
+                <input
+                    className="search-input"
+                    placeholder="Buscar cliente"
+                    value={buscar}
+                    onChange={(e) => setBuscar(e.target.value)}
+                    style={{ flex: 1 }}
+                />
+                <button onClick={buscarClientes}>Buscar</button>
 
-          {!cliente && (
-            <button
-              onClick={() =>
-                setCliente({
-                  id: "TEMP",
-                  nombre: "PUBLICO GENERAL",
-                  descuento: 0,
-                  credito: {
-                    activo: false,
-                    dias: 0,
-                    limite: 0,
-                  },
-                })
-              }
-            >
-              Cliente temporal
-            </button>
-          )}
-        </div>
+                        <button
+                            onClick={() =>
+                                setCliente({
+                                    id: "TEMP",
+                                    nombre: "",
+                                    razonSocial: "",
+                                    rfc: "",
+                                    telefono: "",
+                                    email: "",
+                                    direccion: "",
+                                    numeroExterior: "",
+                                    numeroInterior: "",
+                                    colonia: "",
+                                    municipio: "",
+                                    estado: "",
+                                    cp: "",
+                                })
+                            }
+                        >
+                            Cliente temporal
+                        </button>
+            </div>
+        )}
 
         {/* RESULTADOS */}
         {clientes.length > 0 && !cliente && (
@@ -669,52 +684,122 @@ const Cotizador = () => {
 
             {/* GRID DE CLIENTE */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              <div>
-                <b>Nombre:</b>{" "}
-                {cliente.nombre || cliente.razonSocial || "SIN NOMBRE"}
-              </div>
-              <div>
-                <b>Teléfono:</b> {cliente.telefono || "--"}
-              </div>
-              <div>
-                <b>Descuento:</b>{" "}
-                {cliente.descuento
-                  ? `${(cliente.descuento * 100).toFixed(0)}%`
-                  : "0%"}
-              </div>
-              <div>
-                <b>Crédito:</b> {cliente.credito?.activo ? "ACTIVO" : "NO"}
-              </div>
+                {esClienteTemporal ? (
+                    <>
+                        <div style={{ minWidth: 220 }}>
+                            <b>Nombre:</b>
+                            <input
+                                type="text"
+                                value={cliente.nombre || ""}
+                                onChange={(e) =>
+                                    setCliente((prev) =>
+                                        prev ? { ...prev, nombre: e.target.value } : prev
+                                    )
+                                }
+                                style={{ width: "100%" }}
+                            />
                         </div>
-                        {/* EDITAR CLIENTE EN OPCION CLIENTE SIN BORRAR NADA */}
-                        <div style={{ marginTop: 10 }}>
-                            <button
-                                onClick={() => {
-                                    if (!cliente?.id || cliente.id === "TEMP") {
-                                        alert("Este cliente temporal no se puede editar.");
-                                        return;
-                                    }
 
-                                    guardarBorradorCotizador();
-
-                                    console.log("Voy a clientes con:", {
-                                        modo: "editarDesdeCotizador",
-                                        clienteId: cliente.id,
-                                        volverA: "/cotizador",
-                                    });
-
-                                    navigate("/clientes", {
-                                        state: {
-                                            modo: "editarDesdeCotizador",
-                                            clienteId: cliente.id,
-                                            volverA: "/cotizador",
-                                        },
-                                    });
-                                }}
-                            >
-                                Editar cliente
-                            </button>
+                        <div style={{ minWidth: 220 }}>
+                            <b>Razón social:</b>
+                            <input
+                                type="text"
+                                value={cliente.razonSocial || ""}
+                                onChange={(e) =>
+                                    setCliente((prev) =>
+                                        prev ? { ...prev, razonSocial: e.target.value } : prev
+                                    )
+                                }
+                                style={{ width: "100%" }}
+                            />
                         </div>
+
+                        <div style={{ minWidth: 220 }}>
+                            <b>Teléfono:</b>
+                            <input
+                                type="text"
+                                value={cliente.telefono || ""}
+                                onChange={(e) =>
+                                    setCliente((prev) =>
+                                        prev ? { ...prev, telefono: e.target.value } : prev
+                                    )
+                                }
+                                style={{ width: "100%" }}
+                            />
+                        </div>
+
+                        <div style={{ minWidth: 220 }}>
+                            <b>RFC:</b>
+                            <input
+                                type="text"
+                                value={cliente.rfc || ""}
+                                onChange={(e) =>
+                                    setCliente((prev) =>
+                                        prev ? { ...prev, rfc: e.target.value } : prev
+                                    )
+                                }
+                                style={{ width: "100%" }}
+                            />
+                        </div>
+
+                        <div style={{ minWidth: 220 }}>
+                            <b>Email:</b>
+                            <input
+                                type="text"
+                                value={cliente.email || ""}
+                                onChange={(e) =>
+                                    setCliente((prev) =>
+                                        prev ? { ...prev, email: e.target.value } : prev
+                                    )
+                                }
+                                style={{ width: "100%" }}
+                            />
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div>
+                            <b>Nombre:</b>{" "}
+                            {cliente.nombre || cliente.razonSocial || "SIN NOMBRE"}
+                        </div>
+                        <div>
+                            <b>Teléfono:</b> {cliente.telefono || "--"}
+                        </div>
+                        <div>
+                            <b>Descuento:</b>{" "}
+                            {cliente.descuento
+                                ? `${(cliente.descuento * 100).toFixed(0)}%`
+                                : "0%"}
+                        </div>
+                        <div>
+                            <b>Crédito:</b> {cliente.credito?.activo ? "ACTIVO" : "NO"}
+                                        </div>
+
+                                        <div style={{ marginTop: 10 }}>
+                                            <button
+                                                onClick={() => {
+                                                    if (!cliente?.id || cliente.id === "TEMP") {
+                                                        alert("Este cliente temporal no se puede editar.");
+                                                        return;
+                                                    }
+
+                                                    guardarBorradorCotizador();
+
+                                                    navigate("/clientes", {
+                                                        state: {
+                                                            modo: "editarDesdeCotizador",
+                                                            clienteId: cliente.id,
+                                                            volverA: "/cotizador",
+                                                        },
+                                                    });
+                                                }}
+                                            >
+                                                Editar cliente
+                                            </button>
+                                        </div>
+                    </>
+                )}
+            </div>
 
             {/* ENVÍO */}
             <div style={{ marginTop: 10 }}>
@@ -732,47 +817,151 @@ const Cotizador = () => {
                 <div style={{ color: "red", marginTop: 5 }}>
                   ⚠️ Dirección incompleta
                 </div>
-              )}
+                )}
+            {/* GRID DE ENVIOS */}
             {envio === "si" && (
-              <div
-                style={{
-                  marginTop: 10,
-                  padding: 10,
-                  border: "1px solid #ddd",
-                  borderRadius: 6,
-                  background: "#fff",
-                }}
-              >
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                  <div>
-                    <b>Calle:</b> {cliente.direccion || "--"}
-                  </div>
+                <div
+                    style={{
+                        marginTop: 10,
+                        padding: 10,
+                        border: "1px solid #ddd",
+                        borderRadius: 6,
+                        background: "#fff",
+                    }}
+                >
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                        {esClienteTemporal ? (
+                            <>
+                                <div style={{ minWidth: 220 }}>
+                                    <b>Calle:</b>
+                                    <input
+                                        type="text"
+                                        value={cliente.direccion || ""}
+                                        onChange={(e) =>
+                                            setCliente((prev) =>
+                                                prev ? { ...prev, direccion: e.target.value } : prev
+                                            )
+                                        }
+                                        style={{ width: "100%" }}
+                                    />
+                                </div>
 
-                  <div>
-                    <b>Número:</b>{" "}
-                    {(cliente.numeroExterior || "") +
-                      (cliente.numeroInterior
-                        ? ` Int ${cliente.numeroInterior}`
-                        : "") || "--"}
-                  </div>
+                                <div style={{ minWidth: 120 }}>
+                                    <b>Número exterior:</b>
+                                    <input
+                                        type="text"
+                                        value={cliente.numeroExterior || ""}
+                                        onChange={(e) =>
+                                            setCliente((prev) =>
+                                                prev ? { ...prev, numeroExterior: e.target.value } : prev
+                                            )
+                                        }
+                                        style={{ width: "100%" }}
+                                    />
+                                </div>
 
-                  <div>
-                    <b>Colonia:</b> {cliente.colonia || "--"}
-                  </div>
+                                <div style={{ minWidth: 120 }}>
+                                    <b>Número interior:</b>
+                                    <input
+                                        type="text"
+                                        value={cliente.numeroInterior || ""}
+                                        onChange={(e) =>
+                                            setCliente((prev) =>
+                                                prev ? { ...prev, numeroInterior: e.target.value } : prev
+                                            )
+                                        }
+                                        style={{ width: "100%" }}
+                                    />
+                                </div>
 
-                  <div>
-                    <b>CP:</b> {cliente.cp || "--"}
-                  </div>
+                                <div style={{ minWidth: 180 }}>
+                                    <b>Colonia:</b>
+                                    <input
+                                        type="text"
+                                        value={cliente.colonia || ""}
+                                        onChange={(e) =>
+                                            setCliente((prev) =>
+                                                prev ? { ...prev, colonia: e.target.value } : prev
+                                            )
+                                        }
+                                        style={{ width: "100%" }}
+                                    />
+                                </div>
 
-                  <div>
-                    <b>Municipio:</b> {cliente.municipio || "--"}
-                  </div>
+                                <div style={{ minWidth: 120 }}>
+                                    <b>CP:</b>
+                                    <input
+                                        type="text"
+                                        value={cliente.cp || ""}
+                                        onChange={(e) =>
+                                            setCliente((prev) =>
+                                                prev ? { ...prev, cp: e.target.value } : prev
+                                            )
+                                        }
+                                        style={{ width: "100%" }}
+                                    />
+                                </div>
 
-                  <div>
-                    <b>Estado:</b> {cliente.estado || "--"}
-                  </div>
+                                <div style={{ minWidth: 180 }}>
+                                    <b>Municipio:</b>
+                                    <input
+                                        type="text"
+                                        value={cliente.municipio || ""}
+                                        onChange={(e) =>
+                                            setCliente((prev) =>
+                                                prev ? { ...prev, municipio: e.target.value } : prev
+                                            )
+                                        }
+                                        style={{ width: "100%" }}
+                                    />
+                                </div>
+
+                                <div style={{ minWidth: 180 }}>
+                                    <b>Estado:</b>
+                                    <input
+                                        type="text"
+                                        value={cliente.estado || ""}
+                                        onChange={(e) =>
+                                            setCliente((prev) =>
+                                                prev ? { ...prev, estado: e.target.value } : prev
+                                            )
+                                        }
+                                        style={{ width: "100%" }}
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div>
+                                    <b>Calle:</b> {cliente.direccion || "--"}
+                                </div>
+
+                                <div>
+                                    <b>Número:</b>{" "}
+                                    {(cliente.numeroExterior || "") +
+                                        (cliente.numeroInterior ? ` Int ${cliente.numeroInterior}` : "") ||
+                                        "--"}
+                                </div>
+
+                                <div>
+                                    <b>Colonia:</b> {cliente.colonia || "--"}
+                                </div>
+
+                                <div>
+                                    <b>CP:</b> {cliente.cp || "--"}
+                                </div>
+
+                                <div>
+                                    <b>Municipio:</b> {cliente.municipio || "--"}
+                                </div>
+
+                                <div>
+                                    <b>Estado:</b> {cliente.estado || "--"}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
-              </div>
             )}
 
             {/* DIRECCIÓN SI TIENE ENVÍO (placeholder) */}
