@@ -190,8 +190,8 @@ export const generarPDFOTCotizacion = async (data: OTClienteData) => {
         },
         columnStyles: {
             0: { cellWidth: 25, halign: "center" },
-            1: { cellWidth: 115 }, // más espacio para descripción 🔥
-            2: { cellWidth: 40, halign: "right" },
+            1: { cellWidth: 135 }, // más espacio para descripción 🔥
+            2: { cellWidth: 20, halign: "right" },
         },
         margin: { left: 14, right: 14 },
     });
