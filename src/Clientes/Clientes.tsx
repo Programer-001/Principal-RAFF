@@ -1,7 +1,7 @@
 //src/Cientes/Clientess.tsx
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getDatabase, ref, get, update, remove } from "firebase/database";
+import { getDatabase, ref, get, update, remove,push, set } from "firebase/database";
 import { app } from "../firebase/config";
 import "../css/formulario.css";
 
@@ -53,6 +53,9 @@ const BuscarClientes: React.FC = () => {
     const volverA = state?.volverA || "/cotizador";
     console.log("location.state en Clientes:", location.state);
     console.log("clienteIdDesdeCotizador:", clienteIdDesdeCotizador);
+    //CLIENTES NUEVOS
+    const [modoNuevo, setModoNuevo] = useState(false);
+
     // VARIABLES DEL CLIENTES
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [search, setSearch] = useState("");
@@ -64,7 +67,7 @@ const BuscarClientes: React.FC = () => {
   // 🔎 BUSCAR CLIENTES
   const buscarClientes = async (texto: string) => {
     const snap = await get(ref(db, "Clientes"));
-    const data = snap.val() || {};
+      const data = snap.val() || {};
 
     const lista = Object.keys(data).map((id) => ({
       id,
@@ -128,8 +131,46 @@ const BuscarClientes: React.FC = () => {
   const datosPaginados = clientes.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
-  );
+    );
+    // 💾 GUARDAR CLIENTE
+    const guardarClienteNuevo = async () => {
+        if (!selectedCliente) return;
 
+        const { id, ...datos } = selectedCliente;
+
+        if (!datos.credito?.activo) {
+            delete datos.credito;
+        }
+
+        const snap = await get(ref(db, "Clientes"));
+        const data = snap.val() || {};
+
+        const limpiar = (v: string) => (v || "").toLowerCase().trim();
+
+        const existeDuplicado = Object.keys(data).some((key) => {
+            const c = data[key] || {};
+
+            return (
+                (selectedCliente.rfc &&
+                    limpiar(c.rfc) === limpiar(selectedCliente.rfc)) ||
+                (selectedCliente.razonSocial &&
+                    limpiar(c.razonSocial) === limpiar(selectedCliente.razonSocial))
+            );
+        });
+
+        if (existeDuplicado) {
+            alert("Ya existe un cliente con el mismo RFC o Razón Social");
+            return;
+        }
+
+        const newRef = push(ref(db, "Clientes"));
+        await set(newRef, datos);
+
+        alert("Cliente creado");
+        setModoNuevo(false);
+        setModoEditar(false);
+        setSelectedCliente(null);
+    };
   // 💾 GUARDAR CLIENTE
     const guardarCliente = async () => {
         if (!selectedCliente) return;
@@ -212,7 +253,29 @@ const BuscarClientes: React.FC = () => {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="search-input"
-      />
+          />
+          <button
+              className="btn btn-green"
+              onClick={() => {
+                  setSelectedCliente({
+                      id: "",
+                      nombre: "",
+                      razonSocial: "",
+                      rfc: "",
+                      direccion: "",
+                      numeroExterior: "",
+                      colonia: "",
+                      municipio: "",
+                      estado: "",
+                      telefono: "",
+                      email: "",
+                  });
+                  setModoEditar(true);
+                  setModoNuevo(true);
+              }}
+          >
+              Nuevo Cliente
+          </button>
 
       {/* RESULTADOS */}
 
