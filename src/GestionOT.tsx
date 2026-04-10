@@ -5,6 +5,7 @@ import { getDatabase, ref, get, remove, update } from "firebase/database";
 import { app, auth } from "./firebase/config";
 import { generarPDFOTCliente } from "./plantillas/plantillaOTCliente";
 import { generarPDFOTProduccion } from "./plantillas/plantillaOTProduccion";
+import { generarPDFOTCotizacion } from"./plantillas/plantillaOTCotizacion_Cliente";
 
 interface ClienteSnapshot {
     nombre?: string;
@@ -348,7 +349,47 @@ const GestionOT = () => {
             grupos,
         });
     };
+    //--------------Guardar------------------------------------------------>>
+    const CotizacionPDF = async () => {
+        if (!otSeleccionada) return;
 
+        const conceptos = Object.values(otSeleccionada.trabajos || {}).map(
+            (t: any) => ({
+                cantidad: 1,
+                descripcion: t.descripcion || "--",
+                descuento: 0,
+                subtotal: Number(t.total || 0),
+            })
+        );
+
+        const subtotal = Number(otSeleccionada.subtotal || 0);
+        const totalConDescuento = Number(
+            otSeleccionada.totalConDescuento ?? subtotal
+        );
+        const totalConIva = Number(otSeleccionada.totalConIva || 0);
+
+        const descuento = subtotal - totalConDescuento;
+        const iva = totalConIva - totalConDescuento;
+
+        await generarPDFOTCotizacion({
+            otLabel: otSeleccionada.otLabel || otSeleccionada.firebaseKey,
+            fecha: formatearFecha(otSeleccionada.fecha),
+
+            // primero razón social, si no existe entonces nombre
+            clienteNombre:
+                otSeleccionada.clienteSnapshot?.razonSocial ||
+                otSeleccionada.clienteSnapshot?.nombre ||
+                "PUBLICO GENERAL",
+
+            telefono: otSeleccionada.clienteSnapshot?.telefono || "--",
+
+            conceptos,
+            subtotal,
+            descuento,
+            iva,
+            total: totalConIva,
+        });
+    };
     //------------WhatsApp-------------------------------------------------->>
     const enviarWhatsAppCliente = () => {
         const telefonoOriginal = otSeleccionada?.clienteSnapshot?.telefono || "";
@@ -713,7 +754,7 @@ const GestionOT = () => {
                         >
                             <button onClick={editarOTCompleta}>Editar</button>
                             {tipoDocumento === "cotizacion" ? (
-                                <button onClick={generarPDF}>Cotización</button>
+                                <button onClick={CotizacionPDF}>Cotización</button>
                             ) : (
                                 <>
                                     <button onClick={generarPDF}>PDF cliente</button>
