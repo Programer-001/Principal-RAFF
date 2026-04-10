@@ -561,7 +561,8 @@ const Cotizador = () => {
             <span>{fecha}</span>
           </div>
 
-          {/* Factura - derecha */}
+                    {/* Factura - derecha */}
+                    
           <div className="encabezado-item encabezado-factura">
             <b>Factura: </b>
             <input
