@@ -112,37 +112,42 @@ export const generarPDFOTCotizacion = async (data: OTClienteData) => {
     // =========================
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
-    doc.text("RAFF ESPECIALISTAS TÉRMICOS", 105, 18, { align: "center" });
+    doc.text("RAFF ESPECIALISTAS TÉRMICOS", 120, 18, { align: "center" });
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text("REFORMA No. 1462, C.P. 44600, COL. SANTA TERESITA", 105, 24, {
+    doc.text("REFORMA No. 1462, C.P. 44600, COL. SANTA TERESITA", 120, 24, {
         align: "center",
     });
-    doc.text("Guadalajara, Jalisco, México", 105, 29, { align: "center" });
-    doc.text("TEL. 33 4040 9058", 105, 34, { align: "center" });
-    doc.text("RFC: RET231130AN2", 105, 39, { align: "center" });
+    doc.text("Guadalajara, Jalisco, México", 120, 29, { align: "center" });
+    doc.text("TEL. 33 4040 9058", 120, 34, { align: "center" });
+    doc.text("RFC: RET231130AN2", 120, 39, { align: "center" });
 
     // =========================
-    // TITULO
+    // TITULO NEGRO
     // =========================
     doc.setFillColor(0, 0, 0);
-    doc.rect(150, 46, 45, 8, "F");
+    doc.rect(140, 46, 55, 10, "F");
+
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text("COTIZACIÓN", 172.5, 51.5, { align: "center" });
 
+    // 🔥 TODO en una sola línea
+    doc.text(`COTIZACIÓN: ${data.otLabel}`, 167.5, 52, {
+        align: "center",
+    });
+
+    // 🔥 SOLO DEJAS FECHA ABAJO
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Cotización: ${data.otLabel}`, 150, 60);
-    doc.text(`Fecha: ${data.fecha}`, 150, 66);
+    doc.setFontSize(11);
+    doc.text(`Fecha: ${data.fecha}`, 140, 62);
 
     // =========================
     // CLIENTE EN FILA
     // =========================
-    let y = 56;
+    let y = 50;
 
     doc.setFont("helvetica", "bold");
     doc.text("Cliente / Razón social:", 14, y);
@@ -163,11 +168,10 @@ export const generarPDFOTCotizacion = async (data: OTClienteData) => {
 
     autoTable(doc, {
         startY,
-        head: [["Cantidad", "Descripción", "Descuento", "Subtotal"]],
+        head: [["Cantidad", "Descripción", "Subtotal"]],
         body: data.conceptos.map((c) => [
             String(c.cantidad || 1),
             c.descripcion || "--",
-            formatearMoneda(c.descuento || 0),
             formatearMoneda(c.subtotal || 0),
         ]),
         styles: {
@@ -185,10 +189,9 @@ export const generarPDFOTCotizacion = async (data: OTClienteData) => {
             halign: "center",
         },
         columnStyles: {
-            0: { cellWidth: 20, halign: "center" },
-            1: { cellWidth: 105 },
-            2: { cellWidth: 28, halign: "right" },
-            3: { cellWidth: 32, halign: "right" },
+            0: { cellWidth: 25, halign: "center" },
+            1: { cellWidth: 115 }, // más espacio para descripción 🔥
+            2: { cellWidth: 40, halign: "right" },
         },
         margin: { left: 14, right: 14 },
     });
@@ -218,8 +221,8 @@ export const generarPDFOTCotizacion = async (data: OTClienteData) => {
     // TABLA DE TOTALES
     // =========================
     const boxXLabel = 145;
-    const boxXValue = 168;
-    let yTot = finalY + 4;
+    const boxXValue = 170;
+    let yTot = finalY + 6;
 
     const filasTotales = [
         ["Subtotal", formatearMoneda(data.subtotal)],
@@ -231,21 +234,25 @@ export const generarPDFOTCotizacion = async (data: OTClienteData) => {
     filasTotales.forEach(([label, value], index) => {
         const yFila = yTot + index * 8;
 
-        doc.setFillColor(0, 0, 0);
-        doc.rect(boxXLabel, yFila, 23, 7, "F");
+        // 🔳 CUADRO NEGRO (LABEL)
 
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
-        doc.text(`${label}:`, boxXLabel + 21, yFila + 4.8, { align: "right" });
+        doc.text(`${label}:`, boxXLabel + 23, yFila + 4.8, {
+            align: "right",
+        });
 
+        // ⬜ CUADRO BLANCO (VALOR)
         doc.setFillColor(255, 255, 255);
         doc.setDrawColor(0, 0, 0);
-        doc.rect(boxXValue, yFila, 27, 7);
+        doc.rect(boxXValue, yFila, 30, 7);
 
         doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "normal");
-        doc.text(value, boxXValue + 25, yFila + 4.8, { align: "right" });
+        doc.text(value, boxXValue + 28, yFila + 4.8, {
+            align: "right",
+        });
     });
 
     // =========================
