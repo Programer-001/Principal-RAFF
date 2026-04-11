@@ -1,3 +1,4 @@
+//src/datos/Termopares.ts
 export interface TermoparJ {
   medida_cm: number; // Medida en centímetros
   precio: number; // Precio sin IVA
@@ -69,4 +70,24 @@ export const termoparK: TermoparK[] = [
   { medida_cm: 2600, precio: 8990.45 },
   { medida_cm: 2700, precio: 10339.02 },
   { medida_cm: 2800, precio: 11889.87 },
+];
+
+export interface BulboTornilloTermopar {
+    tipo: string;
+    precio: number;
+}
+
+export const bulboTornilloTermopar: BulboTornilloTermopar[] = [
+    { tipo: "BULBO 3/16 (DEFAULT)", precio: 0.0 },
+    { tipo: "TORNILLO 1/4", precio: 280.0 },
+    { tipo: "TORNILLO 6MM", precio: 280.0 },
+    { tipo: "TORNILLO 3/16", precio: 280.0 },
+    { tipo: "TORNILLO 3/8", precio: 300.0 },
+    { tipo: "TORNILLO 1/2", precio: 300.0 },
+    { tipo: "CAMBIO DE BULBO + TORNILLO 1/4", precio: 350.0 },
+    { tipo: "CAMBIO DE BULBO + TORNILLO 6MM", precio: 350.0 },
+    { tipo: "CAMBIO DE BULBO + TORNILLO 3/16", precio: 350.0 },
+    { tipo: "CAMBIO DE BULBO + TORNILLO 3/8", precio: 350.0 },
+    { tipo: "CAMBIO DE BULBO + TORNILLO 1/2", precio: 350.0 },
+    { tipo: "SIN BULBO", precio: 0.0 },
 ];

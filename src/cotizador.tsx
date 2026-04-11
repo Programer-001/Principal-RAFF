@@ -10,6 +10,10 @@ import Banda from "./cotizadores/Banda";
 import CartuchoBaja from "./cotizadores/cartuchobaja";
 import CartuchoAlta from "./cotizadores/cartuchoalta";
 import Resorte from "./cotizadores/Resorte";
+import Termopar from "./cotizadores/termopares";
+
+// luego en tu render
+<Termopar onGuardar={() => { }} setDirty={() => { }} />
 import {
   obtenerSiguienteCotizacion,
   obtenerSiguienteEnvio,
@@ -73,7 +77,7 @@ const Cotizador = () => {
   const [envio, setEnvio] = useState<"si" | "no">("no");
   const [itemEditando, setItemEditando] = useState<ItemCotizado | null>(null); // para el ticket
   const [cotizadorActivo, setCotizadorActivo] = useState<
-    "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte"
+    "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar"
   >("tubular");
   const [factura, setFactura] = useState<number | "">("");
   const [fecha, setFecha] = useState("");
@@ -176,7 +180,7 @@ const Cotizador = () => {
 
   // 🔥 Cambio con confirmación
   const cambiarCotizador = (
-    nuevo: "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte"
+    nuevo: "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte"|"termopar"
   ) => {
     setItemEditando(null); // 🔥 clave
 
@@ -988,6 +992,7 @@ const Cotizador = () => {
             Cartucho Alta
           </button>
           <button onClick={() => cambiarCotizador("Resorte")}>Resorte</button>
+          <button onClick={() => cambiarCotizador("termopar")}>Termopar</button>
         </div>
 
         {/* AREA */}
@@ -1028,6 +1033,13 @@ const Cotizador = () => {
             onGuardar={guardarCotizacion}
             setDirty={setFormDirty}
           />
+         )}
+        {cotizadorActivo === "termopar" && (
+            <Termopar
+                data={itemEditando || undefined}
+                onGuardar={guardarCotizacion}
+                setDirty={setFormDirty}
+            />
         )}
       </div>
 
