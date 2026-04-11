@@ -419,7 +419,7 @@ const Comisiones = () => {
                         <thead>
                             <tr>
                                 <th style={styles.th}>OT</th>
-                                <th style={styles.th}>Descripción</th>
+                                <th style={styles.th}>Descripcion</th>
                                 <th style={styles.th}>Operador</th>
                                 <th style={styles.th}>Tipo</th>
                                 <th style={styles.th}>Cantidad</th>
