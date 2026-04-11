@@ -70,6 +70,9 @@ const GestionOT = () => {
     const [facturaInput, setFacturaInput] = useState("");
     // 🔹 username real del usuario logueado
     const [usernameActual, setUsernameActual] = useState("");
+    //Seleccionar si es cotizacion o orden de trabajo
+    const [filtroCotizaciones, setFiltroCotizaciones] = useState(false);
+    const [filtroOrdenesTrabajo, setFiltroOrdenesTrabajo] = useState(false);
 
     // 🔹 obtener username real desde RH/Empleados usando el correo del auth
     useEffect(() => {
@@ -159,7 +162,7 @@ const GestionOT = () => {
     useEffect(() => {
         cargarOrdenes();
     }, []);
-
+    //ORDENES FILTRADAS
     const ordenesFiltradas = useMemo(() => {
         const texto = busqueda.trim().toLowerCase();
 
@@ -182,7 +185,7 @@ const GestionOT = () => {
                 !texto ||
                 ot.firebaseKey.toLowerCase().includes(texto) ||
                 (ot.otLabel || "").toLowerCase().includes(texto) ||
-                (ot.ot || "").toLowerCase().includes(texto) ||
+                String(ot.ot || "").toLowerCase().includes(texto) ||
                 (ot.fecha || "").toLowerCase().includes(texto) ||
                 facturaTexto.toLowerCase().includes(texto) ||
                 clienteNombre.toLowerCase().includes(texto) ||
@@ -192,9 +195,38 @@ const GestionOT = () => {
                 ? true
                 : asesorUsername === usernameActual;
 
-            return coincideBusqueda && esMia;
+            // 🔹 filtro por tipo de documento
+            const tipoDoc = ot.tipoDocumento || "cotizacion";
+
+            let coincideTipo = true;
+
+            // si ninguno está marcado => mostrar todos
+            if (!filtroCotizaciones && !filtroOrdenesTrabajo) {
+                coincideTipo = true;
+            }
+            // si ambos están marcados => mostrar ambos
+            else if (filtroCotizaciones && filtroOrdenesTrabajo) {
+                coincideTipo = true;
+            }
+            // solo cotizaciones
+            else if (filtroCotizaciones) {
+                coincideTipo = tipoDoc === "cotizacion";
+            }
+            // solo órdenes de trabajo
+            else if (filtroOrdenesTrabajo) {
+                coincideTipo = tipoDoc === "orden_trabajo";
+            }
+
+            return coincideBusqueda && esMia && coincideTipo;
         });
-    }, [busqueda, ordenes, mostrarSoloMias, usernameActual]);
+    }, [
+        busqueda,
+        ordenes,
+        mostrarSoloMias,
+        usernameActual,
+        filtroCotizaciones,
+        filtroOrdenesTrabajo,
+    ]);
 
     // 🔹 carga tipo y factura desde Firebase
     useEffect(() => {
@@ -494,7 +526,15 @@ const GestionOT = () => {
             {!otSeleccionada && (
                 <>
                     {/* BUSCADOR */}
-                    <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 12,
+                            marginBottom: 20,
+                            alignItems: "center",
+                        }}
+                    >
                         <input
                             type="text"
                             placeholder='Buscar por OT, fecha, factura o cliente. Ej: "ot001"'
@@ -502,23 +542,41 @@ const GestionOT = () => {
                             onChange={(e) => setBusqueda(e.target.value)}
                             style={{
                                 flex: 1,
+                                minWidth: 260,
                                 padding: 8,
                                 border: "1px solid #ccc",
                                 borderRadius: 6,
                             }}
                         />
+
                         <button onClick={cargarOrdenes}>Recargar</button>
-                        {/* 🔹 filtro solo mis OTs */}
-                        <div style={{ marginBottom: 20 }}>
-                            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <input
-                                    type="checkbox"
-                                    checked={mostrarSoloMias}
-                                    onChange={(e) => setMostrarSoloMias(e.target.checked)}
-                                />
-                                Mostrar mis órdenes de trabajo
-                            </label>
-                        </div>
+
+                        <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <input
+                                type="checkbox"
+                                checked={mostrarSoloMias}
+                                onChange={(e) => setMostrarSoloMias(e.target.checked)}
+                            />
+                            Mostrar mis órdenes
+                        </label>
+
+                        <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <input
+                                type="checkbox"
+                                checked={filtroCotizaciones}
+                                onChange={(e) => setFiltroCotizaciones(e.target.checked)}
+                            />
+                            Cotizaciones
+                        </label>
+
+                        <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <input
+                                type="checkbox"
+                                checked={filtroOrdenesTrabajo}
+                                onChange={(e) => setFiltroOrdenesTrabajo(e.target.checked)}
+                            />
+                            Órdenes de trabajo
+                        </label>
                     </div>
 
                     {/* TABLA */}
@@ -531,17 +589,18 @@ const GestionOT = () => {
                                     <th>Factura</th>
                                     <th>Cliente</th>
                                     <th>Asesor</th>
+                                    <th>Tipo</th> 
                                     <th>Seleccionar</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {cargando ? (
                                     <tr>
-                                        <td colSpan={6}>Cargando...</td>
+                                        <td colSpan={7}>Cargando...</td> {/* 🔥 antes era 6 */}
                                     </tr>
                                 ) : ordenesFiltradas.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6}>No hay resultados</td>
+                                        <td colSpan={7}>No hay resultados</td> {/* 🔥 antes era 6 */}
                                     </tr>
                                 ) : (
                                     ordenesFiltradas.map((ot) => (
@@ -563,6 +622,14 @@ const GestionOT = () => {
                                                     ot.asesorSnapshot?.nombre ||
                                                     "--"}
                                             </td>
+
+                                            {/* 🔥 NUEVA COLUMNA */}
+                                            <td>
+                                                {ot.tipoDocumento === "orden_trabajo"
+                                                    ? "Orden de trabajo"
+                                                    : "Cotización"}
+                                            </td>
+
                                             <td>
                                                 <button onClick={() => seleccionarOT(ot)}>
                                                     Seleccionar
