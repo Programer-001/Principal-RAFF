@@ -950,6 +950,65 @@
     padding: 0 12px;
     flex-shrink: 0;
 }
+
+/* =========================
+   TABLA GESTIONOT
+========================= */
+.table-scroll-gestion {
+    width: 100%;
+    max-height: 520px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+}
+
+    .table-scroll-gestion::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+.gestionot-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.95rem;
+}
+
+    .gestionot-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+        .gestionot-table thead tr {
+            background: #f5f5f5;
+        }
+
+        .gestionot-table thead th {
+            position: sticky;
+            top: 0;
+            background: #f5f5f5;
+            z-index: 21;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+            .gestionot-table thead th:last-child {
+                border-right: 1px solid #ddd;
+            }
+
+    .gestionot-table tbody td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .gestionot-table tbody tr:hover {
+        background: #fafafa;
+    }
 /* =========================
    RESPONSIVE
 ========================= */

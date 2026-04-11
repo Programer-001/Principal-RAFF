@@ -522,65 +522,54 @@ const GestionOT = () => {
                     </div>
 
                     {/* TABLA */}
-                    <div
-                        style={{
-                            border: "1px solid #ccc",
-                            borderRadius: 8,
-                            overflow: "hidden",
-                            background: "#fff",
-                        }}
-                    >
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <div className="table-scroll-gestion">
+                        <table className="gestionot-table">
                             <thead>
-                                <tr style={{ background: "#f5f5f5" }}>
-                                    <th style={thStyle}>OT</th>
-                                    <th style={thStyle}>Fecha</th>
-                                    <th style={thStyle}>Factura</th>
-                                    <th style={thStyle}>Cliente</th>
-                                    <th style={thStyle}>Asesor</th>
-                                    <th style={thStyle}>Seleccionar</th>
+                                <tr>
+                                    <th>OT</th>
+                                    <th>Fecha</th>
+                                    <th>Factura</th>
+                                    <th>Cliente</th>
+                                    <th>Asesor</th>
+                                    <th>Seleccionar</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {cargando ? (
                                     <tr>
-                                        <td style={tdStyle} colSpan={6}>
-                                            Cargando...
-                                        </td>
+                                        <td colSpan={6}>Cargando...</td>
                                     </tr>
                                 ) : ordenesFiltradas.length === 0 ? (
                                     <tr>
-                                        <td style={tdStyle} colSpan={5}>
-                                            No hay resultados
-                                        </td>
+                                        <td colSpan={6}>No hay resultados</td>
                                     </tr>
                                 ) : (
-                                            ordenesFiltradas.map((ot) => (
-                                                <tr key={ot.firebaseKey}>
-                                                    <td style={tdStyle}>{ot.otLabel || ot.firebaseKey}</td>
-                                                    <td style={tdStyle}>{formatearFecha(ot.fecha)}</td>
-                                                    <td style={tdStyle}>
-                                                        {ot.factura === null || ot.factura === undefined
-                                                            ? "--"
-                                                            : ot.factura}
-                                                    </td>
-                                                    <td style={tdStyle}>
-                                                        {ot.clienteSnapshot?.nombre ||
-                                                            ot.clienteSnapshot?.razonSocial ||
-                                                            "PUBLICO GENERAL"}
-                                                    </td>
-                                                    <td style={tdStyle}>
-                                                        {ot.asesorSnapshot?.username ||
-                                                            ot.asesorSnapshot?.nombre ||
-                                                            "--"}
-                                                    </td>
-                                                    <td style={tdStyle}>
-                                                        <button onClick={() => seleccionarOT(ot)}>
-                                                            Seleccionar
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                    ordenesFiltradas.map((ot) => (
+                                        <tr key={ot.firebaseKey}>
+                                            <td>{ot.otLabel || ot.firebaseKey}</td>
+                                            <td>{formatearFecha(ot.fecha)}</td>
+                                            <td>
+                                                {ot.factura === null || ot.factura === undefined
+                                                    ? "--"
+                                                    : ot.factura}
+                                            </td>
+                                            <td>
+                                                {ot.clienteSnapshot?.nombre ||
+                                                    ot.clienteSnapshot?.razonSocial ||
+                                                    "PUBLICO GENERAL"}
+                                            </td>
+                                            <td>
+                                                {ot.asesorSnapshot?.username ||
+                                                    ot.asesorSnapshot?.nombre ||
+                                                    "--"}
+                                            </td>
+                                            <td>
+                                                <button onClick={() => seleccionarOT(ot)}>
+                                                    Seleccionar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
                                 )}
                             </tbody>
                         </table>
