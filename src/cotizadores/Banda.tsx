@@ -35,7 +35,7 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
   const [caja, setCaja] = useState(false);
   const [express, setExpress] = useState(false);
   const [excedente, setExcedente] = useState(false);
-  const [servicioExpress, setServicioExpress] = useState(false);
+    const [servicioExpress, setServicioExpress] = useState(false);
 
   // Input numérico
   const [colocarCables, setColocarCables] = useState<number>(0);
@@ -44,7 +44,8 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
   const [usarCables, setUsarCables] = useState(false);
   const [tipoCableSeleccionado, setTipoCableSeleccionado] =
     useState<string>("");
-  const [longitudCm, setLongitudCm] = useState<number>(0);
+    const [longitudCm, setLongitudCm] = useState<number>(0);
+    const [cantidadCables, setCantidadCables] = useState<number>(0);
 
   //--- Barrenos
   const [numBarrenos, setNumBarrenos] = useState<number>(0);
@@ -83,7 +84,8 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
 
       setUsarCables(data.datos.usarCables || false);
       setTipoCableSeleccionado(data.datos.tipoCableSeleccionado || "");
-      setLongitudCm(data.datos.longitudCm || 0);
+    setLongitudCm(data.datos.longitudCm || 0);
+    setCantidadCables(data.datos.cantidadCables || 0);
 
       setUsarTermopar(data.datos.usarTermopar || false);
       setTipoTermoparSeleccionado(data.datos.tipoTermoparSeleccionado || "");
@@ -133,13 +135,18 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
     if (barrenos && numBarrenos > 0) resultado += numBarrenos * 30;
     if (colocarCables > 0) resultado += colocarCables;
 
-    if (usarCables && tipoCableSeleccionado && longitudCm > 0) {
-      const cable = tipoCable.find((c) => c.nombre === tipoCableSeleccionado);
-      if (cable) {
-        const metros = Math.ceil(longitudCm / 100);
-        resultado += cable.precio * metros;
+      if (
+          usarCables &&
+          tipoCableSeleccionado &&
+          longitudCm > 0 &&
+          cantidadCables > 0
+      ) {
+          const cable = tipoCable.find((c) => c.nombre === tipoCableSeleccionado);
+          if (cable) {
+              const metros = Math.ceil(longitudCm / 100);
+              resultado += cable.precio * metros * cantidadCables;
+          }
       }
-    }
 
     if (usarTermopar && tipoTermoparSeleccionado && longitudTermoparCm > 0) {
       const t = termopar.find((tp) => tp.nombre === tipoTermoparSeleccionado);
@@ -198,7 +205,7 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
     setUsarCables(false);
     setTipoCableSeleccionado("");
     setLongitudCm(0);
-
+    setCantidadCables(0);
     // Termopar
     setUsarTermopar(false);
     setTipoTermoparSeleccionado("");
@@ -238,8 +245,11 @@ ${agregar(`BARRIL Y CINCHO`, barrilCincho)}
 ${agregar(`STUCK`, stuck)}
 ${agregar(`BARRENOS O RESAQUES (${numBarrenos})`, barrenos && numBarrenos > 0)}
 ${agregar(
-  `COLOCAR CABLES: ${tipoCableSeleccionado} (${longitudCm} CM)`,
-  usarCables && !!tipoCableSeleccionado && longitudCm > 0
+    `COLOCAR CABLES: ${tipoCableSeleccionado} (${longitudCm} CM) x ${cantidadCables}`,
+    usarCables &&
+    !!tipoCableSeleccionado &&
+    longitudCm > 0 &&
+    cantidadCables > 0
 )}
 ${agregar(`FABRICAR A 440V`, fabricar440)}
 ${agregar(`TRIFASICA`, trifasica)}
@@ -445,39 +455,65 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             <input
               type="checkbox"
               checked={usarCables}
-              onChange={(e) => setUsarCables(e.target.checked)}
+                          onChange={(e) => {
+                              const checked = e.target.checked;
+                              setUsarCables(checked);
+
+                              if (!checked) {
+                                  setTipoCableSeleccionado("");
+                                  setLongitudCm(0);
+                                  setCantidadCables(0);
+                              }
+                          }}
             />
           </div>
 
-          {usarCables && (
-            <>
-              <div className="form-row">
-                <label>Tipo de cable</label>
-                <select
-                  value={tipoCableSeleccionado}
-                  onChange={(e) => setTipoCableSeleccionado(e.target.value)}
-                >
-                  <option value="">Seleccione...</option>
-                  {tipoCable.map((cable, index) => (
-                    <option key={index} value={cable.nombre}>
-                      {cable.nombre} (${cable.precio.toFixed(2)} / m)
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  {usarCables && (
+                      <>
+                          <div className="form-row">
+                              <label>Tipo de cable</label>
+                              <select
+                                  value={tipoCableSeleccionado}
+                                  onChange={(e) => {
+                                      const value = e.target.value;
+                                      setTipoCableSeleccionado(value);
 
-              <div className="form-row">
-                <label>Longitud (cm)</label>
-                <input
-                  type="number"
-                  value={longitudCm === 0 ? "" : longitudCm}
-                  onChange={(e) =>
-                    setLongitudCm(parseFloat(e.target.value) || 0)
-                  }
-                />
-              </div>
-            </>
-          )}
+                                      if (!value) {
+                                          setLongitudCm(0);
+                                          setCantidadCables(0);
+                                      }
+                                  }}
+                              >
+                                  <option value="">Seleccione...</option>
+                                  {tipoCable.map((cable, index) => (
+                                      <option key={index} value={cable.nombre}>
+                                          {cable.nombre} (${cable.precio.toFixed(2)} / m)
+                                      </option>
+                                  ))}
+                              </select>
+                          </div>
+
+                          <div className="form-row">
+                              <label>Longitud (cm)</label>
+                              <input
+                                  type="number"
+                                  disabled={!tipoCableSeleccionado}
+                                  value={longitudCm === 0 ? "" : longitudCm}
+                                  onChange={(e) => setLongitudCm(parseFloat(e.target.value) || 0)}
+                              />
+                          </div>
+
+                          <div className="form-row">
+                              <label>Cantidad de cables</label>
+                              <input
+                                  type="number"
+                                  disabled={!tipoCableSeleccionado}
+                                  value={cantidadCables === 0 ? "" : cantidadCables}
+                                  onChange={(e) => setCantidadCables(parseFloat(e.target.value) || 0)}
+                              />
+                          </div>
+                      </>
+                  )}
 
           <div className="form-row checkbox-row">
             <label>Fabricar a 440V (+10%)</label>
@@ -636,6 +672,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
               usarCables,
               tipoCableSeleccionado,
               longitudCm,
+              cantidadCables,
               usarTermopar,
               tipoTermoparSeleccionado,
               longitudTermoparCm,

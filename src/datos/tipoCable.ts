@@ -12,6 +12,7 @@ export const tipoCable: TipoCable[] = [
   { nombre: "300° CAL 12", precio: 74.28 },
   { nombre: "300° CAL 14", precio: 46.9 },
   { nombre: "300° CAL 16", precio: 33.09 },
+  { nombre: "300° CAL 18", precio: 26.56 },
 ];
 
 export interface Termpopar {

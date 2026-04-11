@@ -520,7 +520,7 @@ const GestionOT = () => {
     //---------------------HTML------------------------------------------------------------------->>
 
     return (
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: 40 }}>
             <h2>Gestión de OT</h2>
 
             {!otSeleccionada && (
