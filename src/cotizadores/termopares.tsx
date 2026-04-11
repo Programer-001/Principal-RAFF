@@ -42,7 +42,7 @@ const termopar = ({ data, onGuardar, setDirty }: Props) => {
         }
     }, [data]);
 
-    useEffect(() => {
+    /*useEffect(() => {
         setDirty(true);
     }, [
         cantidad,
@@ -55,7 +55,7 @@ const termopar = ({ data, onGuardar, setDirty }: Props) => {
         termoparEspecialP,
         datosAdicionales,
         setDirty,
-    ]);
+    ]);*/
 
     const resetForm = () => {
         setCantidad(0);
