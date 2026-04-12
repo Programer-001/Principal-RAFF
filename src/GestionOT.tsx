@@ -1,6 +1,6 @@
 // src/GestionOT.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation  } from "react-router-dom";
 import { getDatabase, ref, get, remove, update } from "firebase/database";
 import { app, auth } from "./firebase/config";
 import { generarPDFOTCliente } from "./plantillas/plantillaOTCliente";
@@ -73,7 +73,7 @@ const GestionOT = () => {
     //Seleccionar si es cotizacion o orden de trabajo
     const [filtroCotizaciones, setFiltroCotizaciones] = useState(false);
     const [filtroOrdenesTrabajo, setFiltroOrdenesTrabajo] = useState(false);
-
+    
     // 🔹 obtener username real desde RH/Empleados usando el correo del auth
     useEffect(() => {
         const cargarUsernameActual = async () => {
@@ -469,7 +469,22 @@ const GestionOT = () => {
             },
         });
     };
+    //-------------------FINALIZAR OT ABRA EN SU OT----------------------------------------->>
 
+    const location = useLocation();
+    useEffect(() => {
+        const state = location.state as any;
+
+        if (!state?.abrirOT || !state?.firebaseKeyOT || ordenes.length === 0) return;
+
+        const encontrada = ordenes.find(
+            (ot) => ot.firebaseKey === state.firebaseKeyOT
+        );
+
+        if (encontrada) {
+            setOtSeleccionada(encontrada);
+        }
+    }, [location.state, ordenes]);
     //------------------------------------------------------------>>
     // 🔹 guardar tipo y factura
     const guardarTipoDocumento = async (

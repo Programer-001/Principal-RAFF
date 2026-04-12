@@ -1009,6 +1009,76 @@
     .gestionot-table tbody tr:hover {
         background: #fafafa;
     }
+
+/* =========================
+   MENU TABS COTIZADOR
+========================= */
+.cotizador-tabs {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.cotizador-tab {
+    position: relative;
+    padding: 8px 0 8px 12px;
+    font-size: 20px;
+    font-weight: 400;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+    .cotizador-tab:hover {
+        color: #555;
+    }
+
+    .cotizador-tab.active {
+        color: #000;
+        font-weight: 600;
+    }
+
+        .cotizador-tab.active::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 75%;
+            background-color: #333;
+            border-radius: 2px;
+
+        }
+
+/* =========================
+  RESULTADOS DEL BUSCADOR DE CLIENTES EN COTIZADOR
+========================= */
+
+.clientes-resultados-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: auto;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+}
+
+    .clientes-resultados-scroll .caja-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .clientes-resultados-scroll .caja-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
 /* =========================
    RESPONSIVE
 ========================= */

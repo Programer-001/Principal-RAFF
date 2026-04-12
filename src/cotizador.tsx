@@ -11,13 +11,7 @@ import CartuchoBaja from "./cotizadores/cartuchobaja";
 import CartuchoAlta from "./cotizadores/cartuchoalta";
 import Resorte from "./cotizadores/Resorte";
 import Termopar from "./cotizadores/termopares";
-
-// luego en tu render
-<Termopar onGuardar={() => { }} setDirty={() => { }} />
-import {
-  obtenerSiguienteCotizacion,
-  obtenerSiguienteEnvio,
-} from "./firebase/consecutivos";
+import {obtenerSiguienteCotizacion,obtenerSiguienteEnvio} from "./firebase/consecutivos";
 // 🔹 Tipos
 interface Cliente {
   id?: string;
@@ -95,52 +89,82 @@ const Cotizador = () => {
   const location = useLocation();
   const DRAFT_KEY = "cotizador_historial";
   // 🔹 Buscar clientes
-  const buscarClientes = async () => {
-    const db = getDatabase(app);
-    const snapshot = await get(ref(db, "Clientes"));
+    const buscarClientes = async (texto: string) => {
+        const snapshot = await get(ref(db, "Clientes"));
 
-    if (!snapshot.exists()) return;
+        if (!snapshot.exists()) {
+            setClientes([]);
+            return;
+        }
 
-    const data = snapshot.val();
+        const data = snapshot.val();
 
-    const lista: Cliente[] = Object.keys(data).map((id) => ({
-      id,
-      nombre: data[id].nombre || "",
-      razonSocial: data[id].razonSocial || "",
-      rfc: data[id].rfc || "",
-      telefono: data[id].telefono || "",
+        const lista: Cliente[] = Object.keys(data).map((id) => ({
+            id,
+            nombre: data[id].nombre || "",
+            razonSocial: data[id].razonSocial || "",
+            rfc: data[id].rfc || "",
+            telefono: data[id].telefono || "",
+            email: data[id].email || "",
 
-      // 🔥 DIRECCIÓN (LO QUE TE FALTABA)
-      direccion: data[id].direccion || "",
-      numeroExterior: data[id].numeroExterior || "",
-      numeroInterior: data[id].numeroInterior || "",
-      colonia: data[id].colonia || "",
-      municipio: data[id].municipio || "",
-      estado: data[id].estado || "",
-      cp: data[id].cp || "",
+            direccion: data[id].direccion || "",
+            numeroExterior: data[id].numeroExterior || "",
+            numeroInterior: data[id].numeroInterior || "",
+            colonia: data[id].colonia || "",
+            municipio: data[id].municipio || "",
+            estado: data[id].estado || "",
+            cp: data[id].cp || "",
 
-      credito: data[id].credito || {
-        activo: false,
-        dias: 0,
-        limite: 0,
-      },
+            empresa: data[id].empresa || "",
+            giro: data[id].giro || "",
+            regimenFiscal: data[id].regimenFiscal || "",
+            notas: data[id].notas || "",
 
-      descuento: data[id].descuentoDefault ?? 0,
+            credito: data[id].credito || {
+                activo: false,
+                dias: 0,
+                limite: 0,
+            },
 
-      busqueda:
-        data[id].busqueda ||
-        `${data[id].nombre || ""} ${data[id].razonSocial || ""}`.toUpperCase(),
-    }));
+            descuento: data[id].descuentoDefault ?? 0,
 
-    // 🔍 FILTRO POR TEXTO
-    const texto = buscar.toLowerCase();
+            busqueda:
+                data[id].busqueda ||
+                `${data[id].nombre || ""} ${data[id].razonSocial || ""} ${data[id].rfc || ""}`.toUpperCase(),
+        }));
 
-    const filtrados = lista.filter((c: any) =>
-      c.busqueda?.toLowerCase().includes(texto)
-    );
+        const textoBusqueda = texto.toLowerCase().trim();
 
-    setClientes(filtrados);
-  };
+        const filtrados = lista.filter((c) => {
+            const nombre = (c.nombre || "").toLowerCase();
+            const razon = (c.razonSocial || "").toLowerCase();
+            const rfc = (c.rfc || "").toLowerCase();
+            const busqueda = (c.busqueda || "").toLowerCase();
+
+            return (
+                nombre.includes(textoBusqueda) ||
+                razon.includes(textoBusqueda) ||
+                rfc.includes(textoBusqueda) ||
+                busqueda.includes(textoBusqueda)
+            );
+        });
+
+        setClientes(filtrados);
+    };
+    useEffect(() => {
+        if (cliente) return;
+
+        if (buscar.trim() === "") {
+            setClientes([]);
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            buscarClientes(buscar);
+        }, 300);
+
+        return () => clearTimeout(timeout);
+    }, [buscar, cliente]);
 
   // 🔹 Guardar cotización
   const guardarCotizacion = (item: ItemCotizado) => {
@@ -258,7 +282,11 @@ const Cotizador = () => {
     if (!cotizaciones.length) {
       alert("No hay cotizaciones");
       return;
-    }
+      }
+      if (!cliente) {
+          alert("Debes seleccionar o Registrar un cliente antes de finalizar la OT");
+          return;
+      }
 
     try {
       const db = getDatabase(app);
@@ -332,6 +360,10 @@ const Cotizador = () => {
 
         await set(ref(db, `ordenes_trabajo/${claveOt}`), ordenTrabajo);
         sessionStorage.removeItem(DRAFT_KEY);
+        const otGuardada = {
+            firebaseKey: claveOt,
+            ...ordenTrabajo,
+        };
 
       alert(
         modoEdicionOT
@@ -355,11 +387,19 @@ const Cotizador = () => {
 
       setEnvioFolioOT("");
       setEnvioGeneradoOT(false);
-      setEnvioEnviadoOT(false);
+        setEnvioEnviadoOT(false);
+        navigate("/consultaot", {
+            state: {
+                abrirOT: true,
+                firebaseKeyOT: claveOt,
+            },
+        });
+
     } catch (error) {
       console.error("Error al finalizar OT:", error);
       alert("Error al guardar la OT");
-    }
+      }
+
   };
 
   //Eliminar Item de ticket
@@ -585,29 +625,24 @@ const Cotizador = () => {
 
                     {/* Factura - derecha */}
                     
-          <div className="encabezado-item encabezado-factura">
-            <b>Factura: </b>
-            <input
-              type="number"
-              min={0}
-              value={factura === "" ? "" : factura}
-              onChange={(e) => setFactura(Number(e.target.value))}
-              className="input-factura"
-            />
-          </div>
+                    <div className="encabezado-item encabezado-factura">
+                        <b>Factura: </b>
+                        <span className="input-factura">
+                            {factura === "" ? "--" : factura}
+                        </span>
+                    </div>
         </div>
 
-        {/* BUSCADOR */}
-        {!cliente && (
-            <div className="search-bar">
-                <input
-                    className="search-input"
-                    placeholder="Buscar cliente"
-                    value={buscar}
-                    onChange={(e) => setBuscar(e.target.value)}
-                    style={{ flex: 1 }}
-                />
-                <button onClick={buscarClientes}>Buscar</button>
+                {/* BUSCADOR */}
+                {!cliente && (
+                    <div className="search-bar">
+                        <input
+                            className="search-input"
+                            placeholder="Buscar nombre, razón social o RFC"
+                            value={buscar}
+                            onChange={(e) => setBuscar(e.target.value)}
+                            style={{ flex: 1 }}
+                        />
 
                         <button
                             onClick={() =>
@@ -630,32 +665,53 @@ const Cotizador = () => {
                         >
                             Cliente temporal
                         </button>
-            </div>
-        )}
+                    </div>
+                )}
 
-        {/* RESULTADOS */}
-        {clientes.length > 0 && !cliente && (
-          <table>
-            <tbody>
-              {clientes.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.nombre || c.razonSocial || "SIN NOMBRE"}</td>
-                  <td>
-                    <button
-                      onClick={() => {
-                        setCliente(c);
-                        setClientes([]);
-                        setEnvio("no");
-                      }}
-                    >
-                      Seleccionar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+                {/* RESULTADOS */}
+                {!cliente && buscar.trim() !== "" && clientes.length > 0 && (
+                    <div className="clientes-resultados-scroll">
+                        <table className="caja-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Razón Social</th>
+                                    <th>RFC</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {clientes.map((c) => (
+                                    <tr key={c.id}>
+                                        <td>{c.nombre || "--"}</td>
+                                        <td>{c.razonSocial || "--"}</td>
+                                        <td>{c.rfc || "--"}</td>
+                                        <td>
+                                            <button
+                                                onClick={() => {
+                                                    setCliente(c);
+                                                    setClientes([]);
+                                                    setBuscar("");
+                                                    setEnvio("no");
+                                                }}
+                                            >
+                                                Seleccionar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* SIN RESULTADOS */}
+                {!cliente && buscar.trim() !== "" && clientes.length === 0 && (
+                    <div style={{ marginTop: 10 }}>
+                        No se encontraron clientes.
+                    </div>
+                )}
 
         {/* CLIENTE */}
         {cliente && (
@@ -982,17 +1038,48 @@ const Cotizador = () => {
         )}
 
         {/* MENU */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-          <button onClick={() => cambiarCotizador("tubular")}>Tubular</button>
-          <button onClick={() => cambiarCotizador("banda")}>Banda</button>
-          <button onClick={() => cambiarCotizador("CartuchoB")}>
-            Cartucho Baja
-          </button>
-          <button onClick={() => cambiarCotizador("CartuchoA")}>
-            Cartucho Alta
-          </button>
-          <button onClick={() => cambiarCotizador("Resorte")}>Resorte</button>
-          <button onClick={() => cambiarCotizador("termopar")}>Termopar</button>
+        <div className="cotizador-tabs">
+            <div
+                className={`cotizador-tab ${cotizadorActivo === "tubular" ? "active" : ""}`}
+                onClick={() => cambiarCotizador("tubular")}
+            >
+                Tubular
+            </div>
+
+            <div
+                className={`cotizador-tab ${cotizadorActivo === "banda" ? "active" : ""}`}
+                onClick={() => cambiarCotizador("banda")}
+            >
+                Banda
+            </div>
+
+            <div
+                className={`cotizador-tab ${cotizadorActivo === "CartuchoB" ? "active" : ""}`}
+                onClick={() => cambiarCotizador("CartuchoB")}
+            >
+                Cartucho Baja
+            </div>
+
+            <div
+                className={`cotizador-tab ${cotizadorActivo === "CartuchoA" ? "active" : ""}`}
+                onClick={() => cambiarCotizador("CartuchoA")}
+            >
+                Cartucho Alta
+            </div>
+
+            <div
+                className={`cotizador-tab ${cotizadorActivo === "Resorte" ? "active" : ""}`}
+                onClick={() => cambiarCotizador("Resorte")}
+            >
+                Resorte
+            </div>
+
+            <div
+                className={`cotizador-tab ${cotizadorActivo === "termopar" ? "active" : ""}`}
+                onClick={() => cambiarCotizador("termopar")}
+            >
+                Termopar
+            </div>
         </div>
 
         {/* AREA */}
@@ -1104,7 +1191,7 @@ const Cotizador = () => {
         </div>
         <br />
         {/* FINALIZAR */}
-        {cotizaciones.length > 0 && (
+                {cotizaciones.length > 0 && cliente &&(
           <div>
             <button onClick={finalizarOT}>
               {modoEdicionOT ? "ACTUALIZAR OT" : "FINALIZAR OT"}
