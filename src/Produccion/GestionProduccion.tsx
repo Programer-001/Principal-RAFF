@@ -98,6 +98,7 @@ const GestionProduccion: React.FC = () => {
     const [mostrarMateriales, setMostrarMateriales] = useState(false);
     const [materialesCalculados, setMaterialesCalculados] = useState<MaterialItem[]>([]);
     const [filtrosEstado, setFiltrosEstado] = useState<string[]>([]);
+    const [filtroTrabajador, setFiltroTrabajador] = useState("");
 
     const [checkRevision, setCheckRevision] = useState(false);
     const [observaciones, setObservaciones] = useState("");
@@ -727,6 +728,7 @@ const GestionProduccion: React.FC = () => {
     // =========================
     // FILTROS DE BUSQUEDA
     // =========================
+    const hayFiltros = filtrosEstado.length > 0 || !!filtroTrabajador;
     const ESTADOS_PRODUCCION = [
         { value: "en_fila", label: "En fila" },
         { value: "en_proceso", label: "En proceso" },
@@ -762,11 +764,16 @@ const GestionProduccion: React.FC = () => {
             otCompleta: ot,
         }));
 
-        if (filtrosEstado.length === 0) return [];
-
         return trabajos.filter((trabajo) => {
             const estado = trabajo.estadoProduccion || "en_fila";
-            return filtrosEstado.includes(estado);
+
+            const cumpleEstado =
+                filtrosEstado.length === 0 || filtrosEstado.includes(estado);
+
+            const cumpleTrabajador =
+                !filtroTrabajador || trabajo.trabajador === filtroTrabajador;
+
+            return cumpleEstado && cumpleTrabajador;
         });
     });
     //Esta abre la OT general y además deja seleccionada la partida.
@@ -911,7 +918,7 @@ const GestionProduccion: React.FC = () => {
                         </button>
                     </div>
                     {/* =========================
-            FILTROS  DE OTS 
+            FILTROS  POR ESTADOS DE OTS 
            ========================= */}
                     <div style={{ marginBottom: 12 }}>
                         <b>Filtrar por estado:</b>
@@ -932,7 +939,29 @@ const GestionProduccion: React.FC = () => {
                             ))}
                         </div>
                     </div>
-                    {filtrosEstado.length === 0 ? (
+                    <div style={{ marginBottom: 12 }}>
+                        <b>Filtrar por trabajador:</b>
+
+                        <select
+                            value={filtroTrabajador}
+                            onChange={(e) => setFiltroTrabajador(e.target.value)}
+                            style={{
+                                marginLeft: 10,
+                                padding: 6,
+                                borderRadius: 6,
+                                border: "1px solid #ccc",
+                            }}
+                        >
+                            <option value="">Todos</option>
+
+                            {operadores.map((op) => (
+                                <option key={op.id} value={op.username || ""}>
+                                    {op.username || "Sin username"}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    {!hayFiltros ? (
                         <div
                             style={{
                                 border: "1px solid #ccc",
