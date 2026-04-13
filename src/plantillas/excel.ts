@@ -231,21 +231,23 @@ export const generarExcelCorteCaja = async (desde: string, hasta: string) => {
     let totalCheque = 0;
     let totalTransfer = 0;
     let totalTarjeta = 0;
+    let totalOtro = 0;
 
     filtrados.forEach((p) => {
         if (!p.estatus) return;
 
-        const m = String(p.metodo || "").toLowerCase();
+        const m = String(p.metodo || "").toLowerCase().trim();
         const cantidad = Number(p.cantidad || 0);
 
         if (m.includes("efectivo")) totalEfectivo += cantidad;
-        if (m.includes("cheque")) totalCheque += cantidad;
-        if (m.includes("transfer")) totalTransfer += cantidad;
-        if (m.includes("tarjeta")) totalTarjeta += cantidad;
+        else if (m.includes("cheque")) totalCheque += cantidad;
+        else if (m.includes("transfer")) totalTransfer += cantidad;
+        else if (m.includes("tarjeta")) totalTarjeta += cantidad;
+        else if (m.includes("otro")) totalOtro += cantidad;
     });
 
     const totalGeneral =
-        totalEfectivo + totalCheque + totalTransfer + totalTarjeta;
+        totalEfectivo + totalCheque + totalTransfer + totalTarjeta + totalOtro;
 
     filaActual++;
     sheet.getCell(`A${filaActual}`).value = "TOTALES";
@@ -273,6 +275,7 @@ export const generarExcelCorteCaja = async (desde: string, hasta: string) => {
         ["Cheque", totalCheque],
         ["Transferencia", totalTransfer],
         ["Tarjeta", totalTarjeta],
+        ["Otro", totalOtro],
         ["Total General", totalGeneral],
     ];
 
