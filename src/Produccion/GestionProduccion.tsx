@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDatabase, ref, get, remove, update, onValue } from "firebase/database";
-import { app } from "../firebase/config";
+import { app, auth } from "../firebase/config";
 import { generarPDFOTCliente } from "../plantillas/plantillaOTCliente";
 import { generarPDFOTProduccion } from "../plantillas/plantillaOTProduccion";
 import { calcularMaterialesTubular, MaterialItem } from "../datos/Armado_Resistencia";
@@ -34,11 +34,20 @@ interface TrabajoItem {
     materialSolicitado?: boolean;
     materialEntregado?: boolean;
     materialEntregaFecha?: string;
+    inspeccion?: {
+        aprobado?: boolean;
+        usuario?: string;
+        fecha?: string;
+        observaciones?: string;
+    };
+    numerosSerie?: string[];
+    seriesGeneradas?: boolean;
 }
 
 interface EmpleadoProduccion {
     id?: string;
     nombre?: string;
+    username?: string;
     area?: string;
     puesto?: string;
     activo?: boolean;
@@ -64,6 +73,7 @@ interface OrdenTrabajo {
     asesorId?: string | null;
     asesorSnapshot?: AsesorSnapshot | null;
     taller?: boolean;
+    tipoDocumento?: string;
 }
 
 type OrdenTrabajoConClave = OrdenTrabajo & {
@@ -87,7 +97,14 @@ const GestionProduccion: React.FC = () => {
     const [estado, setEstado] = useState("");
     const [mostrarMateriales, setMostrarMateriales] = useState(false);
     const [materialesCalculados, setMaterialesCalculados] = useState<MaterialItem[]>([]);
+    const [filtrosEstado, setFiltrosEstado] = useState<string[]>([]);
 
+    const [checkRevision, setCheckRevision] = useState(false);
+    const [observaciones, setObservaciones] = useState("");
+    const [usuarioActual, setUsuarioActual] = useState("");
+
+    const [mostrarSeries, setMostrarSeries] = useState(false);
+    const [numerosSerie, setNumerosSerie] = useState<string[]>([]);
     // =========================
     // FORMATEAR NÚMERO OT
     // Ejemplo: 36 -> 00036
@@ -96,6 +113,37 @@ const GestionProduccion: React.FC = () => {
         const soloNumeros = valor.replace(/\D/g, "");
         return soloNumeros.padStart(5, "0");    
     };
+    // =========================
+    // AUTENTICACION DE USUARIOS
+    // =========================
+    useEffect(() => {
+        const obtenerUsuarioActual = async () => {
+            const user = auth.currentUser;
+
+            if (!user?.uid) return;
+
+            try {
+                const db = getDatabase(app);
+                const snapshot = await get(ref(db, "RH/Empleados"));
+
+                if (!snapshot.exists()) return;
+
+                const data = snapshot.val();
+
+                const empleado = Object.values(data).find(
+                    (emp: any) => emp.uid === user.uid
+                ) as any;
+
+                if (empleado) {
+                    setUsuarioActual(empleado.username || empleado.nombre || "Usuario");
+                }
+            } catch (error) {
+                console.error("Error obteniendo usuario actual:", error);
+            }
+        };
+
+        obtenerUsuarioActual();
+    }, []);
 
     // =========================
     // AGREGAR OT
@@ -151,18 +199,44 @@ const GestionProduccion: React.FC = () => {
                 return;
             }
 
-            // 👇 marcar la OT como enviada a taller
-            await update(ref(db, `ordenes_trabajo/${encontradaKey}`), {
-                taller: true,
+            const otEncontrada = data[encontradaKey];
+
+            // 🔴 VALIDAR QUE SOLO SEA ORDEN DE TRABAJO
+            if (otEncontrada.tipoDocumento !== "orden_trabajo") {
+                alert(
+                    `${otLabelBuscada} no es una orden de trabajo.`
+                );
+                return;
+            }
+
+            // =========================
+            // 🔥 NUEVO: ASEGURAR ESTADO EN PARTIDAS
+            // =========================
+            const trabajos = otEncontrada.trabajos || {};
+            const updatesTrabajos: any = {};
+
+            Object.keys(trabajos).forEach((key) => {
+                const trabajo = trabajos[key];
+
+                // Si NO tiene estado, lo inicializamos
+                if (!trabajo.estadoProduccion) {
+                    updatesTrabajos[`trabajos/${key}/estadoProduccion`] = "en_fila";
+                }
             });
 
-            setNumeroOT("");
+            // 👇 marcar la OT como enviada a taller + actualizar partidas
+            await update(ref(db, `ordenes_trabajo/${encontradaKey}`), {
+                taller: true,
+                ...updatesTrabajos, // 🔥 AQUÍ se agregan los estados automáticamente
+            });
+
             alert(`${otLabelBuscada} agregada a producción`);
         } catch (error) {
             console.error("Error al buscar/agregar la OT:", error);
             alert("Ocurrió un error al agregar la OT");
         } finally {
             setCargando(false);
+            setNumeroOT(""); // 🔥 SIEMPRE limpia el input pase lo que pase
         }
     };
 
@@ -178,6 +252,7 @@ const GestionProduccion: React.FC = () => {
     // =========================
     const cerrarOT = () => {
         setOtSeleccionada(null);
+        setPartidaSeleccionada(null);
     };
 
     // =========================
@@ -200,8 +275,20 @@ const GestionProduccion: React.FC = () => {
         setFechaInicio(trabajo.fechaInicio || "");
         setFechaFin(trabajo.fechaFin || "");
         setEstado(trabajo.estadoProduccion || "en_fila");
-    };
+        setCheckRevision(!!trabajo.inspeccion?.aprobado);
+        setObservaciones(trabajo.inspeccion?.observaciones || "");
 
+        const descripcion = trabajo.descripcion || "";
+        const resultado = calcularMaterialesTubular(descripcion);
+
+        if ((trabajo.tipo || "").toLowerCase() === "tubular" && resultado.familia) {
+            setMaterialesCalculados(resultado.materiales);
+        } else {
+            setMaterialesCalculados([]);
+        }
+        setMostrarSeries(!!trabajo.seriesGeneradas);
+        setNumerosSerie(trabajo.numerosSerie || []);
+    };
     // =========================
     // CERRAR PARTIDA
     // =========================
@@ -211,6 +298,10 @@ const GestionProduccion: React.FC = () => {
         setFechaInicio("");
         setFechaFin("");
         setEstado("en_fila");
+        setCheckRevision(false);
+        setObservaciones("");
+        setMostrarSeries(false);
+        setNumerosSerie([]);
     };
     // =========================
     // CARGAR OPERADORES DE PRODUCCIÓN
@@ -293,20 +384,35 @@ const GestionProduccion: React.FC = () => {
             alert("No se encontró la clave de la partida");
             return;
         }
+        if (estado === "terminada" && !partidaSeleccionada.seriesGeneradas) {
+            alert("Debes generar los números de serie antes de terminar");
+            return;
+        }
 
         try {
             const db = getDatabase(app);
 
             const ruta = `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`;
-
+            if (estado === "inspeccion" && !checkRevision) {
+                alert("Debes confirmar la revisión antes de guardar la inspección");
+                return;
+            }
             // 🔥 1. Guardar en Firebase
             await update(ref(db, ruta), {
-                trabajador,
-                fechaInicio,
-                fechaFin,
+                trabajador: estado === "en_fila" ? "" : trabajador,
+                fechaInicio: estado === "en_fila" ? "" : fechaInicio,
+                fechaFin: estado === "en_fila" ? "" : fechaFin,
                 estadoProduccion: estado,
+                inspeccion:
+                    estado === "inspeccion"
+                        ? {
+                            aprobado: checkRevision,
+                            usuario: usuarioActual,
+                            fecha: new Date().toISOString(),
+                            observaciones,
+                        }
+                        : partidaSeleccionada.inspeccion || undefined,
             });
-
             // 🔥 2. Refrescar estado LOCAL (AQUI VA LO QUE ME PREGUNTASTE)
             setOtSeleccionada((prev) => {
                 if (!prev || !prev.trabajos) return prev;
@@ -317,10 +423,19 @@ const GestionProduccion: React.FC = () => {
                         ...prev.trabajos,
                         [partidaSeleccionada.key!]: {
                             ...prev.trabajos[partidaSeleccionada.key!],
-                            trabajador,
-                            fechaInicio,
-                            fechaFin,
+                            trabajador: estado === "en_fila" ? "" : trabajador,
+                            fechaInicio: estado === "en_fila" ? "" : fechaInicio,
+                            fechaFin: estado === "en_fila" ? "" : fechaFin,
                             estadoProduccion: estado,
+                            inspeccion:
+                                estado === "inspeccion"
+                                    ? {
+                                        aprobado: checkRevision,
+                                        usuario: usuarioActual,
+                                        fecha: new Date().toISOString(),
+                                        observaciones,
+                                    }
+                                    : prev.trabajos[partidaSeleccionada.key!].inspeccion || undefined,
                         },
                     },
                 };
@@ -395,6 +510,7 @@ const GestionProduccion: React.FC = () => {
 
             alert("OT quitada de producción");
             setOtSeleccionada(null);
+            setPartidaSeleccionada(null);
         } catch (error) {
             console.error("Error al quitar de taller:", error);
             alert("No se pudo quitar la OT de producción");
@@ -607,6 +723,160 @@ const GestionProduccion: React.FC = () => {
 
         return equivalencias[texto] || texto;
     };
+
+    // =========================
+    // FILTROS DE BUSQUEDA
+    // =========================
+    const ESTADOS_PRODUCCION = [
+        { value: "en_fila", label: "En fila" },
+        { value: "en_proceso", label: "En proceso" },
+        { value: "inspeccion", label: "Inspección" },
+        { value: "contactado", label: "Contactado" },
+        { value: "terminada", label: "Terminada" },
+        { value: "lista_para_entrega", label: "Lista para entrega" },
+    ];
+
+    //Función para activar/desactivar checks
+    const toggleEstado = (estado: string) => {
+        setFiltrosEstado((prev) => {
+            if (prev.includes(estado)) {
+                return prev.filter((e) => e !== estado);
+            } else {
+                return [...prev, estado];
+            }
+        });
+    };
+
+    //Esto recorre todas las OTs y saca las partidas que coincidan
+    const partidasFiltradasGlobales = ordenesAgregadas.flatMap((ot) => {
+        const trabajos = Object.entries(ot.trabajos || {}).map(([key, trabajo]) => ({
+            key,
+            ...trabajo,
+            otFirebaseKey: ot.firebaseKey,
+            otLabel: ot.otLabel || ot.firebaseKey,
+            factura: ot.factura,
+            clienteNombre:
+                ot.clienteSnapshot?.nombre ||
+                ot.clienteSnapshot?.razonSocial ||
+                "PUBLICO GENERAL",
+            otCompleta: ot,
+        }));
+
+        if (filtrosEstado.length === 0) return [];
+
+        return trabajos.filter((trabajo) => {
+            const estado = trabajo.estadoProduccion || "en_fila";
+            return filtrosEstado.includes(estado);
+        });
+    });
+    //Esta abre la OT general y además deja seleccionada la partida.
+    const seleccionarDesdeFiltroGlobal = (trabajo: any) => {
+        setOtSeleccionada(trabajo.otCompleta);
+        seleccionarPartida(trabajo);
+    };
+    // =========================================
+    // Limpiar trabajador cuando cambia a en_fila
+    // =========================================
+    useEffect(() => {
+        if (estado === "en_fila") {
+            setTrabajador("");
+            setFechaInicio("");
+            setFechaFin("");
+        }
+    }, [estado]);
+
+    // =========================
+    // NUMEROS DE SERIE GRABADO LASER
+    // =========================
+    //Función para formatear fecha de grabado
+    const obtenerFechaGrabado = () => {
+        const hoy = new Date();
+        const dia = String(hoy.getDate()).padStart(2, "0");
+        const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+        const anio = String(hoy.getFullYear()).slice(-2);
+        return `${dia}${mes}${anio}`;
+    };
+    //Función para saber cuántas piezas tiene la partida*
+    const obtenerCantidadParaGrabado = (trabajo: TrabajoItem) => {
+        const cantidad = Number(trabajo.datos?.cantidad);
+
+        if (!cantidad || cantidad <= 0) return 1;
+
+        return cantidad;
+    };
+
+    //Función para generar series
+    const generarNumerosSerie = async () => {
+        if (!otSeleccionada || !partidaSeleccionada || !partidaSeleccionada.key) return;
+
+        if (partidaSeleccionada.seriesGeneradas) {
+            alert("Los números de serie ya fueron generados");
+            return;
+        }
+
+        try {
+            const db = getDatabase(app);
+            const fechaGrabado = obtenerFechaGrabado();
+            const cantidad = obtenerCantidadParaGrabado(partidaSeleccionada);
+
+            const contadorRef = ref(db, `contadores/grabado/${fechaGrabado}`);
+            const snapshot = await get(contadorRef);
+
+            const ultimoConsecutivo = snapshot.exists() ? Number(snapshot.val() || 0) : 0;
+
+            const nuevosNumeros: string[] = [];
+
+            for (let i = 1; i <= cantidad; i++) {
+                const consecutivo = String(ultimoConsecutivo + i).padStart(2, "0");
+                nuevosNumeros.push(`${fechaGrabado}${consecutivo}`);
+            }
+
+            const nuevoUltimo = ultimoConsecutivo + cantidad;
+
+            await update(ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`), {
+                numerosSerie: nuevosNumeros,
+                seriesGeneradas: true,
+            });
+
+            await update(ref(db, "contadores/grabado"), {
+                [fechaGrabado]: nuevoUltimo,
+            });
+
+            setNumerosSerie(nuevosNumeros);
+            setMostrarSeries(true);
+
+            setPartidaSeleccionada((prev) => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    numerosSerie: nuevosNumeros,
+                    seriesGeneradas: true,
+                };
+            });
+
+            setOtSeleccionada((prev) => {
+                if (!prev || !prev.trabajos) return prev;
+
+                return {
+                    ...prev,
+                    trabajos: {
+                        ...prev.trabajos,
+                        [partidaSeleccionada.key!]: {
+                            ...prev.trabajos[partidaSeleccionada.key!],
+                            numerosSerie: nuevosNumeros,
+                            seriesGeneradas: true,
+                        },
+                    },
+                };
+            });
+        } catch (error) {
+            console.error("Error al generar números de serie:", error);
+            alert("No se pudieron generar los números de serie");
+        }
+    };
+    // =========================
+    // HTML
+    // =========================
     return (
 
         <div style={{ padding: 20 }}>
@@ -623,6 +893,11 @@ const GestionProduccion: React.FC = () => {
                             placeholder="Número de OT"
                             value={numeroOT}
                             onChange={(e) => setNumeroOT(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !cargando) {
+                                    agregarOT();
+                                }
+                            }}
                             style={{
                                 width: 180,
                                 padding: 8,
@@ -635,63 +910,133 @@ const GestionProduccion: React.FC = () => {
                             {cargando ? "Buscando..." : "Agregar OT"}
                         </button>
                     </div>
-
                     {/* =========================
-            TABLA DE OTS AGREGADAS
+            FILTROS  DE OTS 
            ========================= */}
-                    <div
-                        style={{
-                            border: "1px solid #ccc",
-                            borderRadius: 8,
-                            overflow: "hidden",
-                            background: "#fff",
-                        }}
-                    >
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr style={{ background: "#f5f5f5" }}>
-                                    <th style={thStyle}>OT</th>
-                                    <th style={thStyle}>Factura</th>
-                                    <th style={thStyle}>Cliente</th>
-                                    <th style={thStyle}>Acciones</th>
-                                </tr>
-                            </thead>
+                    <div style={{ marginBottom: 12 }}>
+                        <b>Filtrar por estado:</b>
 
-                            <tbody>
-                                {ordenesAgregadas.length === 0 ? (
-                                    <tr>
-                                        <td style={tdStyle} colSpan={4}>
-                                            No hay OTs agregadas
-                                        </td>
+                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+                            {ESTADOS_PRODUCCION.map((estado) => (
+                                <label
+                                    key={estado.value}
+                                    style={{ display: "flex", alignItems: "center", gap: 4 }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={filtrosEstado.includes(estado.value)}
+                                        onChange={() => toggleEstado(estado.value)}
+                                    />
+                                    {estado.label}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    {filtrosEstado.length === 0 ? (
+                        <div
+                            style={{
+                                border: "1px solid #ccc",
+                                borderRadius: 8,
+                                overflow: "hidden",
+                                background: "#fff",
+                            }}
+                        >
+                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                <thead>
+                                    <tr style={{ background: "#f5f5f5" }}>
+                                        <th style={thStyle}>OT</th>
+                                        <th style={thStyle}>Factura</th>
+                                        <th style={thStyle}>Cliente</th>
+                                        <th style={thStyle}>Acciones</th>
                                     </tr>
-                                ) : (
-                                    ordenesAgregadas.map((ot) => (
-                                        <tr key={ot.firebaseKey}>
-                                            <td style={tdStyle}>{ot.otLabel || ot.firebaseKey}</td>
+                                </thead>
 
-                                            <td style={tdStyle}>
-                                                {ot.factura === null || ot.factura === undefined
-                                                    ? "--"
-                                                    : ot.factura}
-                                            </td>
-
-                                            <td style={tdStyle}>
-                                                {ot.clienteSnapshot?.nombre ||
-                                                    ot.clienteSnapshot?.razonSocial ||
-                                                    "PUBLICO GENERAL"}
-                                            </td>
-
-                                            <td style={tdStyle}>
-                                                <button onClick={() => seleccionarOT(ot)}>
-                                                    Seleccionar
-                                                </button>
+                                <tbody>
+                                    {ordenesAgregadas.length === 0 ? (
+                                        <tr>
+                                            <td style={tdStyle} colSpan={4}>
+                                                No hay OTs agregadas
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    ) : (
+                                        ordenesAgregadas.map((ot) => (
+                                            <tr key={ot.firebaseKey}>
+                                                <td style={tdStyle}>{ot.otLabel || ot.firebaseKey}</td>
+
+                                                <td style={tdStyle}>
+                                                    {ot.factura === null || ot.factura === undefined
+                                                        ? "--"
+                                                        : ot.factura}
+                                                </td>
+
+                                                <td style={tdStyle}>
+                                                    {ot.clienteSnapshot?.nombre ||
+                                                        ot.clienteSnapshot?.razonSocial ||
+                                                        "PUBLICO GENERAL"}
+                                                </td>
+
+                                                <td style={tdStyle}>
+                                                    <button onClick={() => seleccionarOT(ot)}>
+                                                        Seleccionar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                    ) : (
+                          
+                        <div
+                            style={{
+                                border: "1px solid #ccc",
+                                borderRadius: 8,
+                                overflow: "hidden",
+                                background: "#fff",
+                            }}
+                        >
+                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                <thead>
+                                    <tr style={{ background: "#f5f5f5" }}>
+                                        <th style={thStyle}>OT</th>
+                                        <th style={thStyle}>Partida</th>
+                                        <th style={thStyle}>Tipo</th>
+                                        <th style={thStyle}>Estado</th>
+                                        <th style={thStyle}>Cliente</th>
+                                        <th style={thStyle}>Acción</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {partidasFiltradasGlobales.length === 0 ? (
+                                        <tr>
+                                            <td style={tdStyle} colSpan={6}>
+                                                No hay partidas con esos filtros
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        partidasFiltradasGlobales.map((trabajo, index) => (
+                                            <tr key={`${trabajo.otFirebaseKey}-${trabajo.key}-${index}`}>
+                                                <td style={tdStyle}>{trabajo.otLabel}</td>
+                                                <td style={tdStyle}>{trabajo.partida || "--"}</td>
+                                                <td style={tdStyle}>{trabajo.tipo || "--"}</td>
+                                                <td style={tdStyle}>{trabajo.estadoProduccion || "en_fila"}</td>
+                                                <td style={tdStyle}>{trabajo.clienteNombre}</td>
+                                                <td style={tdStyle}>
+                                                    <button onClick={() => seleccionarDesdeFiltroGlobal(trabajo)}>
+                                                        Seleccionar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
                 </>
             )}
 
@@ -797,7 +1142,7 @@ const GestionProduccion: React.FC = () => {
                                             </td>
                                         </tr>
                                     ) : (
-                                        trabajosArray.map((trabajo, index) => (
+                                            trabajosArray.map((trabajo, index) => (
                                             <tr key={trabajo.partida || index}>
                                                 <td style={tdStyle}>
                                                     {trabajo.partida || `Partida ${index + 1}`}
@@ -878,9 +1223,9 @@ const GestionProduccion: React.FC = () => {
                             <div
                                 style={{
                                     display: "grid",
-                                    gridTemplateColumns: "1fr 1fr 1fr",
-                                    gap: 12,
-                                    marginBottom: 15,
+                                    gridTemplateColumns: "auto auto auto",
+                                    gap: 10,
+                                    justifyContent: "start", // 🔥 evita que se expandan
                                 }}
                             >
                                 <div>
@@ -897,6 +1242,13 @@ const GestionProduccion: React.FC = () => {
                                     <select
                                         value={trabajador}
                                         onChange={(e) => setTrabajador(e.target.value)}
+                                        disabled={
+                                            estado === "en_fila" ||
+                                            estado === "inspeccion" ||
+                                            estado === "terminada" ||
+                                            estado === "contactado" ||
+                                            estado === "lista_para_entrega"
+                                        }
                                         style={{
                                             width: "100%",
                                             padding: 8,
@@ -907,8 +1259,8 @@ const GestionProduccion: React.FC = () => {
                                         <option value="">Selecciona un operador</option>
 
                                         {operadores.map((op) => (
-                                            <option key={op.id} value={op.nombre || ""}>
-                                                {op.nombre || "Sin nombre"}
+                                            <option key={op.id} value={op.username || ""}>
+                                                {op.username || "Sin nombre"}
                                             </option>
                                         ))}
                                     </select>
@@ -928,9 +1280,17 @@ const GestionProduccion: React.FC = () => {
                                         type="date"
                                         value={fechaInicio}
                                         onChange={(e) => setFechaInicio(e.target.value)}
+                                        disabled={
+                                            !trabajador ||
+                                            estado === "inspeccion" ||
+                                            estado === "contactado" ||
+                                            estado === "terminada" ||
+                                            estado === "lista_para_entrega"
+                                        }
                                         style={{
                                             width: "100%",
-                                            padding: 8,
+                                            maxWidth: 180,
+                                            padding: 6,
                                             border: "1px solid #ccc",
                                             borderRadius: 6,
                                         }}
@@ -950,10 +1310,26 @@ const GestionProduccion: React.FC = () => {
                                     <input
                                         type="date"
                                         value={fechaFin}
-                                        onChange={(e) => setFechaFin(e.target.value)}
+                                        onChange={(e) => {
+                                            const valor = e.target.value;
+                                            setFechaFin(valor);
+
+                                            if (valor) {
+                                                setEstado("inspeccion");
+                                            }
+                                        }}
+                                        disabled={
+                                            !trabajador ||
+                                            !fechaInicio ||
+                                            estado === "inspeccion" ||
+                                            estado === "contactado" ||
+                                            estado === "terminada" ||
+                                            estado === "lista_para_entrega"
+                                        }
                                         style={{
                                             width: "100%",
-                                            padding: 8,
+                                            maxWidth: 180,
+                                            padding: 6,
                                             border: "1px solid #ccc",
                                             borderRadius: 6,
                                         }}
@@ -983,15 +1359,97 @@ const GestionProduccion: React.FC = () => {
                                         borderRadius: 6,
                                     }}
                                 >
-                                    <option value="En fila">En fila</option>
-                                    <option value="En proceso">En proceso</option>
-                                    <option value="Inspeccion">Inspección</option>
-                                    <option value="Contactado">Contactado</option>
-                                    <option value="Terminada">Terminada</option>
-                                    <option value="Lista para entrega">Lista para entrega</option>
+                                    <option
+                                        value="en_fila"
+                                        disabled={partidaSeleccionada.seriesGeneradas}
+                                    >
+                                        En fila
+                                    </option>
+
+                                    <option
+                                        value="en_proceso"
+                                        disabled={partidaSeleccionada.seriesGeneradas}
+                                    >
+                                        En proceso
+                                    </option>
+
+                                    <option
+                                        value="inspeccion"
+                                        disabled={partidaSeleccionada.seriesGeneradas}
+                                    >
+                                        Inspección
+                                    </option>
+
+                                    <option value="terminada">
+                                        Terminada
+                                    </option>
+
+                                    <option value="contactado">
+                                        Contactado
+                                    </option>
+
+                                    <option value="lista_para_entrega">
+                                        Lista para entrega
+                                    </option>
                                 </select>
                             </div>
+                            {/*DIV DE INSPECCION*/ }
+                            {estado === "inspeccion" && (
+                                <div
+                                    style={{
+                                        marginBottom: 20,
+                                        padding: 14,
+                                        border: "1px solid #d9d9d9",
+                                        borderRadius: 8,
+                                        background: "#fff",
+                                    }}
+                                >
+                                    <label
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                            fontWeight: "bold",
+                                            marginBottom: 12,
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checkRevision}
+                                            onChange={(e) => setCheckRevision(e.target.checked)}
+                                        />
+                                        {usuarioActual || "Usuario"} ha revisado que cumple
+                                    </label>
 
+                                    <div>
+                                        <label
+                                            style={{
+                                                display: "block",
+                                                fontWeight: "bold",
+                                                marginBottom: 6,
+                                            }}
+                                        >
+                                            Observaciones:
+                                        </label>
+
+                                        <textarea
+                                            value={observaciones}
+                                            onChange={(e) => setObservaciones(e.target.value)}
+                                            placeholder="Escribe observaciones de inspección..."
+                                            style={{
+                                                width: "100%",
+                                                minHeight: 100,
+                                                padding: 8,
+                                                border: "1px solid #ccc",
+                                                borderRadius: 6,
+                                                resize: "vertical",
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/*SECCION DE BOTONES*/ }
                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                                 <button
                                     onClick={() => {
@@ -1001,20 +1459,101 @@ const GestionProduccion: React.FC = () => {
                                     Crear PDF
                                 </button>
 
-                                {(partidaSeleccionada.tipo || "").toLowerCase() === "tubular" && (
-                                    <button onClick={abrirSolicitudMaterial}>
-                                        {partidaSeleccionada.materialEntregado
-                                            ? "Material entregado"
-                                            : "Solicitar material"}
-                                    </button>
-                                )}
-
                                 <button onClick={guardarPartida}>
                                     Guardar
                                 </button>
-                            </div>
+                                {estado === "contactado" && (
+   
+                                        <button
+                                            onClick={() => {
+                                                const telefono =
+                                                    otSeleccionada?.clienteSnapshot?.telefono || "";
 
-                            {mostrarMateriales && (
+                                                if (!telefono) {
+                                                    alert("El cliente no tiene teléfono");
+                                                    return;
+                                                }
+
+                                                const numero = telefono.replace(/\D/g, ""); // limpiar
+
+                                                const mensaje = `Nos comunicamos de RAFF para informarle que su ${otSeleccionada?.otLabel} ya esta lista`;
+
+                                                const url = `https://wa.me/52${numero}?text=${encodeURIComponent(mensaje)}`;
+
+                                                window.open(url, "_blank");
+                                            }}
+                                            style={{
+                                                padding: "8px 14px",
+                                                background: "#25D366",
+                                                color: "#fff",
+                                                border: "none",
+                                                borderRadius: 6,
+                                                cursor: "pointer",
+                                                fontWeight: "bold",
+                                            }}
+                                        >
+                                            Enviar WhatsApp
+                                        </button>
+                                   
+                                )}
+                            </div>
+                            {/*NUMERO DE SERIE LASER*/}
+                            {estado === "terminada" && (
+                                <div
+                                    style={{
+                                        marginBottom: 20,
+                                        padding: 14,
+                                        border: "1px solid #d9d9d9",
+                                        borderRadius: 8,
+                                        background: "#fff",
+                                    }}
+                                >
+                                    <label
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                            fontWeight: "bold",
+                                            marginBottom: 12,
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={mostrarSeries}
+                                            disabled={mostrarSeries}
+                                            onChange={async (e) => {
+                                                if (e.target.checked) {
+                                                    await generarNumerosSerie();
+                                                }
+                                            }}
+                                        />
+                                        Mostrar números de serie
+                                    </label>
+
+                                    {numerosSerie.length > 0 && (
+                                        <div
+                                            style={{
+                                                border: "1px solid #e5e7eb",
+                                                borderRadius: 8,
+                                                background: "#f9fafb",
+                                                padding: 12,
+                                            }}
+                                        >
+                                            <b>Números de serie:</b>
+                                            <div style={{ marginTop: 10 }}>
+                                                {numerosSerie.map((serie, index) => (
+                                                    <div key={`${serie}-${index}`} style={{ marginBottom: 4 }}>
+                                                        {serie}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {/*TABLA DE ENTREGA DE MATERIAL TUBULAR*/ }
+
+                            {(partidaSeleccionada.tipo || "").toLowerCase() === "tubular" && (
                                 <div
                                     style={{
                                         marginTop: 20,
@@ -1024,52 +1563,9 @@ const GestionProduccion: React.FC = () => {
                                         background: "#ffffff",
                                     }}
                                 >
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                            marginBottom: 12,
-                                        }}
-                                    >
-                                        <h4 style={{ margin: 0 }}>Solicitud de material</h4>
-
-                                        <button
-                                            onClick={cerrarSolicitudMaterial}
-                                            style={{
-                                                background: "#ef4444",
-                                                color: "#fff",
-                                                border: "none",
-                                                borderRadius: "50%",
-                                                width: 28,
-                                                height: 28,
-                                                cursor: "pointer",
-                                                fontWeight: "bold",
-                                            }}
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-
-                                    <div style={{ marginBottom: 12 }}>
-                                        <b>Partida:</b> {partidaSeleccionada.partida || "--"}
-                                    </div>
-
-                                    <div style={{ marginBottom: 12 }}>
-                                        <b>Descripción:</b>
-                                        <div
-                                            style={{
-                                                marginTop: 6,
-                                                padding: 10,
-                                                border: "1px solid #e5e7eb",
-                                                borderRadius: 8,
-                                                background: "#f9fafb",
-                                                whiteSpace: "pre-line",
-                                            }}
-                                        >
-                                            {partidaSeleccionada.descripcion || "--"}
-                                        </div>
-                                    </div>
+                                    <h4 style={{ marginTop: 0, marginBottom: 12 }}>
+                                        Material requerido
+                                    </h4>
 
                                     <div
                                         style={{
@@ -1112,7 +1608,7 @@ const GestionProduccion: React.FC = () => {
                                             disabled={partidaSeleccionada.materialEntregado === true}
                                         >
                                             {partidaSeleccionada.materialEntregado
-                                                ? "Ya entregado"
+                                                ? "Material entregado"
                                                 : "Entregar material"}
                                         </button>
                                     </div>
