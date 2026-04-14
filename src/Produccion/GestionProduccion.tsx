@@ -1,4 +1,4 @@
-// src/GestionProduccion.tsx
+// src/Produccion/GestionProduccion.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDatabase, ref, get, remove, update, onValue } from "firebase/database";
@@ -74,6 +74,7 @@ interface OrdenTrabajo {
     asesorSnapshot?: AsesorSnapshot | null;
     taller?: boolean;
     tipoDocumento?: string;
+    Entrada_Almacen?: string;
 }
 
 type OrdenTrabajoConClave = OrdenTrabajo & {
@@ -115,6 +116,16 @@ const GestionProduccion: React.FC = () => {
         return soloNumeros.padStart(5, "0");    
     };
     // =========================
+    // función para formatear la fecha
+    // =========================
+    const obtenerFechaEntradaAlmacen = () => {
+        const hoy = new Date();
+        const dia = String(hoy.getDate()).padStart(2, "0");
+        const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+        const anio = String(hoy.getFullYear()).slice(-2);
+        return `${dia}/${mes}/${anio}`;
+    };
+    // =========================
     // AUTENTICACION DE USUARIOS
     // =========================
     useEffect(() => {
@@ -152,7 +163,7 @@ const GestionProduccion: React.FC = () => {
     // =========================
     const agregarOT = async () => {
         const numeroLimpio = numeroOT.replace(/\D/g, "");
-
+        const entradaAlmacen = obtenerFechaEntradaAlmacen();
         if (!numeroLimpio) {
             alert("Escribe un número de OT");
             return;
@@ -228,6 +239,7 @@ const GestionProduccion: React.FC = () => {
             // 👇 marcar la OT como enviada a taller + actualizar partidas
             await update(ref(db, `ordenes_trabajo/${encontradaKey}`), {
                 taller: true,
+                Entrada_Almacen: entradaAlmacen,
                 ...updatesTrabajos, // 🔥 AQUÍ se agregan los estados automáticamente
             });
 
@@ -385,6 +397,7 @@ const GestionProduccion: React.FC = () => {
             alert("No se encontró la clave de la partida");
             return;
         }
+
         if (estado === "terminada" && !partidaSeleccionada.seriesGeneradas) {
             alert("Debes generar los números de serie antes de terminar");
             return;
@@ -392,29 +405,33 @@ const GestionProduccion: React.FC = () => {
 
         try {
             const db = getDatabase(app);
-
             const ruta = `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`;
+
             if (estado === "inspeccion" && !checkRevision) {
                 alert("Debes confirmar la revisión antes de guardar la inspección");
                 return;
             }
-            // 🔥 1. Guardar en Firebase
-            await update(ref(db, ruta), {
+
+            const datosActualizar: any = {
                 trabajador: estado === "en_fila" ? "" : trabajador,
                 fechaInicio: estado === "en_fila" ? "" : fechaInicio,
                 fechaFin: estado === "en_fila" ? "" : fechaFin,
                 estadoProduccion: estado,
-                inspeccion:
-                    estado === "inspeccion"
-                        ? {
-                            aprobado: checkRevision,
-                            usuario: usuarioActual,
-                            fecha: new Date().toISOString(),
-                            observaciones,
-                        }
-                        : partidaSeleccionada.inspeccion || undefined,
-            });
-            // 🔥 2. Refrescar estado LOCAL (AQUI VA LO QUE ME PREGUNTASTE)
+            };
+
+            if (estado === "inspeccion") {
+                datosActualizar.inspeccion = {
+                    aprobado: checkRevision,
+                    usuario: usuarioActual,
+                    fecha: new Date().toISOString(),
+                    observaciones,
+                };
+            } else if (partidaSeleccionada.inspeccion) {
+                datosActualizar.inspeccion = partidaSeleccionada.inspeccion;
+            }
+
+            await update(ref(db, ruta), datosActualizar);
+
             setOtSeleccionada((prev) => {
                 if (!prev || !prev.trabajos) return prev;
 
@@ -436,14 +453,13 @@ const GestionProduccion: React.FC = () => {
                                         fecha: new Date().toISOString(),
                                         observaciones,
                                     }
-                                    : prev.trabajos[partidaSeleccionada.key!].inspeccion || undefined,
+                                    : prev.trabajos[partidaSeleccionada.key!].inspeccion,
                         },
                     },
                 };
             });
 
             alert("Partida guardada correctamente ✅");
-
         } catch (error) {
             console.error("Error al guardar:", error);
             alert("Error al guardar la partida");
