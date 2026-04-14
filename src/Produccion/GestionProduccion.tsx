@@ -1121,6 +1121,10 @@ const GestionProduccion: React.FC = () => {
                     <h1 style={{ textAlign: "center", marginBottom: 20 }}>
                         {otSeleccionada.otLabel || otSeleccionada.firebaseKey}
                     </h1>
+                    <div style={{ marginBottom: 10 }}>
+                        <b>Entrada a almacén:</b>{" "}
+                        {otSeleccionada?.Entrada_Almacen || "--"}
+                    </div>
 
                     <div style={{ marginBottom: 10 }}>
                         <b>Factura:</b>{" "}
