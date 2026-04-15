@@ -17,6 +17,7 @@ interface OTProduccionData {
   fecha: string;
     clienteNombre: string;
     razonSocial?: string;
+    telefono?: string;
   asesor?: string;
   envio: boolean;
   grupos: GrupoProduccion[];
@@ -87,27 +88,49 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
     doc.setFont("helvetica", "normal");
     doc.text(data.fecha, 107, 68);
 
-    // Fila 2
-    doc.setFont("helvetica", "bold");
-    doc.text("Cliente:", 20, 76);
-    doc.setFont("helvetica", "normal");
-    doc.text(data.clienteNombre, 38, 76);
-
+    // Fila derecha
     doc.setFont("helvetica", "bold");
     doc.text("Envío:", 150, 76);
     doc.setFont("helvetica", "normal");
     doc.text(data.envio ? "Sí" : "No", 165, 76);
 
-    let y = 86;
-  const marginX = 20;
-  const boxWidth = pageWidth - marginX * 2;
+    // Bloque dinámico izquierdo
+    let yInfo = 76;
 
-  const nuevaPaginaSiHaceFalta = (altoNecesario: number) => {
-    if (y + altoNecesario > pageHeight - 20) {
-      doc.addPage();
-      y = 20;
+    if (data.razonSocial && data.razonSocial.trim() !== "") {
+        doc.setFont("helvetica", "bold");
+        doc.text("Razón social:", 20, yInfo);
+        doc.setFont("helvetica", "normal");
+        doc.text(data.razonSocial, 50, yInfo);
+        yInfo += 6;
     }
-  };
+
+    if (data.clienteNombre && data.clienteNombre.trim() !== "") {
+        doc.setFont("helvetica", "bold");
+        doc.text("Cliente:", 20, yInfo);
+        doc.setFont("helvetica", "normal");
+        doc.text(data.clienteNombre, 38, yInfo);
+        yInfo += 6;
+    }
+
+    if (data.telefono && data.telefono.trim() !== "") {
+        doc.setFont("helvetica", "bold");
+        doc.text("Teléfono:", 20, yInfo);
+        doc.setFont("helvetica", "normal");
+        doc.text(data.telefono, 42, yInfo);
+        yInfo += 6;
+    }
+
+    let y = yInfo + 10;
+    const marginX = 20;
+    const boxWidth = pageWidth - marginX * 2;
+
+    const nuevaPaginaSiHaceFalta = (altoNecesario: number) => {
+        if (y + altoNecesario > pageHeight - 20) {
+            doc.addPage();
+            y = 20;
+        }
+    };
 
   // =========================
   // FUNCION DIBUJAR BLOQUE

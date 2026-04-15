@@ -321,7 +321,7 @@ const GestionOT = () => {
                 otSeleccionada.asesorSnapshot?.nombre ||
                 "",
             clienteNombre:
-                otSeleccionada.clienteSnapshot?.nombre || "PUBLICO GENERAL",
+                otSeleccionada.clienteSnapshot?.nombre || "",
             razonSocial:otSeleccionada.clienteSnapshot?.razonSocial ||"",
             empresa: otSeleccionada.clienteSnapshot?.empresa || "",
             telefono: otSeleccionada.clienteSnapshot?.telefono || "",
@@ -379,9 +379,9 @@ const GestionOT = () => {
                 otSeleccionada.asesorSnapshot?.nombre ||
                 "",
             clienteNombre:
-                otSeleccionada.clienteSnapshot?.nombre || "PUBLICO GENERAL",
+                otSeleccionada.clienteSnapshot?.nombre || "",
             razonSocial:otSeleccionada.clienteSnapshot?.razonSocial ||"",
-                
+            telefono: otSeleccionada.clienteSnapshot?.telefono || "",    
             envio: otSeleccionada.envio ?? false,
             grupos,
         });
@@ -762,7 +762,7 @@ const GestionOT = () => {
                                 <b>CRÉDITO</b>
                             </div>
                         )}
-                        <div style={{ marginBottom: 10 }}>
+                        <div style={{  marginBottom: 10}}>
                             <b>Envío:</b> {otSeleccionada.envio ? "Sí" : "No"}
                             {otSeleccionada.envioFolio && (
                                 <div
@@ -783,6 +783,28 @@ const GestionOT = () => {
                                             : `ENVÍO RESERVADO: ${otSeleccionada.envioFolio}`}
                                 </div>
                             )}
+                        </div>
+                        {/*Totales */} 
+                        <div style={{ marginBottom: 10 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", width: 200, marginBottom: 10 }}>
+                                <b>Subtotal:</b>
+                                <span>
+                                    ${Number(otSeleccionada.totalConDescuento || 0).toLocaleString("es-MX", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </span>
+                            </div>
+
+                            <div style={{ display: "flex", justifyContent: "space-between", width: 200, marginBottom: 10 }}>
+                                <b>Total:</b>
+                                <span>
+                                    ${Number(otSeleccionada.totalConIva || 0).toLocaleString("es-MX", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </span>
+                            </div>
                         </div>
 
                         <div style={{ marginTop: 20, marginBottom: 10 }}>
