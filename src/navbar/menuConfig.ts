@@ -64,6 +64,7 @@ const MENU_BASE: Record<string, MenuItem> = {
         label: "Administracion",
         children: [
             { key: "comisiones", label: "Comisiones Produccion" },
+            { key: "comisionesmostrador", label: "Comisiones mostrador" },
         ],
     },
 };
