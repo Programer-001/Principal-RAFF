@@ -50,6 +50,8 @@ const ComisionesMostrador: React.FC = () => {
 
     const [facturasExcluidas, setFacturasExcluidas] = useState<Record<string, boolean>>({});
 
+    const [busquedaFactura, setBusquedaFactura] = useState("");
+
     // =========================
     // HELPERS
     // =========================
@@ -335,7 +337,24 @@ const ComisionesMostrador: React.FC = () => {
         setFechaFin("");
         setVentasRango([]);
         setFacturasExcluidas({});
+        setBusquedaFactura("");
     };
+    // =========================
+    // BUSCAR FACTURA
+    // =========================
+    const ventasMostradas = useMemo(() => {
+        const texto = busquedaFactura.trim().toLowerCase();
+
+        if (!texto) return ventasRango;
+
+        return ventasRango.filter((item) =>
+            String(item.factura || "").toLowerCase().includes(texto)
+        );
+    }, [ventasRango, busquedaFactura]);
+
+    // ====================================================================================
+    // HTML
+    // ====================================================================================
     return (
         <div className="form-container">
             <h2>Comisiones Mostrador</h2>
@@ -428,6 +447,16 @@ const ComisionesMostrador: React.FC = () => {
             {/* TABLA DE FACTURAS */}
             <h3>Facturas dentro del rango</h3>
 
+            <div className="search-bar" style={{ marginBottom: 10 }}>
+                <input
+                    type="text"
+                    placeholder="Buscar factura..."
+                    value={busquedaFactura}
+                    onChange={(e) => setBusquedaFactura(e.target.value)}
+                    className="search-input"
+                />
+            </div>
+
             <div className="table-scroll">
                 <table className="caja-table">
                     <thead>
@@ -446,12 +475,12 @@ const ComisionesMostrador: React.FC = () => {
                             <tr>
                                 <td colSpan={6}>Cargando ventas...</td>
                             </tr>
-                        ) : ventasRango.length === 0 ? (
+                        ) : ventasMostradas.length === 0 ? (
                             <tr>
-                                <td colSpan={6}>No hay facturas en el rango seleccionado.</td>
+                                <td colSpan={6}>No hay facturas para mostrar.</td>
                             </tr>
                         ) : (
-                            ventasRango.map((item) => (
+                            ventasMostradas.map((item) => (
                                 <tr
                                     key={item.id}
                                     style={{
