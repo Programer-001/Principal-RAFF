@@ -15,7 +15,8 @@ interface OTClienteData {
   clienteNombre: string;
   telefono?: string;
   envio: boolean;
-
+  empresa?: string;
+  razonSocial?: string;
   asesor?: string;
 
   conceptos: Concepto[];
@@ -97,26 +98,49 @@ export const generarPDFOTCliente = async (data: OTClienteData) => {
   // =========================
   // CLIENTE
   // =========================
-  let y = 80;
+    let y = 80;
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Cliente:", 20, y);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.clienteNombre, 45, y);
+    // RAZÓN SOCIAL
+    if (data.razonSocial && data.razonSocial.trim() !== "") {
+        doc.setFont("helvetica", "bold");
+        doc.text("Razón social:", 20, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(data.razonSocial, 52, y);
+        y += 7;
+    }
 
-  y += 7;
+    // CLIENTE
+    if (data.clienteNombre && data.clienteNombre.trim() !== "") {
+        doc.setFont("helvetica", "bold");
+        doc.text("Cliente:", 20, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(data.clienteNombre, 45, y);
+        y += 7;
+    }
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Teléfono:", 20, y);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.telefono || "--", 45, y);
+    // EMPRESA
+    if (data.empresa && data.empresa.trim() !== "") {
+        doc.setFont("helvetica", "bold");
+        doc.text("Empresa:", 20, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(data.empresa, 45, y);
+        y += 7;
+    }
 
-  y += 7;
+    // TELÉFONO
+    if (data.telefono && data.telefono.trim() !== "") {
+        doc.setFont("helvetica", "bold");
+        doc.text("Teléfono:", 20, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(data.telefono, 45, y);
+        y += 7;
+    }
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Envío:", 20, y);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.envio ? "Sí" : "No", 45, y);
+    // ENVÍO
+    doc.setFont("helvetica", "bold");
+    doc.text("Envío:", 20, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.envio ? "Sí" : "No", 45, y);
 
   // =========================
   // CONCEPTOS

@@ -11,6 +11,7 @@ interface ClienteSnapshot {
     nombre?: string;
     razonSocial?: string;
     telefono?: string;
+    empresa?: string;
 }
 interface AsesorSnapshot {
     id?: string;
@@ -320,10 +321,10 @@ const GestionOT = () => {
                 otSeleccionada.asesorSnapshot?.nombre ||
                 "",
             clienteNombre:
-                otSeleccionada.clienteSnapshot?.nombre ||
-                otSeleccionada.clienteSnapshot?.razonSocial ||
-                "PUBLICO GENERAL",
-            telefono: otSeleccionada.clienteSnapshot?.telefono,
+                otSeleccionada.clienteSnapshot?.nombre || "PUBLICO GENERAL",
+            razonSocial:otSeleccionada.clienteSnapshot?.razonSocial ||"",
+            empresa: otSeleccionada.clienteSnapshot?.empresa || "",
+            telefono: otSeleccionada.clienteSnapshot?.telefono || "",
             envio: otSeleccionada.envio ?? false,
 
             conceptos,
@@ -378,9 +379,9 @@ const GestionOT = () => {
                 otSeleccionada.asesorSnapshot?.nombre ||
                 "",
             clienteNombre:
-                otSeleccionada.clienteSnapshot?.nombre ||
-                otSeleccionada.clienteSnapshot?.razonSocial ||
-                "PUBLICO GENERAL",
+                otSeleccionada.clienteSnapshot?.nombre || "PUBLICO GENERAL",
+            razonSocial:otSeleccionada.clienteSnapshot?.razonSocial ||"",
+                
             envio: otSeleccionada.envio ?? false,
             grupos,
         });

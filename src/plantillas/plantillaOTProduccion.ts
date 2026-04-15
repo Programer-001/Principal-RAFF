@@ -15,7 +15,8 @@ interface GrupoProduccion {
 interface OTProduccionData {
   otLabel: string;
   fecha: string;
-  clienteNombre: string;
+    clienteNombre: string;
+    razonSocial?: string;
   asesor?: string;
   envio: boolean;
   grupos: GrupoProduccion[];

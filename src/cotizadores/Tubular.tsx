@@ -202,8 +202,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   const descuento = obtenerDescuento(cantidadResistencias, descuentosTubular);
   let totalResistencia =
     Number(cantidadResistencias) *
-      (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo + totalAleta ) +
-    precioSoldadura +
+      (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo + totalAleta + precioSoldadura ) +
+      //precioSoldadura+ <-- LO QUITE POR MIENTRAS
     precioDesoldarbase +
     totalCable +
     totalDesoldartornillo +
@@ -287,7 +287,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   
   ${agregar("TORNILLO", seleccionados["tornillo"]?.tipo)}
   ${agregar("DESOLDAR BASE", seleccionados["desoldar_base"]?.tipo)}
-  ${agregar("SOLDADURA", seleccionados["soldadura_resistencia"]?.tipo)}
+  ${agregar("", seleccionados["soldadura_resistencia"]?.tipo)}
   ${agregar("BORNE", seleccionados["borne"]?.tipo)}
   
   ${agregar("SOLDAR CABLE", tipoSoldarCable)}
