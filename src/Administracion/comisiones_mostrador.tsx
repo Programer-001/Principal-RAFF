@@ -327,7 +327,15 @@ const ComisionesMostrador: React.FC = () => {
     useEffect(() => {
         setFacturasExcluidas({});
     }, [fechaInicio, fechaFin]);
-
+    // =========================
+    // RESET
+    // =========================
+    const resetearRango = () => {
+        setFechaInicio("");
+        setFechaFin("");
+        setVentasRango([]);
+        setFacturasExcluidas({});
+    };
     return (
         <div className="form-container">
             <h2>Comisiones Mostrador</h2>
@@ -376,8 +384,14 @@ const ComisionesMostrador: React.FC = () => {
                     </div>
                 </div>
 
-                <div>
-                    <button onClick={cargarVentas}>Consultar rango</button>
+                <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={cargarVentas} className="btn btn-blue">
+                        Consultar
+                    </button>
+
+                    <button onClick={resetearRango} className="btn btn-red">
+                        Limpiar
+                    </button>
                 </div>
             </div>
 
