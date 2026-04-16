@@ -11,11 +11,30 @@ export const formatearMoneda = (valor: number | undefined | null): string => {
 
 //para los inputs nada mas
 export const procesarInputMoneda = (valor: string) => {
-    const limpio = valor.replace(/[^0-9]/g, "");
-    const numero = Number(limpio);
+    // quitar $ y comas
+    let limpio = valor.replace(/\$/g, "").replace(/,/g, "");
+
+    // dejar solo números y punto
+    limpio = limpio.replace(/[^0-9.]/g, "");
+
+    // permitir solo un punto decimal
+    const partes = limpio.split(".");
+    if (partes.length > 2) {
+        limpio = partes[0] + "." + partes.slice(1).join("");
+    }
+
+    // separar entero y decimal
+    const [entero, decimal] = limpio.split(".");
+
+    const enteroFormateado = entero ? Number(entero).toLocaleString("es-MX") : "";
+
+    const texto =
+        decimal !== undefined ? `${enteroFormateado}.${decimal}` : enteroFormateado;
+
+    const numero = limpio === "" || limpio === "." ? 0 : Number(limpio);
 
     return {
-        texto: limpio ? numero.toLocaleString("es-MX") : "",
+        texto,
         numero,
     };
 };

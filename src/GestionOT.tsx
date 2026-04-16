@@ -380,7 +380,8 @@ const GestionOT = () => {
                 "",
             clienteNombre:
                 otSeleccionada.clienteSnapshot?.nombre || "",
-            razonSocial:otSeleccionada.clienteSnapshot?.razonSocial ||"",
+            razonSocial: otSeleccionada.clienteSnapshot?.razonSocial || "",
+            factura: otSeleccionada.factura ?? undefined,
             telefono: otSeleccionada.clienteSnapshot?.telefono || "",    
             envio: otSeleccionada.envio ?? false,
             grupos,

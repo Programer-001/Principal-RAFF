@@ -53,7 +53,35 @@ export const generarPDFOTCliente = async (data: OTClienteData) => {
     y: 20,
     width: 45,
   });
+    // =========================
+    // CAJA OT (ARRIBA DERECHA)
+    // =========================
+    const boxWidth = 35;
+    const boxHeight = 18;
+    const boxX = pageWidth - boxWidth - 20;
+    const boxY = 20;
 
+    // Marco
+    doc.setDrawColor(0, 0, 0);
+    doc.rect(boxX, boxY, boxWidth, boxHeight);
+
+    // Encabezado negro
+    doc.setFillColor(0, 0, 0);
+    doc.rect(boxX, boxY, boxWidth, 6, "F");
+
+    // Texto "OT"
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("OT", boxX + boxWidth / 2, boxY + 4.5, { align: "center" });
+
+    // Número
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(data.otLabel.replace("OT-", ""), boxX + boxWidth / 2, boxY + 13.5, {
+        align: "center",
+    });
   // =========================
   // EMPRESA
   // =========================
@@ -73,7 +101,7 @@ export const generarPDFOTCliente = async (data: OTClienteData) => {
   // =========================
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(`ORDEN DE TRABAJO ${data.otLabel} (CLIENTE)`, 20, 60);
+  doc.text(`ORDEN DE TRABAJO (CLIENTE)`, 20, 60);
 
     // =========================
     // DATOS OT

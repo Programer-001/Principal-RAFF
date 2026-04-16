@@ -19,7 +19,8 @@ interface OTProduccionData {
     razonSocial?: string;
     telefono?: string;
   asesor?: string;
-  envio: boolean;
+    envio: boolean;
+    factura?: number;
   grupos: GrupoProduccion[];
 }
 
@@ -51,6 +52,36 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
     width: 45,
   });
 
+    // =========================
+    // CAJA OT (ARRIBA DERECHA)
+    // =========================
+    const boxWidthOT = 35;
+    const boxHeight = 18;
+    const boxX = pageWidth - boxWidthOT - 20;
+    const boxY = 20;
+
+    // Marco
+    doc.setDrawColor(0, 0, 0);
+    doc.rect(boxX, boxY, boxWidthOT, boxHeight);
+
+    // Encabezado negro
+    doc.setFillColor(0, 0, 0);
+    doc.rect(boxX, boxY, boxWidthOT, 6, "F");
+
+    // Texto "OT"
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("OT", boxX + boxWidthOT / 2, boxY + 4.5, { align: "center" });
+
+    // Número
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(data.otLabel.replace("OT-", ""), boxX + boxWidthOT / 2, boxY + 13.5, {
+        align: "center",
+    });
+
   // =========================
   // EMPRESA
   // =========================
@@ -70,7 +101,7 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
   // =========================
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-    doc.text(`ORDEN DE TRABAJO ${data.otLabel} (PRODUCCIÓN)`, 20, 58);
+    doc.text(`ORDEN DE TRABAJO (PRODUCCIÓN)`, 20, 58);
 
     // =========================
     // DATOS GENERALES
@@ -84,9 +115,14 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
     doc.text(data.asesor || "--", 48, 70);
 
     doc.setFont("helvetica", "bold");
-    doc.text("Fecha:", 90, 68);
+    doc.text("Factura:", 90, 70);
     doc.setFont("helvetica", "normal");
-    doc.text(data.fecha, 107, 68);
+    doc.text(data.factura ? String(data.factura) : "--", 108, 70);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Fecha:", 150, 70);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.fecha, 165, 70);
 
     // Fila derecha
     doc.setFont("helvetica", "bold");
@@ -131,7 +167,6 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
             y = 20;
         }
     };
-
   // =========================
   // FUNCION DIBUJAR BLOQUE
   // =========================

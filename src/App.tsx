@@ -35,6 +35,7 @@ import InvAlmacen from "./Produccion/inv_almacen";
 import Comisiones from "./Administracion/comisiones";
 import Proveedores from "./Administracion/Proveedores";
 import ComisionesMostrador from "./Administracion/comisiones_mostrador";
+import Pago_Banda from "./Administracion/pago_banda";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -67,6 +68,7 @@ function AppLayout() {
         if (pathname.startsWith("/comisiones")) return "comisiones";
         if (pathname.startsWith("/comisionesmostrador")) return "comisionesmostrador";
         if (pathname.startsWith("/proveedores")) return "proveedores";
+        if (pathname.startsWith("/pago_banda")) return "pago_banda";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
         return "home";
@@ -98,7 +100,8 @@ function AppLayout() {
             invalmacen: "/invalmacen",
             comisiones: "/comisiones",
             comisionesmostrador: "/comisionesmostrador",
-            proveedores:"/proveedores",
+            proveedores: "/proveedores",
+            pago_banda: "/pago_banda",
             perfil: "/perfil",
             home: "/home",
             
@@ -137,6 +140,7 @@ function AppLayout() {
                 <Route path="/comisiones" element={<Comisiones />} />
                 <Route path="/comisionesmostrador" element={<ComisionesMostrador />} />
                 <Route path="/proveedores" element={<Proveedores />} />
+                <Route path="/pago_banda" element={<Pago_Banda />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>

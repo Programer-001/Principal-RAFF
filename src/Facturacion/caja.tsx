@@ -166,6 +166,7 @@ const CorteCaja: React.FC = () => {
         alert("❌ Pago cancelado correctamente");
 
         setCantidad(0);
+        setCantidadInput("");
         setFactura("");
         setMetodo("efectivo");
     };
