@@ -1,4 +1,4 @@
-// src/cotizador.tsx
+﻿// src/cotizador.tsx
 import React, { useState, useEffect } from "react";
 //firebase
 import { getDatabase, ref, get, set } from "firebase/database";
@@ -11,6 +11,7 @@ import CartuchoBaja from "./cotizadores/cartuchobaja";
 import CartuchoAlta from "./cotizadores/cartuchoalta";
 import Resorte from "./cotizadores/Resorte";
 import Termopar from "./cotizadores/termopares";
+import { formatearMoneda } from "./funciones/formato_moneda";
 import {obtenerSiguienteCotizacion,obtenerSiguienteEnvio} from "./firebase/consecutivos";
 // 🔹 Tipos
 interface Cliente {
@@ -1142,7 +1143,7 @@ const Cotizador = () => {
               <b>{ot ? `${ot}.${index + 1}` : `TEMP.${index + 1}`}</b>
             </div>
             <div>{c.descripcion}</div>
-            <div>${c.total.toFixed(2)}</div>
+                <div>${formatearMoneda(c.total)}</div>
 
             <button
               onClick={() => {
@@ -1171,7 +1172,7 @@ const Cotizador = () => {
         ))}
         <hr />
         <div>
-          <b>Subtotal:</b> ${totalGeneral.toFixed(2)}
+                    <b>Subtotal:</b> ${formatearMoneda(totalGeneral)}
         </div>
         {cliente && descuentoCliente > 0 && (
           <div>
@@ -1187,7 +1188,7 @@ const Cotizador = () => {
           </div>
         )}
         <div>
-          <b>Total con IVA (16%):</b> ${totalConIva.toFixed(2)}
+                    <b>Total con IVA (16%):</b> ${formatearMoneda(totalConIva)}
         </div>
         <br />
         {/* FINALIZAR */}

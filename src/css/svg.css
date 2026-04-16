@@ -1,0 +1,37 @@
+﻿.logo {
+    animation: changeColor 10s 2;
+}
+
+@keyframes rotar {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes changeColor {
+    0% {
+        stop-color: #f2f0ea;
+    }
+
+    50% {
+        stop-color: #ffc400;
+    }
+
+    100% {
+        stop-color: #ec8d10;
+    }
+}
+
+#id0 stop {
+    animation: changeColor 5s infinite;
+}
+
+
+#texto {
+    transform: translateY(14px) scale(1.1);
+    transform-origin: top center;
+}

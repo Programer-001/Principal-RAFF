@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { get, ref } from "firebase/database";
 import { db } from "../firebase/config";
+import { formatearMoneda } from "../funciones/formato_moneda";
 
 interface CorteCajaItem {
     id: string;
@@ -55,12 +56,12 @@ const ComisionesMostrador: React.FC = () => {
     // =========================
     // HELPERS
     // =========================
-    const formatearMoneda = (valor: number) =>
+    {/*const formatearMoneda = (valor: number) =>
         new Intl.NumberFormat("es-MX", {
             style: "currency",
             currency: "MXN",
             minimumFractionDigits: 2,
-        }).format(valor || 0);
+        }).format(valor || 0);*/}
 
     const parseFechaCorteCaja = (fecha?: string): Date | null => {
         if (!fecha || typeof fecha !== "string") return null;

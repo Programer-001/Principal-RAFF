@@ -1,4 +1,4 @@
-.App {
+﻿.App {
   font-family: sans-serif;
 }
 
@@ -566,15 +566,7 @@
         background: rgba(239, 68, 68, 0.1);
     }
 
-@media (max-width: 900px) {
-    .notas-layout {
-        grid-template-columns: 1fr;
-    }
 
-    .notas-panel-derecho {
-        position: static;
-    }
-}
 /* ====== COTIZADOR ====== */
 /*Esta es el Resume de lado derecho o izquierdo para siempre baje con la pagina*/
 .resumen-caja {
@@ -638,6 +630,35 @@
     margin: 0 auto; /* ⭐ centrado en la pantalla */
     width: 100%;
 }
+.caja-total-final {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #111827;
+    margin-top: 10px;
+    border-top: 1px solid #ccc;
+    padding-top: 8px;
+
+}
+.caja-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #e5e7eb;
+}
+/* ===== CONTENEDOR SCROLL DE TABLA ===== */
+.caja-table-container {
+    max-height: 480px; /* ajusta a tu gusto */
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+    /* Opcional: evita que la tabla se pegue al borde */
+    .caja-table-container table {
+        margin-bottom: 0;
+    }
+
+
 /*====Resumen de mostrar caja=======*/
 
 /*Esta es el Resume de lado derecho o izquierdo para siempre baje con la pagina*/
@@ -1088,6 +1109,15 @@
     }
 
     .inv-panel {
+        position: static;
+    }
+}
+@media (max-width: 900px) {
+    .notas-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .notas-panel-derecho {
         position: static;
     }
 }

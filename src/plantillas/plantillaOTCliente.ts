@@ -1,5 +1,6 @@
-import jsPDF from "jspdf";
+﻿import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { formatearMoneda } from "../funciones/formato_moneda";
 import "svg2pdf.js";
 
 interface Concepto {
@@ -160,7 +161,7 @@ export const generarPDFOTCliente = async (data: OTClienteData) => {
     body: data.conceptos.map((c) => [
       c.partida,
       c.descripcion,
-      `$ ${c.subtotal.toFixed(2)}`,
+        `$ ${formatearMoneda(c.subtotal)}`,
     ]),
     styles: { fontSize: 9 },
     headStyles: {
@@ -190,23 +191,23 @@ export const generarPDFOTCliente = async (data: OTClienteData) => {
   // =========================
   // TOTALES
   // =========================
-  const totalesX = pageWidth - 60;
+    const totalesX = pageWidth - 60;
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Subtotal:", totalesX, finalY + 10);
-  doc.text("IVA:", totalesX, finalY + 16);
-  doc.text("Total:", totalesX, finalY + 22);
+    doc.setFont("helvetica", "bold");
+    doc.text("Subtotal:", totalesX, finalY + 10);
+    doc.text("IVA:", totalesX, finalY + 16);
+    doc.text("Total:", totalesX, finalY + 22);
 
-  doc.setFont("helvetica", "normal");
-  doc.text(`$ ${data.subtotal.toFixed(2)}`, pageWidth - 20, finalY + 10, {
-    align: "right",
-  });
-  doc.text(`$ ${data.iva.toFixed(2)}`, pageWidth - 20, finalY + 16, {
-    align: "right",
-  });
-  doc.text(`$ ${data.total.toFixed(2)}`, pageWidth - 20, finalY + 22, {
-    align: "right",
-  });
+    doc.setFont("helvetica", "normal");
+    doc.text(`$ ${formatearMoneda(data.subtotal)}`, pageWidth - 20, finalY + 10, {
+        align: "right",
+    });
+    doc.text(`$ ${formatearMoneda(data.iva)}`, pageWidth - 20, finalY + 16, {
+        align: "right",
+    });
+    doc.text(`$ ${formatearMoneda(data.total)}`, pageWidth - 20, finalY + 22, {
+        align: "right",
+    });
   // =========================
   // TERMINOS Y CONDICIONES
   // =========================

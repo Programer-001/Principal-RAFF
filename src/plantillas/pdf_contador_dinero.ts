@@ -1,6 +1,7 @@
 ﻿// src/plantillas/pdf_contador_dinero.ts
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { formatearMoneda } from "../funciones/formato_moneda";
 import "svg2pdf.js";
 
 interface Fila {
@@ -68,10 +69,7 @@ export const generarPDF = async (
         body: billetes.map((f) => [
             f.denom,
             f.cantidad,
-            `$${f.subtotal.toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            })}`,
+            `$${formatearMoneda(f.subtotal)}`,
         ]),
         theme: "grid",
         headStyles: { fillColor: [41, 128, 185], textColor: 255 },
@@ -93,10 +91,7 @@ export const generarPDF = async (
         body: monedas.map((f) => [
             f.denom,
             f.cantidad,
-            `$${f.subtotal.toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            })}`,
+            `$${formatearMoneda(f.subtotal)}`,
         ]),
         theme: "grid",
         headStyles: { fillColor: [39, 174, 96], textColor: 255 },
@@ -109,10 +104,7 @@ export const generarPDF = async (
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(
-        `Total General: $${total.toLocaleString("es-MX", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        })}`,
+        `Total General: $${formatearMoneda(total)}`,
         14,
         posY
     );

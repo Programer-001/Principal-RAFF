@@ -1,8 +1,9 @@
-// src/cotizadores/Banda.tsx
+﻿// src/cotizadores/Banda.tsx
 import React, { useState, useEffect } from "react";
 import { calcularPrecio } from "../funciones/calculos";
 import { tipoCable, termopar, tira } from "../datos/tipoCable";
 import { ItemCotizado } from "../cotizador";
+import { formatearMoneda } from "../funciones/formato_moneda";
 
 interface Props {
   data?: ItemCotizado;
@@ -641,7 +642,9 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
       </div>
 
       <h3 style={{ marginTop: "20px" }}>
-        💰  Subtotal: ${precioCalculado.toFixed(2)} MXN
+              Subtotal: ${formatearMoneda(precioCalculado)}
+              <br/>
+              total:${formatearMoneda(precioCalculado*1.16)}
       </h3>
 
           <button

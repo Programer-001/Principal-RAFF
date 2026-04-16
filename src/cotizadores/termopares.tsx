@@ -313,7 +313,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
 
             <div className="form-row textarea-row full-width descripcion-row">
                 <div className="descripcion-box">
-                    <label className="descripcion-title">Descripcion</label>
+                    <label className="descripcion-title">Descripción</label>
                     <p className="descripcion-texto">{descripcionTermopar}</p>
                 </div>
             </div>

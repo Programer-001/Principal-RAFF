@@ -1,7 +1,8 @@
-//src/cotizadores/cartuchobaja.tsx
+﻿//src/cotizadores/cartuchobaja.tsx
 
 import React, { useState, useEffect } from "react";
 import { obtenerPrecioCartuchoBaja } from "../datos/Resistencia_baja_C";
+import { formatearMoneda } from "../funciones/formato_moneda";
 import { ItemCotizado } from "../cotizador";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
@@ -178,61 +179,78 @@ const CartuchoBaja = ({ data, onGuardar, setDirty }: Props) => {
           />
         </div>
 
-        <div className="form-row">
-          <label>Cable de alta temperatura: </label>
-          <select
-            value={cableAltaTemperatura}
-            onChange={(e) => setCableAltaTemperatura(e.target.value)}
-          >
-            <option value="">Selecciona</option>
-            <option value="SI">SI</option>
-            <option value="NO">NO</option>
-          </select>
-        </div>
+              <div className="form-row">
+                  <label>Cable de alta temperatura:</label>
+                  <select
+                      value={cableAltaTemperatura}
+                      onChange={(e) => {
+                          const valor = e.target.value;
+                          setCableAltaTemperatura(valor);
 
-        <div className="form-row">
-          <label>Calibre y grados de cable: </label>
-          <select
-            value={soldarCableSeleccionado?.id || ""}
-            onChange={(e) => {
-              const id = e.target.value;
+                          // limpiar si cambia a NO o vacío
+                          if (valor !== "SI") {
+                              setSoldarCableSeleccionado(null);
+                              setMedidaCableCm("");
+                              setCantidadCables("");
+                          }
+                      }}
+                  >
+                      <option value="">Selecciona</option>
+                      <option value="SI">SI</option>
+                      <option value="NO">NO</option>
+                  </select>
+              </div>
 
-              const seleccionado = opcionesSoldarCable.find(
-                (item) => item.id === id
-              );
+              <div className="form-row">
+                  <label>Calibre y grados de cable:</label>
+                  <select
+                      value={soldarCableSeleccionado?.id || ""}
+                      onChange={(e) => {
+                          const id = e.target.value;
 
-              setSoldarCableSeleccionado(seleccionado || null);
-            }}
-          >
-            <option value="">Seleccione...</option>
+                          const seleccionado = opcionesSoldarCable.find(
+                              (item) => item.id === id
+                          );
 
-            {opcionesSoldarCable.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.tipo}
-              </option>
-            ))}
-          </select>
-        </div>
+                          setSoldarCableSeleccionado(seleccionado || null);
 
-        <div className="form-row">
-          <label>Longitud de cable (cm): </label>
-          <input
-            type="number"
-            value={medidaCableCm}
-            onChange={(e) => setMedidaCableCm(e.target.value)}
-            disabled={cableAltaTemperatura !== "SI"}
-          />
-        </div>
+                          // si borra la selección, limpia los campos de abajo
+                          if (!id) {
+                              setMedidaCableCm("");
+                              setCantidadCables("");
+                          }
+                      }}
+                      disabled={cableAltaTemperatura !== "SI"}
+                  >
+                      <option value="">Seleccione...</option>
 
-        <div className="form-row">
-          <label>Cantidad de cables: </label>
-          <input
-            type="number"
-            value={cantidadCables}
-            onChange={(e) => setCantidadCables(e.target.value)}
-            disabled={cableAltaTemperatura !== "SI"}
-          />
-        </div>
+                      {opcionesSoldarCable.map((item) => (
+                          <option key={item.id} value={item.id}>
+                              {item.tipo}
+                          </option>
+                      ))}
+                  </select>
+              </div>
+
+              <div className="form-row">
+                  <label>Longitud de cable (cm):</label>
+                  <input
+                      type="number"
+                      value={medidaCableCm}
+                      onChange={(e) => setMedidaCableCm(e.target.value)}
+                      disabled={cableAltaTemperatura !== "SI" || !soldarCableSeleccionado}
+                  />
+              </div>
+
+              <div className="form-row">
+                  <label>Cantidad de cables:</label>
+                  <input
+                      type="number"
+                      value={cantidadCables}
+                      onChange={(e) => setCantidadCables(e.target.value)}
+                      disabled={cableAltaTemperatura !== "SI" || !soldarCableSeleccionado || !medidaCableCm}
+                  />
+              </div>
 
         <div className="form-row textarea-row">
           <label>DATOS ADICIONALES: </label>
@@ -254,10 +272,10 @@ const CartuchoBaja = ({ data, onGuardar, setDirty }: Props) => {
       <div className="form-row textarea-row">
         <label>Total</label>
         <div>
-          <p>Precio del cable: ${precioSoldarCable}</p>
-          <p>Precio cable: ${totalCable.toFixed(2)}</p>
-          <p>Precio de resistencia: ${totalPorResistencia.toFixed(2)}</p>
-          <p>Total: ${total.toFixed(2)}</p>
+                  <p>Precio del cable: ${formatearMoneda(precioSoldarCable)}</p>
+                  <p>Precio cable: ${formatearMoneda(totalCable)}</p>
+                  <p>Precio de resistencia: ${formatearMoneda(totalPorResistencia)}</p>
+                  <p>Total: ${formatearMoneda(total)}</p>
         </div>
       </div>
 

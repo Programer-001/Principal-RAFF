@@ -1,8 +1,9 @@
-//src/cotizadores/Tubular.totalExpress
+﻿//src/cotizadores/Tubular.totalExpress
 import React, { useEffect, useState } from "react";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 import { tablasPrecios, TipoResistencia } from "../datos/PrecioTipoResistencia";
+import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 import {
   obtenerDescuento,
   descuentosTubular,
@@ -776,8 +777,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
 
           {/* ---------------------------------------------Fin del DIV de cotizador-------------------------------------------------------------->> */}
               </div>
-              <h2>Subtotal Tubular: $ {totalConDescuento.toFixed(2)}</h2>
-              <h1>Total: $ {totalconiva.toFixed(2)}</h1>
+              <h2>Subtotal Tubular: $ {formatearMoneda(totalConDescuento)}</h2>
+              <h1>Total: $ {formatearMoneda(totalconiva)}</h1>
               {/*<h3>Descuento aplicado: {(descuento * 100).toFixed(0)}%</h3>*/}
               <button
                   className="btn btn-blue"

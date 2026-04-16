@@ -393,7 +393,7 @@ const Proveedores: React.FC = () => {
                 <button
                     onClick={nuevoProveedor}
                     style={{
-                        width: "100%",
+                        width: "80%",
                         padding: 8,
                         marginBottom: 10,
                         background: "#1976d2",
@@ -409,7 +409,7 @@ const Proveedores: React.FC = () => {
                     placeholder="Buscar proveedor..."
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    style={{ width: "100%", padding: 6, marginBottom: 10 }}
+                    style={{ width: "80%", padding: 6, marginBottom: 10 }}
                 />
 
                 {proveedoresFiltrados.map((p) => (

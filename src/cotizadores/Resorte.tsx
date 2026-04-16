@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { ItemCotizado } from "../cotizador";
+import { formatearMoneda } from "../funciones/formato_moneda";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 interface Props {
@@ -280,7 +281,6 @@ const Resorte = ({ data, onGuardar, setDirty }: Props) => {
             onChange={(e) => setTerminalSeleccionada(e.target.value)}
           >
             <option value="">Selecciona</option>
-            <option value="NO">NO</option>
             {terminalOptions.map((op) => (
               <option key={op.id} value={op.id}>
                 {op.tipo || op.id}
@@ -353,12 +353,14 @@ const Resorte = ({ data, onGuardar, setDirty }: Props) => {
         {data ? "ACTUALIZAR" : "AGREGAR"}
       </button>
       {/*Mostrar los resultados*/}
-      <div style={{ marginTop: "20px" }}>
+          <div style={{ marginTop: "20px" }}>
+              <h1> <strong>Total general:</strong> ${formatearMoneda(totalGeneral * 1.16)}</h1>
+              <h2> <strong>subtotal general:</strong> ${formatearMoneda(totalGeneral)}</h2> 
         <h3>Resultados</h3>
 
         <div>
           <strong>Resistencia del alambre (ohms x metro):</strong>{" "}
-          {resistenciaPorMetro.toFixed(4)}
+                  {resistenciaPorMetro.toFixed(4)} Ω/m
         </div>
 
         <div>
@@ -367,32 +369,32 @@ const Resorte = ({ data, onGuardar, setDirty }: Props) => {
         </div>
 
         <div>
-          <strong>Precio por metro:</strong> ${precioAlambrePorMetro.toFixed(2)}
+                  <strong>Precio por metro:</strong> ${formatearMoneda(precioAlambrePorMetro)}
         </div>
 
         <div>
           <strong>Costo del alambre por resorte:</strong> $
-          {costoAlambre.toFixed(2)}
+                  ${formatearMoneda(costoAlambre)}
         </div>
 
         {mostrarCantidadTerminales && (
           <div>
             <strong>Terminales por resorte:</strong> {cantidadTerminalesNum} x $
-            {precioTerminal.toFixed(2)} = ${costoTerminales.toFixed(2)}
+                      {formatearMoneda(precioTerminal)} = ${formatearMoneda(costoTerminales)}
           </div>
         )}
 
         <div>
-          <strong>50% fabricación:</strong> ${costoFabricacion.toFixed(2)}
+                  <strong>50% fabricación:</strong> ${formatearMoneda(costoFabricacion)}
         </div>
 
         <div>
-          <strong>Total por resorte:</strong> ${totalPorResorte.toFixed(2)}
+                  <strong>subtotal por resorte:</strong> ${formatearMoneda(totalPorResorte)}
         </div>
 
         <div>
-          <strong>Total general:</strong> ${totalGeneral.toFixed(2)}
-        </div>
+                  <strong>subtotal general:</strong> ${formatearMoneda(totalGeneral)}
+              </div>
       </div>
     </>
   );

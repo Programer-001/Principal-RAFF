@@ -1,6 +1,8 @@
 ﻿import React, { useState } from "react";
 import { loginConUsername } from "./Login";
 import { useNavigate } from "react-router-dom";
+import { ReactComponent as LogoBlanco } from "../auth/logo_blanco.svg";
+import "../css/svg.css";
 
 const Login: React.FC = () => {
     const [username, setUsername] = useState("");
@@ -177,13 +179,11 @@ const Login: React.FC = () => {
                         padding: "30px",
                     }}
                 >
-                    <img
-                        src="/svg/logo_blanco.svg"
-                        alt="Logo blanco"
+                    <LogoBlanco
+                        className="logo"
                         style={{
-                            width: "260px",
+                            width: "500px",
                             maxWidth: "80%",
-                            objectFit: "contain",
                         }}
                     />
                 </div>

@@ -1,6 +1,8 @@
-import jsPDF from "jspdf";
+﻿import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { formatearMoneda } from "../funciones/formato_moneda";
 import "svg2pdf.js";
+
 
 interface Concepto {
     cantidad: number;
@@ -27,12 +29,7 @@ interface OTClienteData {
 // ======================================================
 // UTILIDADES
 // ======================================================
-const formatearMoneda = (valor: number) => {
-    return `$${Number(valor || 0).toLocaleString("es-MX", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    })}`;
-};
+
 
 const parseFechaDDMMYYYY = (fecha: string): Date | null => {
     if (!fecha) return null;

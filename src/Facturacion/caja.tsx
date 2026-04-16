@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from "react";
 import { getDatabase, ref, set, update, onValue } from "firebase/database";
 import { app } from "../firebase/config";
+import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 //import "../css/caja.css";
 interface Pago {
     id: string;
@@ -36,6 +37,10 @@ const CorteCaja: React.FC = () => {
     // Estado del modal de cancelación
     const [mostrarCancelar, setMostrarCancelar] = useState(false);
     const [motivoCancelacion, setMotivoCancelacion] = useState("");
+
+
+    //para escribir en monedas con comas
+    const [cantidadInput, setCantidadInput] = useState("");
 
     useEffect(() => {
         const pagosRef = ref(db, `corte-caja/${fecha}`);
@@ -214,13 +219,18 @@ const CorteCaja: React.FC = () => {
 
                 <div className="grid-inputs">
                     <input
-                        type="number"
+                        type="text"
                         placeholder="Cantidad"
-                        value={cantidad === 0 ? "" : cantidad}
-                        onChange={(e) => setCantidad(parseFloat(e.target.value) || 0)}
-                        className={`input-caja1 ${errorCantidad ? "input-caja1-error" : ""
-                            }`}
+                        value={cantidadInput}
+                        onChange={(e) => {
+                            const { texto, numero } = procesarInputMoneda(e.target.value);
+
+                            setCantidadInput(texto ? `$${texto}` : "");  // visual → "1,000"
+                            setCantidad(numero);     // real → 1000
+                        }}
+                        className={`input-caja1 ${errorCantidad ? "input-caja1-error" : ""}`}
                     />
+            
 
                     <select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
                         <option value="efectivo">Efectivo</option>
@@ -277,40 +287,42 @@ const CorteCaja: React.FC = () => {
                                 <tr key={i}>
                                     <td>{p.transaccion}</td>
                                     <td>{p.metodo.replace("_", " ")}</td>
-                                    <td>${p.cantidad.toFixed(2)}</td>
+                                    <td>${formatearMoneda(p.cantidad)}</td>
                                     <td>{p.factura || "-"}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
 
-                    <div className="caja-totales">
-                        <p>
-                            <strong>Efectivo:</strong> ${totalEfectivo.toFixed(2)}
-                        </p>
-                        <p>
-                            <strong>Cheque:</strong> ${totalCheque.toFixed(2)}
-                        </p>
-                        <p>
-                            <strong>Tarjeta Crédito:</strong> ${totalCredito.toFixed(2)}
-                        </p>
-                        <p>
-                            <strong>Tarjeta Débito:</strong> ${totalDebito.toFixed(2)}
-                        </p>
-                        <p>
-                            <strong>Transferencia:</strong> ${totalTransferencia.toFixed(2)}
-                        </p>
-                        <p>
-                            <strong>Crédito Clientes:</strong> $
-                            {totalCreditoClientes.toFixed(2)}
-                        </p>
 
-                        <p className="caja-total-final">
-                            Total: ${totalGeneral.toFixed(2)}
-                        </p>
-                    </div>
                 </div>
             )}
+            <div className="caja-totales">
+                <p>
+                    <strong>Efectivo:</strong> ${formatearMoneda(totalEfectivo)}
+                </p>
+                <p>
+                    <strong>Cheque:</strong> ${formatearMoneda(totalCheque)}
+                </p>
+                <p>
+                    <strong>Tarjeta Crédito:</strong> ${formatearMoneda(totalCredito)}
+                </p>
+                <p>
+                    <strong>Tarjeta Débito:</strong> ${formatearMoneda(totalDebito)}
+                </p>
+                <p>
+                    <strong>Transferencia:</strong> $
+                    {formatearMoneda(totalTransferencia)}
+                </p>
+                <p>
+                    <strong>Crédito Clientes:</strong> $
+                    {formatearMoneda(totalCreditoClientes)}
+                </p>
+
+                <p className="caja-total-final">
+                    Total: ${formatearMoneda(totalGeneral)}
+                </p>
+            </div>
 
             {/* ---------------- MODAL DE CANCELACIÓN ---------------- */}
             {mostrarCancelar && (
