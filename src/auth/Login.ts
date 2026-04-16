@@ -4,6 +4,7 @@ import { db, auth } from "../firebase/config";
 
 interface Empleado {
     username: string;
+    area?: string;
     email: string;
     activo: boolean;
 }
@@ -33,6 +34,10 @@ export const loginConUsername = async (username: string, password: string) => {
     if (!empleadoEncontrado.activo) {
         throw new Error("Usuario inactivo");
     }
+
+    // 💾 GUARDAR DATOS EN LOCALSTORAGE
+    localStorage.setItem("area", empleadoEncontrado.area || "");
+    localStorage.setItem("username", empleadoEncontrado.username);
 
     return await signInWithEmailAndPassword(
         auth,
