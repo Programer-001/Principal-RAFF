@@ -1,3 +1,4 @@
+ï»¿//src/Administracion/comisiones.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { get, ref } from "firebase/database";
 import { db } from "../firebase/config";
@@ -51,8 +52,8 @@ const COMISION_PORCENTAJE = 0.002; // 0.2%
 const TIPOS_DISPONIBLES = [
     "tubular",
     "banda",
-    "cartucho baja concentración",
-    "cartucho alta concentración",
+    "cartucho baja concentraciÃ³n",
+    "cartucho alta concentraciÃ³n",
     "resorte",
     "termopar",
     "ceramica",
@@ -152,7 +153,7 @@ const Comisiones = () => {
                     })
                 );
 
-                // Aquí tomé trabajadores activos de producción / operadores
+                // AquÃ­ tomÃ© trabajadores activos de producciÃ³n / operadores
                 const activosProduccion = listaEmpleados.filter((emp) => {
                     const activo = emp.activo === true;
                     const area = normalizarTexto(emp.area);
@@ -481,7 +482,7 @@ const Comisiones = () => {
                                 <th style={styles.th}>Cantidad</th>
                                 <th style={styles.th}>Partidas</th>
                                 <th style={styles.th}>Total trabajado</th>
-                                <th style={styles.th}>Comisión 0.2%</th>
+                                <th style={styles.th}>ComisiÃ³n 0.2%</th>
                             </tr>
                         </thead>
                         <tbody>
