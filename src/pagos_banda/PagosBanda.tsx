@@ -6,7 +6,10 @@ const PagosBanda: React.FC = () => {
     const [vista, setVista] = useState<"pago" | "consulta">("pago");
 
     return (
-        <div>
+        <div style={{
+            padding: 20,
+            margin: "0 auto",
+        }}>
             <h1>Pagos de banda</h1>
 
             {/* MENU TIPO COTIZADOR */}

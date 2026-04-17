@@ -202,7 +202,8 @@ const Consulta_Pago_Banda: React.FC = () => {
     };
     //----------------------------------HTML----------------------------------------------->>
     return (
-        <div style={{ display: "flex", gap: 30, padding: 20 }}>
+        <div style={{
+            display: "flex", gap: 30, padding: 20, maxWidth: 1200, margin: "0 auto", }}>
             {/* LADO IZQUIERDO */}
             <div style={{ flex: 3 }}>
                 <h2>Consulta de pagos de banda</h2>
