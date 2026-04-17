@@ -1,4 +1,4 @@
-import {
+﻿import {
     Routes,
     Route,
     Navigate,
@@ -35,7 +35,7 @@ import InvAlmacen from "./Produccion/inv_almacen";
 import Comisiones from "./Administracion/comisiones";
 import Proveedores from "./Administracion/Proveedores";
 import ComisionesMostrador from "./Administracion/comisiones_mostrador";
-import Pago_Banda from "./Administracion/pago_banda";
+import PagosBanda from "./pagos_banda/PagosBanda";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -140,7 +140,7 @@ function AppLayout() {
                 <Route path="/comisiones" element={<Comisiones />} />
                 <Route path="/comisionesmostrador" element={<ComisionesMostrador />} />
                 <Route path="/proveedores" element={<Proveedores />} />
-                <Route path="/pago_banda" element={<Pago_Banda />} />
+                <Route path="/pago_banda" element={<PagosBanda />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>

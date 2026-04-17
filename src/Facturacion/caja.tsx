@@ -206,67 +206,67 @@ const CorteCaja: React.FC = () => {
 
     return (
         <div className="form-container">
-            <div className="caja-header">
-                <h1>💵 Caja</h1>
+            <div className="caja-sticky-top">
+                <div className="caja-header">
+                    <h1>💵 Caja</h1>
 
-                <div className="encabezado-cotizador">
-                    <label>
-                        <strong>Transacción:</strong> #{transaccion}
-                    </label>
-                    <label>
-                        <strong>Fecha:</strong> {new Date().toLocaleDateString()}
-                    </label>
-                </div>
+                    <div className="encabezado-cotizador">
+                        <label>
+                            <strong>Transacción:</strong> #{transaccion}
+                        </label>
+                        <label>
+                            <strong>Fecha:</strong> {new Date().toLocaleDateString()}
+                        </label>
+                    </div>
 
-                <div className="grid-inputs">
-                    <input
-                        type="text"
-                        placeholder="Cantidad"
-                        value={cantidadInput}
-                        onChange={(e) => {
-                            const { texto, numero } = procesarInputMoneda(e.target.value);
+                    <div className="grid-inputs">
+                        <input
+                            type="text"
+                            placeholder="Cantidad"
+                            value={cantidadInput}
+                            onChange={(e) => {
+                                const { texto, numero } = procesarInputMoneda(e.target.value);
+                                setCantidadInput(texto ? `$${texto}` : "");
+                                setCantidad(numero);
+                            }}
+                            className={`input-caja1 ${errorCantidad ? "input-caja1-error" : ""}`}
+                        />
 
-                            setCantidadInput(texto ? `$${texto}` : "");  // visual → "1,000"
-                            setCantidad(numero);     // real → 1000
-                        }}
-                        className={`input-caja1 ${errorCantidad ? "input-caja1-error" : ""}`}
-                    />
-            
+                        <select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="tarjeta_credito">Tarjeta Crédito</option>
+                            <option value="tarjeta_debito">Tarjeta Débito</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="credito">Crédito Clientes</option>
+                            <option value="otro">Otro</option>
+                        </select>
 
-                    <select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="cheque">Cheque</option>
-                        <option value="tarjeta_credito">Tarjeta Crédito</option>
-                        <option value="tarjeta_debito">Tarjeta Débito</option>
-                        <option value="transferencia">Transferencia</option>
-                        <option value="credito">Crédito Clientes</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                   
-                    <input
-                        type="text"
-                        placeholder="Factura"
-                        value={factura}
-                        onChange={(e) => setFactura(e.target.value)}
-                        className={`input-caja1 ${errorFactura ? "input-caja1-error" : ""}`}
-                    />
-                </div>
+                        <input
+                            type="text"
+                            placeholder="Factura"
+                            value={factura}
+                            onChange={(e) => setFactura(e.target.value)}
+                            className={`input-caja1 ${errorFactura ? "input-caja1-error" : ""}`}
+                        />
+                    </div>
 
-                <div className="btn-container">
-                    <button onClick={handleGuardar} className="btn btn-blue">
-                        Guardar Pago
-                    </button>
+                    <div className="btn-container">
+                        <button onClick={handleGuardar} className="btn btn-blue">
+                            Guardar Pago
+                        </button>
 
-                    <button
-                        onClick={() => setMostrarCaja(!mostrarCaja)}
-                        className="btn btn-green"
-                    >
-                        {mostrarCaja ? "Ocultar Caja" : "Mostrar Caja"}
-                    </button>
+                        <button
+                            onClick={() => setMostrarCaja(!mostrarCaja)}
+                            className="btn btn-green"
+                        >
+                            {mostrarCaja ? "Ocultar Caja" : "Mostrar Caja"}
+                        </button>
 
-                    <button onClick={abrirModalCancelacion} className="btn btn-red">
-                        Cancelar Factura
-                    </button>
+                        <button onClick={abrirModalCancelacion} className="btn btn-red">
+                            Cancelar Factura
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -294,10 +294,9 @@ const CorteCaja: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
-
-
                 </div>
             )}
+
             <div className="caja-totales">
                 <p>
                     <strong>Efectivo:</strong> ${formatearMoneda(totalEfectivo)}
@@ -312,12 +311,10 @@ const CorteCaja: React.FC = () => {
                     <strong>Tarjeta Débito:</strong> ${formatearMoneda(totalDebito)}
                 </p>
                 <p>
-                    <strong>Transferencia:</strong> $
-                    {formatearMoneda(totalTransferencia)}
+                    <strong>Transferencia:</strong> ${formatearMoneda(totalTransferencia)}
                 </p>
                 <p>
-                    <strong>Crédito Clientes:</strong> $
-                    {formatearMoneda(totalCreditoClientes)}
+                    <strong>Crédito Clientes:</strong> ${formatearMoneda(totalCreditoClientes)}
                 </p>
 
                 <p className="caja-total-final">
@@ -325,7 +322,6 @@ const CorteCaja: React.FC = () => {
                 </p>
             </div>
 
-            {/* ---------------- MODAL DE CANCELACIÓN ---------------- */}
             {mostrarCancelar && (
                 <div className="modal">
                     <div className="modal-content">
