@@ -1,5 +1,4 @@
-﻿//src/Administracion/Proveedores.tsx
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { ref, push, set, get, update } from "firebase/database";
 import { db } from "../firebase/config";
 
@@ -20,6 +19,36 @@ interface Proveedor {
     email: string;
     notas: string;
 }
+
+type CampoProps = {
+    label: string;
+    valor: string;
+    campo: keyof Proveedor;
+    modoEditar: boolean;
+    handleChange: (campo: keyof Proveedor, valor: string) => void;
+};
+
+const Campo: React.FC<CampoProps> = ({
+    label,
+    valor,
+    campo,
+    modoEditar,
+    handleChange,
+}) => (
+    <div style={{ marginBottom: 10 }}>
+        <label style={{ fontWeight: "bold" }}>{label}</label>
+
+        {modoEditar ? (
+            <input
+                value={valor}
+                onChange={(e) => handleChange(campo, e.target.value)}
+                style={{ width: "100%" }}
+            />
+        ) : (
+            <p>{valor || "-"}</p>
+        )}
+    </div>
+);
 
 const Proveedores: React.FC = () => {
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
@@ -78,10 +107,10 @@ const Proveedores: React.FC = () => {
     }, []);
 
     const handleChange = (campo: keyof Proveedor, valor: string) => {
-        setForm({
-            ...form,
+        setForm((prev) => ({
+            ...prev,
             [campo]: valor,
-        });
+        }));
     };
 
     const guardarProveedor = async () => {
@@ -130,7 +159,22 @@ const Proveedores: React.FC = () => {
     };
 
     const seleccionarProveedor = (p: Proveedor) => {
-        setForm(p);
+        setForm({
+            nombre: p.nombre || "",
+            alias: p.alias || "",
+            rfc: p.rfc || "",
+            domicilio: p.domicilio || "",
+            colonia: p.colonia || "",
+            municipio: p.municipio || "",
+            estado: p.estado || "",
+            cp: p.cp || "",
+            pais: p.pais || "",
+            vendedor: p.vendedor || "",
+            telefono: p.telefono || "",
+            whatsapp: p.whatsapp || "",
+            email: p.email || "",
+            notas: p.notas || "",
+        });
         setEditandoId(p.id || null);
         setModoEditar(false);
         setProveedorSeleccionado(true);
@@ -163,41 +207,17 @@ const Proveedores: React.FC = () => {
         (p.nombre + p.alias).toLowerCase().includes(busqueda.toLowerCase())
     );
 
-    const Campo = ({
-        label,
-        valor,
-        campo,
-    }: {
-        label: string;
-        valor: string;
-        campo: keyof Proveedor;
-    }) => (
-        <div style={{ marginBottom: 10 }}>
-            <label style={{ fontWeight: "bold" }}>{label}</label>
-
-            {modoEditar ? (
-                <input
-                    value={valor}
-                    onChange={(e) => handleChange(campo, e.target.value)}
-                    style={{ width: "100%" }}
-                />
-            ) : (
-                <p>{valor || "-"}</p>
-            )}
-        </div>
-    );
-
     return (
-        <div style={{
-            padding: 20,
-            display: "flex",
-            gap: 30,
-            width: "100%",
-            maxWidth: 1300,
-            margin: "0 auto",
-        }}>
-            {/* PANEL IZQUIERDO */}
-
+        <div
+            style={{
+                padding: 20,
+                display: "flex",
+                gap: 30,
+                width: "100%",
+                maxWidth: 1300,
+                margin: "0 auto",
+            }}
+        >
             <div
                 style={{
                     flex: 2,
@@ -221,8 +241,6 @@ const Proveedores: React.FC = () => {
                 ) : (
                     <>
                         <h1>{form.nombre || "Nuevo proveedor"}</h1>
-
-                        {/* BOTON WHATSAPP */}
 
                         {!modoEditar && whatsappNumero && (
                             <a
@@ -251,33 +269,104 @@ const Proveedores: React.FC = () => {
                                 gap: 20,
                             }}
                         >
-                            <Campo label="Alias" valor={form.alias} campo="alias" />
-                            <Campo label="RFC" valor={form.rfc} campo="rfc" />
+                            <Campo
+                                label="Alias"
+                                valor={form.alias}
+                                campo="alias"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                                />
+                            <Campo
+                                label="Nombre"
+                                valor={form.nombre}
+                                campo="nombre"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
+                            <Campo
+                                label="RFC"
+                                valor={form.rfc}
+                                campo="rfc"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
 
                             <Campo
                                 label="Domicilio"
                                 valor={form.domicilio}
                                 campo="domicilio"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
                             />
-                            <Campo label="CP" valor={form.cp} campo="cp" />
+                            <Campo
+                                label="CP"
+                                valor={form.cp}
+                                campo="cp"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
 
-                            <Campo label="Colonia" valor={form.colonia} campo="colonia" />
+                            <Campo
+                                label="Colonia"
+                                valor={form.colonia}
+                                campo="colonia"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
                             <Campo
                                 label="Municipio"
                                 valor={form.municipio}
                                 campo="municipio"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
                             />
 
-                            <Campo label="Estado" valor={form.estado} campo="estado" />
-                            <Campo label="País" valor={form.pais} campo="pais" />
+                            <Campo
+                                label="Estado"
+                                valor={form.estado}
+                                campo="estado"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
+                            <Campo
+                                label="País"
+                                valor={form.pais}
+                                campo="pais"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
 
-                            <Campo label="Vendedor" valor={form.vendedor} campo="vendedor" />
-                            <Campo label="Teléfono" valor={form.telefono} campo="telefono" />
+                            <Campo
+                                label="Vendedor"
+                                valor={form.vendedor}
+                                campo="vendedor"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
+                            <Campo
+                                label="Teléfono"
+                                valor={form.telefono}
+                                campo="telefono"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
 
-                            <Campo label="WhatsApp" valor={form.whatsapp} campo="whatsapp" />
+                            <Campo
+                                label="WhatsApp"
+                                valor={form.whatsapp}
+                                campo="whatsapp"
+                                modoEditar={modoEditar}
+                                handleChange={handleChange}
+                            />
                         </div>
 
-                        <Campo label="Email" valor={form.email} campo="email" />
+                        <Campo
+                            label="Email"
+                            valor={form.email}
+                            campo="email"
+                            modoEditar={modoEditar}
+                            handleChange={handleChange}
+                        />
 
                         <div style={{ marginBottom: 10 }}>
                             <label style={{ fontWeight: "bold" }}>Notas</label>
@@ -285,15 +374,15 @@ const Proveedores: React.FC = () => {
                             {modoEditar ? (
                                 <textarea
                                     value={form.notas}
-                                    onChange={(e) => handleChange("notas", e.target.value)}
+                                    onChange={(e) =>
+                                        handleChange("notas", e.target.value)
+                                    }
                                     style={{ width: "100%", height: 70 }}
                                 />
                             ) : (
                                 <p>{form.notas || "-"}</p>
                             )}
                         </div>
-
-                        {/* BOTONES */}
 
                         <div style={{ marginTop: 15 }}>
                             {!modoEditar && (
@@ -342,8 +431,6 @@ const Proveedores: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* MAPA */}
-
                         {form.domicilio && (
                             <div style={{ marginTop: 30 }}>
                                 <h3>Ubicación</h3>
@@ -375,8 +462,6 @@ const Proveedores: React.FC = () => {
                     </>
                 )}
             </div>
-
-            {/* LIBRETA */}
 
             <div
                 style={{
