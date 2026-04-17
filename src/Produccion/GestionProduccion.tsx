@@ -5,6 +5,7 @@ import { getDatabase, ref, get, remove, update, onValue } from "firebase/databas
 import { app, auth } from "../firebase/config";
 import { generarPDFOTCliente } from "../plantillas/plantillaOTCliente";
 import { generarPDFOTProduccion } from "../plantillas/plantillaOTProduccion";
+import { generarPDFOTProduccionPartida } from "../plantillas/plantillaOTProduccion_individual";
 import { calcularMaterialesTubular, MaterialItem } from "../datos/Armado_Resistencia";
 
 interface ClienteSnapshot {
@@ -897,6 +898,41 @@ const GestionProduccion: React.FC = () => {
             alert("No se pudieron generar los números de serie");
         }
     };
+
+    // =========================
+    // PDF INDIVIDUAL DE PARTIDA
+    // =========================
+    const crearPDFPartida = async () => {
+        if (!otSeleccionada || !partidaSeleccionada) {
+            alert("Selecciona una partida");
+            return;
+        }
+
+        try {
+            await generarPDFOTProduccionPartida({
+                otLabel: otSeleccionada.otLabel || `OT-${otSeleccionada.ot}`,
+                partida: partidaSeleccionada.partida || "SIN_PARTIDA",
+                fecha: partidaSeleccionada.fechaInicio || "--",
+                clienteNombre:
+                    otSeleccionada.clienteSnapshot?.nombre ||
+                    otSeleccionada.clienteSnapshot?.razonSocial ||
+                    "PUBLICO GENERAL",
+                razonSocial: otSeleccionada.clienteSnapshot?.razonSocial || "",
+                telefono: otSeleccionada.clienteSnapshot?.telefono || "",
+                trabajador: partidaSeleccionada.trabajador || "--",
+                envio: !!otSeleccionada.envio,
+                factura:
+                    otSeleccionada.factura === null || otSeleccionada.factura === undefined
+                        ? undefined
+                        : otSeleccionada.factura,
+                descripcion: partidaSeleccionada.descripcion || "--",
+                tipo: partidaSeleccionada.tipo || "--",
+            });
+        } catch (error) {
+            console.error("Error al generar PDF individual de partida:", error);
+            alert("No se pudo generar el PDF de la partida");
+        }
+    };
     // =========================
     // HTML
     // =========================
@@ -992,6 +1028,7 @@ const GestionProduccion: React.FC = () => {
                                         <th style={thStyle}>OT</th>
                                         <th style={thStyle}>Factura</th>
                                         <th style={thStyle}>Cliente</th>
+                                        <th style={thStyle}>Estado</th>
                                         <th style={thStyle}>Acciones</th>
                                     </tr>
                                 </thead>
@@ -999,34 +1036,56 @@ const GestionProduccion: React.FC = () => {
                                 <tbody>
                                     {ordenesAgregadas.length === 0 ? (
                                         <tr>
-                                            <td style={tdStyle} colSpan={4}>
+                                            <td style={tdStyle} colSpan={5}>
                                                 No hay OTs agregadas
                                             </td>
                                         </tr>
                                     ) : (
-                                        ordenesAgregadas.map((ot) => (
-                                            <tr key={ot.firebaseKey}>
-                                                <td style={tdStyle}>{ot.otLabel || ot.firebaseKey}</td>
+                                        ordenesAgregadas.map((ot) => {
+                                            const otCompleta = Object.values(ot.trabajos || {}).every(
+                                                (t: any) => t.estadoProduccion === "lista_para_entrega"
+                                            );
 
-                                                <td style={tdStyle}>
-                                                    {ot.factura === null || ot.factura === undefined
-                                                        ? "--"
-                                                        : ot.factura}
-                                                </td>
+                                            return (
+                                                <tr
+                                                    key={ot.firebaseKey}
+                                                    style={{
+                                                        background: otCompleta ? "#d9f7be" : "transparent",
+                                                    }}
+                                                >
+                                                    <td style={tdStyle}>{ot.otLabel || ot.firebaseKey}</td>
 
-                                                <td style={tdStyle}>
-                                                    {ot.clienteSnapshot?.nombre ||
-                                                        ot.clienteSnapshot?.razonSocial ||
-                                                        "PUBLICO GENERAL"}
-                                                </td>
+                                                    <td style={tdStyle}>
+                                                        {ot.factura === null || ot.factura === undefined
+                                                            ? "--"
+                                                            : ot.factura}
+                                                    </td>
 
-                                                <td style={tdStyle}>
-                                                    <button onClick={() => seleccionarOT(ot)}>
-                                                        Seleccionar
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
+                                                    <td style={tdStyle}>
+                                                        {ot.clienteSnapshot?.nombre ||
+                                                            ot.clienteSnapshot?.razonSocial ||
+                                                            "PUBLICO GENERAL"}
+                                                    </td>
+
+                                                    {/* 🔥 NUEVA COLUMNA ESTADO */}
+                                                    <td style={tdStyle}>
+                                                        {otCompleta ? (
+                                                            <span style={{ color: "green", fontSize: 18, fontWeight: "bold" }}>
+                                                                ✔
+                                                            </span>
+                                                        ) : (
+                                                            "--"
+                                                        )}
+                                                    </td>
+
+                                                    <td style={tdStyle}>
+                                                        <button onClick={() => seleccionarOT(ot)}>
+                                                            Seleccionar
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>
@@ -1049,7 +1108,8 @@ const GestionProduccion: React.FC = () => {
                                         <th style={thStyle}>Partida</th>
                                         <th style={thStyle}>Tipo</th>
                                         <th style={thStyle}>Estado</th>
-                                        <th style={thStyle}>Cliente</th>
+                                            <th style={thStyle}>Cliente</th>
+                                            <th style={thStyle}>Estado</th>
                                         <th style={thStyle}>Acción</th>
                                     </tr>
                                 </thead>
@@ -1178,7 +1238,6 @@ const GestionProduccion: React.FC = () => {
                                     <tr style={{ background: "#f5f5f5" }}>
                                         <th style={thStyle}>Partida</th>
                                         <th style={thStyle}>Tipo</th>
-                                        <th style={thStyle}>Estado</th>
                                         <th style={thStyle}>Acción</th>
                                     </tr>
                                 </thead>
@@ -1500,11 +1559,7 @@ const GestionProduccion: React.FC = () => {
 
                             {/*SECCION DE BOTONES*/ }
                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                <button
-                                    onClick={() => {
-                                        alert("Aquí luego conectamos el PDF de la partida");
-                                    }}
-                                >
+                                <button onClick={crearPDFPartida}>
                                     Crear PDF
                                 </button>
 

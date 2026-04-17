@@ -18,6 +18,11 @@ const MENU_BASE: Record<string, MenuItem> = {
     envios: { key: "envios", label: "Envíos" },
     compras: { key: "compras", label: "Orden de compras" },
     productos: { key: "productos", label: "Productos" },
+    //almacen
+    gestion: { key: "gestionproduccion", label: "Gestion de produccion" },
+    inventario_almacen: { key: "invalmacen", label: "Inventario de almacen" },
+
+    //submenus
     rh: {
         key: "rh",
         label: "Recursos Humanos",
@@ -132,7 +137,8 @@ const MENUS_POR_ROL: MenuPorRol[] = [
         area: "Almacen",
         puesto: "Almacenista",
         items: [
-            MENU_BASE.produccion,
+            MENU_BASE.gestion,
+            MENU_BASE.inventario_almacen,
 
         ],
     },

@@ -11,8 +11,10 @@ import CartuchoBaja from "./cotizadores/cartuchobaja";
 import CartuchoAlta from "./cotizadores/cartuchoalta";
 import Resorte from "./cotizadores/Resorte";
 import Termopar from "./cotizadores/termopares";
+import Cuarzo from "./cotizadores/cuarzo";
 import { formatearMoneda } from "./funciones/formato_moneda";
 import {obtenerSiguienteCotizacion,obtenerSiguienteEnvio} from "./firebase/consecutivos";
+
 // 🔹 Tipos
 interface Cliente {
   id?: string;
@@ -72,7 +74,7 @@ const Cotizador = () => {
   const [envio, setEnvio] = useState<"si" | "no">("no");
   const [itemEditando, setItemEditando] = useState<ItemCotizado | null>(null); // para el ticket
   const [cotizadorActivo, setCotizadorActivo] = useState<
-    "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar"
+      "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" | "cuarzo"
   >("tubular");
   const [factura, setFactura] = useState<number | "">("");
   const [fecha, setFecha] = useState("");
@@ -205,7 +207,7 @@ const Cotizador = () => {
 
   // 🔥 Cambio con confirmación
   const cambiarCotizador = (
-    nuevo: "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte"|"termopar"
+      nuevo: "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" |"cuarzo"
   ) => {
     setItemEditando(null); // 🔥 clave
 
@@ -633,7 +635,7 @@ const Cotizador = () => {
                         </span>
                     </div>
         </div>
-
+        <h2>Cliente</h2>
                 {/* BUSCADOR */}
                 {!cliente && (
                     <div className="search-bar">
@@ -1080,6 +1082,12 @@ const Cotizador = () => {
                 onClick={() => cambiarCotizador("termopar")}
             >
                 Termopar
+                    </div>
+            <div
+                className={`cotizador-tab ${cotizadorActivo === "cuarzo" ? "active" : ""}`}
+                onClick={() => cambiarCotizador("cuarzo")}
+            >
+                Cuarzo
             </div>
         </div>
 
@@ -1124,6 +1132,13 @@ const Cotizador = () => {
          )}
         {cotizadorActivo === "termopar" && (
             <Termopar
+                data={itemEditando || undefined}
+                onGuardar={guardarCotizacion}
+                setDirty={setFormDirty}
+            />
+        )}
+        {cotizadorActivo === "cuarzo" && (
+            <Cuarzo
                 data={itemEditando || undefined}
                 onGuardar={guardarCotizacion}
                 setDirty={setFormDirty}

@@ -28,6 +28,7 @@ interface TrabajoItem {
     descripcion?: string;
     total?: number;
     datos?: any;
+    estadoProduccion?: string;
 }
 
 interface OrdenTrabajo {
@@ -606,54 +607,82 @@ const GestionOT = () => {
                                     <th>Factura</th>
                                     <th>Cliente</th>
                                     <th>Asesor</th>
-                                    <th>Tipo</th> 
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
                                     <th>Seleccionar</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {cargando ? (
                                     <tr>
-                                        <td colSpan={7}>Cargando...</td> {/* 🔥 antes era 6 */}
+                                        <td colSpan={8}>Cargando...</td>
                                     </tr>
                                 ) : ordenesFiltradas.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7}>No hay resultados</td> {/* 🔥 antes era 6 */}
+                                        <td colSpan={8}>No hay resultados</td>
                                     </tr>
                                 ) : (
-                                    ordenesFiltradas.map((ot) => (
-                                        <tr key={ot.firebaseKey}>
-                                            <td>{ot.otLabel || ot.firebaseKey}</td>
-                                            <td>{formatearFecha(ot.fecha)}</td>
-                                            <td>
-                                                {ot.factura === null || ot.factura === undefined
-                                                    ? "--"
-                                                    : ot.factura}
-                                            </td>
-                                            <td>
-                                                {ot.clienteSnapshot?.nombre ||
-                                                    ot.clienteSnapshot?.razonSocial ||
-                                                    "PUBLICO GENERAL"}
-                                            </td>
-                                            <td>
-                                                {ot.asesorSnapshot?.username ||
-                                                    ot.asesorSnapshot?.nombre ||
-                                                    "--"}
-                                            </td>
+                                    ordenesFiltradas.map((ot) => {
+                                        const otCompleta = Object.values(ot.trabajos || {}).every(
+                                            (t: any) => t.estadoProduccion === "lista_para_entrega"
+                                        );
 
-                                            {/* 🔥 NUEVA COLUMNA */}
-                                            <td>
-                                                {ot.tipoDocumento === "orden_trabajo"
-                                                    ? "Orden de trabajo"
-                                                    : "Cotización"}
-                                            </td>
+                                        return (
+                                            <tr
+                                                key={ot.firebaseKey}
+                                                style={{
+                                                    background: otCompleta ? "#d9f7be" : "transparent",
+                                                }}
+                                            >
+                                                <td>{ot.otLabel || ot.firebaseKey}</td>
+                                                <td>{formatearFecha(ot.fecha)}</td>
+                                                <td>
+                                                    {ot.factura === null || ot.factura === undefined
+                                                        ? "--"
+                                                        : ot.factura}
+                                                </td>
+                                                <td>
+                                                    {ot.clienteSnapshot?.nombre ||
+                                                        ot.clienteSnapshot?.razonSocial ||
+                                                        "PUBLICO GENERAL"}
+                                                </td>
+                                                <td>
+                                                    {ot.asesorSnapshot?.username ||
+                                                        ot.asesorSnapshot?.nombre ||
+                                                        "--"}
+                                                </td>
 
-                                            <td>
-                                                <button onClick={() => seleccionarOT(ot)}>
-                                                    Seleccionar
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
+                                                <td>
+                                                    {ot.tipoDocumento === "orden_trabajo"
+                                                        ? "Orden de trabajo"
+                                                        : "Cotización"}
+                                                </td>
+
+                                                {/* 🔥 COLUMNA ESTADO */}
+                                                <td>
+                                                    {otCompleta ? (
+                                                        <span
+                                                            style={{
+                                                                color: "green",
+                                                                fontSize: 18,
+                                                                fontWeight: "bold",
+                                                            }}
+                                                        >
+                                                            ✔
+                                                        </span>
+                                                    ) : (
+                                                        "--"
+                                                    )}
+                                                </td>
+
+                                                <td>
+                                                    <button onClick={() => seleccionarOT(ot)}>
+                                                        Seleccionar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
