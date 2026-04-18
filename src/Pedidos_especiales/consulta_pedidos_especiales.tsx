@@ -53,6 +53,7 @@ const ConsultaPedidosEspeciales: React.FC = () => {
     const [folioAbierto, setFolioAbierto] = useState<string | null>(null);
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState<PedidoEspecial | null>(null);
     const [loading, setLoading] = useState(true);
+    const [indicesSlider, setIndicesSlider] = useState<Record<string, number>>({});
 
     useEffect(() => {
         const pedidosRef = ref(db, "pedidos_especiales");
@@ -202,10 +203,26 @@ const ConsultaPedidosEspeciales: React.FC = () => {
             alert("Error al eliminar el pedido");
         }
     };
+    //SLIDER MANUAL
+    const irAnterior = (otKey: string, total: number) => {
+        setIndicesSlider((prev) => {
+            const actual = prev[otKey] ?? 0;
+            const nuevo = actual === 0 ? total - 1 : actual - 1;
+            return { ...prev, [otKey]: nuevo };
+        });
+    };
+
+    const irSiguiente = (otKey: string, total: number) => {
+        setIndicesSlider((prev) => {
+            const actual = prev[otKey] ?? 0;
+            const nuevo = actual === total - 1 ? 0 : actual + 1;
+            return { ...prev, [otKey]: nuevo };
+        });
+    };
 
     return (
         <div className="consulta-pedidos-layout">
-            {/* VISOR IZQUIERDO */}
+            {/* VISOR IZQUIERDO CUANDO NO TENEMOS SELECCIONADO NADA */}
             <div className="consulta-pedidos-visor">
                 {!pedidoSeleccionado ? (
                     <div className="visor-vacio">
@@ -217,70 +234,43 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                         {/* ENCABEZADO */}
                         <div className="documento-header">
                             <div>
-                                <h2 className="documento-titulo">
+                                <h1 className="documento-titulo">
+                                    Pedido especial:
+                                </h1>
+                                <h2 className="documento-subtitulo">
                                     {pedidoSeleccionado.folio}
                                 </h2>
-                                <p className="documento-subtitulo">
-                                    Pedido especial
-                                </p>
                             </div>
                         </div>
 
                         {/* DATOS GENERALES */}
                         <div className="documento-bloque">
-                            <h3>Encabezado</h3>
-
                             <div className="documento-grid">
-                                <div>
-                                    <b>Folio:</b> {pedidoSeleccionado.folio || "--"}
-                                </div>
                                 <div>
                                     <b>Fecha cotización:</b>{" "}
                                     {pedidoSeleccionado.fecha_cotizacion || "--"}
                                 </div>
+
                                 <div>
                                     <b>Pedido realizado:</b>{" "}
                                     {pedidoSeleccionado.pedido_realizado ? "Sí" : "No"}
                                 </div>
+
                                 <div>
                                     <b>Pedido recibido:</b>{" "}
                                     {pedidoSeleccionado.pedido_recibido ? "Sí" : "No"}
                                 </div>
+
                                 <div>
                                     <b>Proveedor:</b>{" "}
                                     {pedidoSeleccionado.proveedorSnapshot?.alias ||
                                         pedidoSeleccionado.proveedorSnapshot?.nombre ||
                                         "--"}
                                 </div>
-                                <div>
-                                    <b>Cotización:</b>{" "}
-                                    {pedidoSeleccionado.cotizacion || "--"}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* RESUMEN */}
-                        <div className="documento-bloque">
-                            <h3>Resumen</h3>
-
-                            <div className="documento-grid resumen-grid">
-                                <div className="resumen-card">
-                                    <span className="resumen-label">Número de OTs</span>
-                                    <strong>{totalOTs}</strong>
-                                </div>
 
                                 <div className="resumen-card">
-                                    <span className="resumen-label">
-                                        Número de partidas
-                                    </span>
-                                    <strong>{totalPartidas}</strong>
-                                </div>
-
-                                <div className="resumen-card">
-                                    <span className="resumen-label">
-                                        Total proveedor
-                                    </span>
-                                    <strong>{formatearMoneda(totalProveedor)}</strong>
+                                    <b>Total proveedor</b>{" "}
+                                    {formatearMoneda(totalProveedor)}
                                 </div>
                             </div>
                         </div>
@@ -289,8 +279,7 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                         <div className="documento-bloque">
                             <h3>Detalle por OT</h3>
 
-                            {!pedidoSeleccionado.ots ||
-                            pedidoSeleccionado.ots.length === 0 ? (
+                            {!pedidoSeleccionado.ots || pedidoSeleccionado.ots.length === 0 ? (
                                 <p>No hay OTs guardadas en este pedido.</p>
                             ) : (
                                 pedidoSeleccionado.ots.map((ot, indexOT) => {
@@ -298,6 +287,11 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                                         ot.clienteSnapshot?.nombre ||
                                         ot.clienteSnapshot?.razonSocial ||
                                         "--";
+
+                                    const partidas = ot.partidas || [];
+                                    const otKey = ot.otLabel || `ot-${indexOT}`;
+                                    const indiceActual = indicesSlider[otKey] ?? 0;
+                                    const partidaActual = partidas[indiceActual];
 
                                     return (
                                         <div className="bloque-ot" key={indexOT}>
@@ -308,8 +302,7 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                                                         <b>Fecha:</b> {ot.fecha || "--"}
                                                     </p>
                                                     <p>
-                                                        <b>Tipo documento:</b>{" "}
-                                                        {ot.tipoDocumento || "--"}
+                                                        <b>Tipo documento:</b> {ot.tipoDocumento || "--"}
                                                     </p>
                                                     <p>
                                                         <b>Cliente:</b> {nombreCliente}
@@ -317,77 +310,97 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="table-scroll">
-                                                <table className="caja-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Partida</th>
-                                                            <th>Tipo</th>
-                                                            <th>Descripción</th>
-                                                            <th>Cantidad</th>
-                                                            <th>Voltaje</th>
-                                                            <th>Potencia</th>
-                                                            <th>Precio proveedor</th>
-                                                            <th>Total calculado</th>
-                                                            <th>Confirmada</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {!ot.partidas ||
-                                                        ot.partidas.length === 0 ? (
-                                                            <tr>
-                                                                <td colSpan={9}>
-                                                                    No hay partidas en esta OT.
-                                                                </td>
-                                                            </tr>
-                                                        ) : (
-                                                            ot.partidas.map(
-                                                                (partida, indexPartida) => (
-                                                                    <tr
-                                                                        key={`${ot.otLabel}-${indexPartida}`}
-                                                                    >
-                                                                        <td>
-                                                                            {partida.partida || "--"}
-                                                                        </td>
-                                                                        <td>{partida.tipo || "--"}</td>
-                                                                        <td>
-                                                                            {partida.descripcion || "--"}
-                                                                        </td>
-                                                                        <td>
-                                                                            {partida.cantidad || 0}
-                                                                        </td>
-                                                                        <td>
-                                                                            {partida.voltaje || "--"}
-                                                                        </td>
-                                                                        <td>
-                                                                            {partida.potencia || "--"}
-                                                                        </td>
-                                                                        <td>
-                                                                            {formatearMoneda(
-                                                                                Number(
-                                                                                    partida.precio_proveedor || 0
-                                                                                )
-                                                                            )}
-                                                                        </td>
-                                                                        <td>
-                                                                            {formatearMoneda(
-                                                                                Number(
-                                                                                    partida.totalCalculado || 0
-                                                                                )
-                                                                            )}
-                                                                        </td>
-                                                                        <td>
-                                                                            {partida.confirmada
-                                                                                ? "Sí"
-                                                                                : "No"}
-                                                                        </td>
-                                                                    </tr>
-                                                                )
-                                                            )
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                            {!partidas.length ? (
+                                                <p>No hay partidas en esta OT.</p>
+                                            ) : partidas.length === 1 ? (
+                                                <div className="partida-ficha">
+                                                    <div className="partida-ficha-top">
+                                                        <h4>{partidas[0].partida || "--"}</h4>
+                                                        <span className="partida-tipo-chip">
+                                                            {partidas[0].tipo || "--"}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="partida-ficha-body">
+                                                        <p className="partida-descripcion">
+                                                            <b>Descripción:</b>
+                                                            <br />
+                                                            {partidas[0].descripcion || "--"}
+                                                        </p>
+
+                                                        <p>
+                                                            <b>Precio calculado:</b>{" "}
+                                                            {formatearMoneda(
+                                                                Number(partidas[0].totalCalculado || 0)
+                                                            )}
+                                                        </p>
+
+                                                        <p>
+                                                            <b>Confirmada:</b>{" "}
+                                                            {partidas[0].confirmada ? "Sí" : "No"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="slider-partidas">
+                                                    <div className="slider-header-simple">
+                                                        <button
+                                                            type="button"
+                                                            className="slider-btn"
+                                                            onClick={() =>
+                                                                irAnterior(otKey, partidas.length)
+                                                            }
+                                                        >
+                                                            ◀
+                                                        </button>
+
+                                                        <span className="slider-indicador">
+                                                            {indiceActual + 1} / {partidas.length}
+                                                        </span>
+
+                                                        <button
+                                                            type="button"
+                                                            className="slider-btn"
+                                                            onClick={() =>
+                                                                irSiguiente(otKey, partidas.length)
+                                                            }
+                                                        >
+                                                            ▶
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="partida-ficha">
+                                                        <div className="partida-ficha-top">
+                                                            <h4>{partidaActual?.partida || "--"}</h4>
+                                                            <span className="partida-tipo-chip">
+                                                                {partidaActual?.tipo || "--"}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="partida-ficha-body">
+                                                            <p className="partida-descripcion">
+                                                                <b>Descripción:</b>
+                                                                <br />
+                                                                {partidaActual?.descripcion || "--"}
+                                                            </p>
+
+                                                            <p>
+                                                                <b>Precio calculado:</b>{" "}
+                                                                {formatearMoneda(
+                                                                    Number(
+                                                                        partidaActual?.totalCalculado || 0
+                                                                    )
+                                                                )}
+                                                            </p>
+
+                                                            <p>
+                                                                <b>Confirmada:</b>{" "}
+                                                                {partidaActual?.confirmada ? "Sí" : "No"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })
@@ -432,7 +445,7 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                                         <span
                                             className="folio-eliminar"
                                             onClick={(e) => {
-                                                e.stopPropagation(); // 🔥 evita que abra/cierre el folio
+                                                e.stopPropagation();
                                                 eliminarPedido(pedido.folio);
                                             }}
                                         >
