@@ -1,4 +1,4 @@
-// src/Produccion/GestionProduccion.tsx
+﻿// src/Produccion/GestionProduccion.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDatabase, ref, get, remove, update, onValue } from "firebase/database";
@@ -43,6 +43,7 @@ interface TrabajoItem {
     };
     numerosSerie?: string[];
     seriesGeneradas?: boolean;
+    pedido_recibido?: string;
 }
 
 interface EmpleadoProduccion {
@@ -278,6 +279,16 @@ const GestionProduccion: React.FC = () => {
             ...value,
         }))
         : [];
+    const esTipoEspecial = (tipo?: string) =>
+        tipo === "cuarzo" || tipo === "CartuchoA";
+
+    const partidaEspecialSeleccionada = esTipoEspecial(partidaSeleccionada?.tipo);
+    const partidaEspecialRecibida = !!partidaSeleccionada?.pedido_recibido;
+
+    const puedeSeleccionarPartida = (trabajo: TrabajoItem) => {
+        if (!esTipoEspecial(trabajo.tipo)) return true;
+        return !!trabajo.pedido_recibido;
+    };
 
     // =========================
     // SELECCIONAR PARTIDA
@@ -412,11 +423,12 @@ const GestionProduccion: React.FC = () => {
                 alert("Debes confirmar la revisión antes de guardar la inspección");
                 return;
             }
+            const esEspecial = esTipoEspecial(partidaSeleccionada.tipo);
 
             const datosActualizar: any = {
-                trabajador: estado === "en_fila" ? "" : trabajador,
-                fechaInicio: estado === "en_fila" ? "" : fechaInicio,
-                fechaFin: estado === "en_fila" ? "" : fechaFin,
+                trabajador: esEspecial ? "" : estado === "en_fila" ? "" : trabajador,
+                fechaInicio: esEspecial ? "" : estado === "en_fila" ? "" : fechaInicio,
+                fechaFin: esEspecial ? "" : estado === "en_fila" ? "" : fechaFin,
                 estadoProduccion: estado,
             };
 
@@ -442,9 +454,9 @@ const GestionProduccion: React.FC = () => {
                         ...prev.trabajos,
                         [partidaSeleccionada.key!]: {
                             ...prev.trabajos[partidaSeleccionada.key!],
-                            trabajador: estado === "en_fila" ? "" : trabajador,
-                            fechaInicio: estado === "en_fila" ? "" : fechaInicio,
-                            fechaFin: estado === "en_fila" ? "" : fechaFin,
+                            trabajador: esEspecial ? "" : estado === "en_fila" ? "" : trabajador,
+                            fechaInicio: esEspecial ? "" : estado === "en_fila" ? "" : fechaInicio,
+                            fechaFin: esEspecial ? "" : estado === "en_fila" ? "" : fechaFin,
                             estadoProduccion: estado,
                             inspeccion:
                                 estado === "inspeccion"
@@ -1262,11 +1274,23 @@ const GestionProduccion: React.FC = () => {
                                                     {trabajo.estadoProduccion || "en_fila"}
                                                 </td>
 
-                                                <td style={tdStyle}>
-                                                    <button onClick={() => seleccionarPartida(trabajo)}>
-                                                        Seleccionar
-                                                    </button>
-                                                </td>
+                                                    <td style={tdStyle}>
+                                                        <button
+                                                            onClick={() => seleccionarPartida(trabajo)}
+                                                            disabled={!puedeSeleccionarPartida(trabajo)}
+                                                            style={{
+                                                                opacity: !puedeSeleccionarPartida(trabajo) ? 0.5 : 1,
+                                                                cursor: !puedeSeleccionarPartida(trabajo) ? "not-allowed" : "pointer",
+                                                            }}
+                                                            title={
+                                                                !puedeSeleccionarPartida(trabajo)
+                                                                    ? "Esta partida especial aún no tiene Pedido recibido"
+                                                                    : ""
+                                                            }
+                                                        >
+                                                            Seleccionar
+                                                        </button>
+                                                    </td>
                                             </tr>
                                         ))
                                     )}
@@ -1327,7 +1351,7 @@ const GestionProduccion: React.FC = () => {
                                     {partidaSeleccionada.descripcion || "--"}
                                 </div>
                             </div>
-
+                            {!partidaEspecialSeleccionada && (
                             <div
                                 style={{
                                     display: "grid",
@@ -1444,7 +1468,8 @@ const GestionProduccion: React.FC = () => {
                                     />
                                 </div>
                             </div>
-
+                            )}
+                            {/*----------------------------------------------------*/ }
                             <div style={{ marginBottom: 20 }}>
                                 <label
                                     style={{
@@ -1469,21 +1494,30 @@ const GestionProduccion: React.FC = () => {
                                 >
                                     <option
                                         value="en_fila"
-                                        disabled={partidaSeleccionada.seriesGeneradas}
+                                        disabled={
+                                            partidaEspecialSeleccionada ||
+                                            partidaSeleccionada.seriesGeneradas
+                                        }
                                     >
                                         En fila
                                     </option>
 
                                     <option
                                         value="en_proceso"
-                                        disabled={partidaSeleccionada.seriesGeneradas}
+                                        disabled={
+                                            partidaEspecialSeleccionada ||
+                                            partidaSeleccionada.seriesGeneradas
+                                        }
                                     >
                                         En proceso
                                     </option>
 
                                     <option
                                         value="inspeccion"
-                                        disabled={partidaSeleccionada.seriesGeneradas}
+                                        disabled={
+                                            partidaEspecialSeleccionada ||
+                                            partidaSeleccionada.seriesGeneradas
+                                        }
                                     >
                                         Inspección
                                     </option>
@@ -1559,9 +1593,11 @@ const GestionProduccion: React.FC = () => {
 
                             {/*SECCION DE BOTONES*/ }
                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                <button onClick={crearPDFPartida}>
-                                    Crear PDF
-                                </button>
+                                {!partidaEspecialSeleccionada && (
+                                    <button onClick={crearPDFPartida}>
+                                        Crear PDF
+                                    </button>
+                                )}
 
                                 <button onClick={guardarPartida}>
                                     Guardar

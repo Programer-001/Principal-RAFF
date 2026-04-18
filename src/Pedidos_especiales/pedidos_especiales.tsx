@@ -37,6 +37,8 @@ interface TrabajoOriginal {
     pedido_realizado?: string;
     pedido_recibido?: string;
     numeroSerie?: string;
+    folio_pedido_especial?: string;
+    pedidoEspecialActivo?: boolean;
 }
 interface OTFirebase {
     ot?: string;
@@ -69,6 +71,8 @@ interface PartidaEspecial {
     pedido_realizado?: string;
     pedido_recibido?: string;
     numeroSerie?: string;
+    folio_pedido_especial?: string;
+    pedidoEspecialActivo?: boolean;
     datos: any;
 }
 
@@ -262,6 +266,8 @@ const PedidosEspeciales: React.FC = () => {
                     pedido_realizado: trabajo.pedido_realizado || "",
                     pedido_recibido: trabajo.pedido_recibido || "",
                     numeroSerie: trabajo.numeroSerie || "",
+                    folio_pedido_especial: trabajo.folio_pedido_especial || "",
+                    pedidoEspecialActivo: trabajo.pedidoEspecialActivo === true,
                     datos: trabajo.datos || {},
                 };
             });
@@ -295,6 +301,18 @@ const PedidosEspeciales: React.FC = () => {
 
             if (partidasFiltradas.length === 0) {
                 alert("La OT no tiene partidas de tipo cuarzo o CartuchoA.");
+                return;
+            }
+
+            const partidasYaLigadas = partidasFiltradas.filter(
+                (p) => p.pedidoEspecialActivo && p.folio_pedido_especial
+            );
+
+            if (partidasYaLigadas.length > 0) {
+                const folios = [...new Set(partidasYaLigadas.map((p) => p.folio_pedido_especial))];
+                alert(
+                    `Esta OT ya tiene partidas ligadas a pedido especial.\n\nFolio(s): ${folios.join(", ")}`
+                );
                 return;
             }
 
@@ -386,6 +404,8 @@ const PedidosEspeciales: React.FC = () => {
                     pedido_realizado: pedidoRealizadoFecha || partida.pedido_realizado || "",
                     pedido_recibido: pedidoRecibidoFecha || partida.pedido_recibido || "",
                     numeroSerie: partida.numeroSerie || "",
+                    folio_pedido_especial: folioParaGuardar,
+                    pedidoEspecialActivo: true,
                     datos: partida.datos || {},
                 })),
             })),
@@ -405,13 +425,22 @@ const PedidosEspeciales: React.FC = () => {
     const recalcularTotalesOT = async (otFirebaseKey: string) => {
         try {
             const snapshot = await get(ref(db, `ordenes_trabajo/${otFirebaseKey}`));
-
             if (!snapshot.exists()) return;
 
             const otData = snapshot.val();
-            const trabajos = Object.values(otData.trabajos || {}) as any[];
+            const trabajos = otData.trabajos || {};
 
-            const subtotal = trabajos.reduce((acc, trabajo) => {
+            const otLocal = otsAgregadas.find((ot) => ot.otFirebaseKey === otFirebaseKey);
+
+            const subtotal = Object.entries(trabajos).reduce((acc, [trabajoKey, trabajo]: [string, any]) => {
+                const partidaLocal = otLocal?.partidas.find(
+                    (p) => p.partidaKey === trabajoKey
+                );
+
+                if (partidaLocal) {
+                    return acc + Number(partidaLocal.totalCalculado || 0);
+                }
+
                 return acc + Number(trabajo.total || 0);
             }, 0);
 
@@ -462,6 +491,8 @@ const PedidosEspeciales: React.FC = () => {
                 precio_proveedor: subtotalBase,
                 total: totalFinal,
                 estadoProduccion: "cotizando",
+                folio_pedido_especial: folioId || "",
+                pedidoEspecialActivo: true,
             };
 
             if (pedidoRealizadoFecha) {
@@ -522,7 +553,10 @@ const PedidosEspeciales: React.FC = () => {
             alert("Agrega al menos una OT.");
             return;
         }
-
+        if (!proveedorSeleccionado?.alias) {
+            alert("Debes seleccionar un proveedor.");
+            return;
+        }
         try {
             let folioParaGuardar = folioId;
             let fechaBase = fechaCotizacion;
@@ -554,6 +588,8 @@ const PedidosEspeciales: React.FC = () => {
                         payloadActualizacion.total = partida.totalCalculado;
                         payloadActualizacion.precio_proveedor = partida.precioProveedorConfirmado;
                     }
+                    payloadActualizacion.folio_pedido_especial = folioParaGuardar;
+                    payloadActualizacion.pedidoEspecialActivo = true;
 
                     if (Object.keys(payloadActualizacion).length > 0) {
                         await update(
@@ -1072,7 +1108,7 @@ const PedidosEspeciales: React.FC = () => {
                             <div style={{ marginTop: "8px" }}>
                                 {otsAgregadas.flatMap((ot) =>
                                     ot.partidas
-                                        .filter((p) => p.confirmada && Number(p.precioProveedor || 0) > 0)
+                                        .filter((p) => p.confirmada && Number(p.precioProveedorConfirmado || 0) > 0)
                                         .map((p) => (
                                             <div key={p.partida} style={{ marginBottom: "6px", fontSize: "14px" }}>
                                                 {p.partida} ${formatearMoneda(Number(p.precioProveedorConfirmado || 0) )}

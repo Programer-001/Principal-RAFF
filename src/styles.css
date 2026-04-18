@@ -1142,6 +1142,97 @@
             top: 0;
             z-index: 5;
         }
+
+/* =========================
+   Visor pedidos especiales
+========================= */
+.consulta-pedidos-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.consulta-pedidos-visor {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 16px;
+    background: #fff;
+    min-height: 500px;
+}
+
+.consulta-pedidos-lista {
+    width: 320px;
+    border-left: 1px solid #ddd;
+    padding-left: 16px;
+}
+
+.input-buscar-folio {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.folios-scroll {
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.folio-card {
+    border: 1px solid #dcdcdc;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.folio-header {
+    padding: 12px;
+    cursor: pointer;
+    background: #f7f7f7;
+}
+
+    .folio-header.activo {
+        background: #ececec;
+    }
+
+.folio-body {
+    padding: 12px;
+    font-size: 14px;
+}
+
+.visor-vacio {
+    color: #666;
+}
+
+.folio-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.folio-titulo {
+    flex: 1;
+    cursor: pointer;
+}
+
+.folio-eliminar {
+    color: #999;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+    .folio-eliminar:hover {
+        background: #ffe5e5;
+        color: #d00000;
+    }
 /* =========================
    RESPONSIVE
 ========================= */

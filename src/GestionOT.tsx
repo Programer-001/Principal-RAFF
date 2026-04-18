@@ -1,7 +1,7 @@
-// src/GestionOT.tsx
-import React, { useEffect, useMemo, useState } from "react";
+﻿// src/GestionOT.tsx
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate,useLocation  } from "react-router-dom";
-import { getDatabase, ref, get, remove, update } from "firebase/database";
+import { getDatabase, ref, get, remove, update, onValue } from "firebase/database";
 import { app, auth } from "./firebase/config";
 import { generarPDFOTCliente } from "./plantillas/plantillaOTCliente";
 import { generarPDFOTProduccion } from "./plantillas/plantillaOTProduccion";
@@ -65,6 +65,7 @@ const GestionOT = () => {
     // 🔹 mostrar solo mis OTs
     const [mostrarSoloMias, setMostrarSoloMias] = useState(false);
     const [otSeleccionada, setOtSeleccionada] = useState<OrdenTrabajoConClave | null>(null);
+    const otSeleccionadaRef = useRef<OrdenTrabajoConClave | null>(null);
     // 🔹 tipo de documento (cotización / OT)
     const [tipoDocumento, setTipoDocumento] = useState<"cotizacion" | "orden_trabajo">("cotizacion");
 
@@ -117,13 +118,15 @@ const GestionOT = () => {
 
         cargarUsernameActual();
     }, []);
+    useEffect(() => {
+        otSeleccionadaRef.current = otSeleccionada;
+    }, [otSeleccionada]);
 
-    const cargarOrdenes = async () => {
-        try {
-            setCargando(true);
-            const db = getDatabase(app);
-            const snapshot = await get(ref(db, "ordenes_trabajo"));
+    useEffect(() => {
+        const db = getDatabase(app);
+        const refOT = ref(db, "ordenes_trabajo");
 
+        const unsubscribe = onValue(refOT, (snapshot) => {
             if (!snapshot.exists()) {
                 setOrdenes([]);
                 return;
@@ -136,7 +139,6 @@ const GestionOT = () => {
                 ...data[key],
             }));
 
-            // Orden más nueva arriba, usando ot numérica si existe
             lista.sort((a, b) => {
                 const na = Number(a.ot || 0);
                 const nb = Number(b.ot || 0);
@@ -144,26 +146,24 @@ const GestionOT = () => {
             });
 
             setOrdenes(lista);
-            if (otSeleccionada) {
+
+            const actualSeleccionada = otSeleccionadaRef.current;
+
+            if (actualSeleccionada) {
                 const actualizada = lista.find(
-                    (ot) => ot.firebaseKey === otSeleccionada.firebaseKey
+                    (ot) => ot.firebaseKey === actualSeleccionada.firebaseKey
                 );
 
                 if (actualizada) {
                     setOtSeleccionada(actualizada);
                 }
             }
-        } catch (error) {
-            console.error("Error cargando OTs:", error);
-            alert("Error al cargar órdenes de trabajo");
-        } finally {
-            setCargando(false);
-        }
-    };
+        });
 
-    useEffect(() => {
-        cargarOrdenes();
+        return () => unsubscribe();
     }, []);
+
+
     //ORDENES FILTRADAS
     const ordenesFiltradas = useMemo(() => {
         const texto = busqueda.trim().toLowerCase();
@@ -271,7 +271,7 @@ const GestionOT = () => {
 
             alert("OT borrada correctamente");
             setOtSeleccionada(null);
-            await cargarOrdenes();
+        
         } catch (error) {
             console.error("Error al borrar OT:", error);
             alert("No se pudo borrar la OT");
@@ -508,7 +508,7 @@ const GestionOT = () => {
 
                 setTipoDocumento("cotizacion");
                 setFacturaInput("");
-                await cargarOrdenes();
+         
                 return;
             }
 
@@ -527,7 +527,7 @@ const GestionOT = () => {
 
             setTipoDocumento("orden_trabajo");
             setFacturaInput(numeroFactura);
-            await cargarOrdenes();
+          
         } catch (error) {
             console.error(error);
             alert("Error al guardar");
@@ -567,7 +567,7 @@ const GestionOT = () => {
                             }}
                         />
 
-                        <button onClick={cargarOrdenes}>Recargar</button>
+                        <button onClick={() => window.location.reload()}>Recargar</button>
 
                         <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <input

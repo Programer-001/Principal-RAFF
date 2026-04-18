@@ -1,7 +1,7 @@
 ﻿// src/Administracion/visor_pedidos_especiales.tsx
 import React, { useState } from "react";
 import PedidosEspeciales from "../Pedidos_especiales/pedidos_especiales";
-//import ConsultaPedidosEspeciales from "../Pedidos_especiales/consulta_pedidos_especiales";
+import ConsultaPedidosEspeciales from "../Pedidos_especiales/consulta_pedidos_especiales";
 
 const VisorPedidosEspeciales: React.FC = () => {
     const [vista, setVista] = useState<"crear" | "consulta">("crear");
@@ -30,7 +30,7 @@ const VisorPedidosEspeciales: React.FC = () => {
             {/* CONTENIDO */}
             <div style={{ marginTop: 20 }}>
                 {vista === "crear" && <PedidosEspeciales />}
-                {/* {vista === "consulta" && <ConsultaPedidosEspeciales />}*/}
+                {vista === "consulta" && <ConsultaPedidosEspeciales />}
             </div>
         </div>
     );
