@@ -71,7 +71,8 @@ const MENU_BASE: Record<string, MenuItem> = {
             { key: "comisiones", label: "Comisiones Produccion" },
             { key: "comisionesmostrador", label: "Comisiones mostrador" },
             { key: "proveedores", label: "Proveedores" },
-            { key: "pago_banda", label: "Pago de banda" }, 
+            { key: "pago_banda", label: "Pago de banda" },
+            { key:"visor_pedidos_especiales", label: "Pedidos especiales"}
         ],
     },
 };

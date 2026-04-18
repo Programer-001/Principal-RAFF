@@ -352,6 +352,7 @@ const CartuchoAlta = ({ data, onGuardar, setDirty }: Props) => {
               datos: {
                 cantidadResistencias,
                 voltaje,
+                potencia: watts,
                 watts,
                 diametro,
                 longitudCm,

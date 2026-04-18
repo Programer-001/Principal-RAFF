@@ -36,6 +36,7 @@ import Comisiones from "./Administracion/comisiones";
 import Proveedores from "./Administracion/Proveedores";
 import ComisionesMostrador from "./Administracion/comisiones_mostrador";
 import PagosBanda from "./pagos_banda/PagosBanda";
+import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiales"
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -69,6 +70,7 @@ function AppLayout() {
         if (pathname.startsWith("/comisionesmostrador")) return "comisionesmostrador";
         if (pathname.startsWith("/proveedores")) return "proveedores";
         if (pathname.startsWith("/pago_banda")) return "pago_banda";
+        if (pathname.startsWith("/pago_banda")) return "visor_pedidos_especiales";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
         return "home";
@@ -102,6 +104,7 @@ function AppLayout() {
             comisionesmostrador: "/comisionesmostrador",
             proveedores: "/proveedores",
             pago_banda: "/pago_banda",
+            visor_pedidos_especiales: "/visor_pedidos_especiales",
             perfil: "/perfil",
             home: "/home",
             
@@ -141,6 +144,7 @@ function AppLayout() {
                 <Route path="/comisionesmostrador" element={<ComisionesMostrador />} />
                 <Route path="/proveedores" element={<Proveedores />} />
                 <Route path="/pago_banda" element={<PagosBanda />} />
+                <Route path="/visor_pedidos_especiales" element={<VisorPedidosEspeciales />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>
