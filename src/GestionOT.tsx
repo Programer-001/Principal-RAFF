@@ -533,7 +533,25 @@ const GestionOT = () => {
             alert("Error al guardar");
         }
     };
-
+    //ESTADOS
+    const formatearEstadoProduccion = (estado?: string) => {
+        switch (estado) {
+            case "en_fila":
+                return "En fila";
+            case "en_proceso":
+                return "En proceso";
+            case "inspeccion":
+                return "Inspección";
+            case "terminada":
+                return "Terminada";
+            case "contactado":
+                return "Contactado";
+            case "lista_para_entrega":
+                return "Lista para entrega";
+            default:
+                return estado || "--";
+        }
+    };
   
     //---------------------HTML------------------------------------------------------------------->>
 
@@ -866,8 +884,12 @@ const GestionOT = () => {
                                         <div>
                                             <b>{trabajo.partida || `Partida ${index + 1}`}</b>
                                         </div>
-                                        <div>{trabajo.descripcion || "--"}</div>
+                                        <div>
+                                            {trabajo.descripcion || "--"}</div>
+                                        <p><strong>Estado:</strong> {formatearEstadoProduccion(trabajo.estadoProduccion)}</p>
                                     </div>
+                                    
+                                    
                                 ))
                             )}
                         </div>

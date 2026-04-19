@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import { onValue, ref, remove } from "firebase/database";
 import { db } from "../firebase/config";
+import { generarPDFPedidoProveedor } from "../plantillas/plantillaPedidoEspecial";
 //import "../css/consulta_pedidos_especiales.css";
 
 interface ProveedorSnapshot {
@@ -219,7 +220,29 @@ const ConsultaPedidosEspeciales: React.FC = () => {
             return { ...prev, [otKey]: nuevo };
         });
     };
+    //PDF
+    const handleGuardarPDFProveedor = () => {
+        if (!pedidoSeleccionado) {
+            alert("Selecciona un pedido primero");
+            return;
+        }
 
+        generarPDFPedidoProveedor({
+            folio: pedidoSeleccionado.folio,
+            proveedor:
+                pedidoSeleccionado.proveedorSnapshot?.nombre ||
+                pedidoSeleccionado.proveedorSnapshot?.alias ||
+                "",
+            partidas: (pedidoSeleccionado.ots || []).flatMap((ot) =>
+                (ot.partidas || []).map((p) => ({
+                    cantidad: p.cantidad || 0,
+                    descripcion: p.descripcion || "",
+                    potencia: String(p.potencia || ""),
+                    voltaje: String(p.voltaje || ""),
+                }))
+            ),
+        });
+    };
     return (
         <div className="consulta-pedidos-layout">
             {/* VISOR IZQUIERDO CUANDO NO TENEMOS SELECCIONADO NADA */}
@@ -277,10 +300,10 @@ const ConsultaPedidosEspeciales: React.FC = () => {
 
                         {/* DETALLE */}
                         <div className="documento-bloque">
-                            <h3>Detalle por OT</h3>
+                            <h2>Detalle por OT</h2>
 
                             {!pedidoSeleccionado.ots || pedidoSeleccionado.ots.length === 0 ? (
-                                <p>No hay OTs guardadas en este pedido.</p>
+                                <h3>No hay OTs guardadas en este pedido.</h3>
                             ) : (
                                 pedidoSeleccionado.ots.map((ot, indexOT) => {
                                     const nombreCliente =
@@ -297,7 +320,7 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                                         <div className="bloque-ot" key={indexOT}>
                                             <div className="bloque-ot-header">
                                                 <div>
-                                                    <h4>{ot.otLabel || "OT sin folio"}</h4>
+                                                    <h2>{ot.otLabel || "OT sin folio"}</h2>
                                                     <p>
                                                         <b>Fecha:</b> {ot.fecha || "--"}
                                                     </p>
@@ -315,7 +338,7 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                                             ) : partidas.length === 1 ? (
                                                 <div className="partida-ficha">
                                                     <div className="partida-ficha-top">
-                                                        <h4>{partidas[0].partida || "--"}</h4>
+                                                        <h3>{partidas[0].partida || "--"}</h3>
                                                         <span className="partida-tipo-chip">
                                                             {partidas[0].tipo || "--"}
                                                         </span>
@@ -462,20 +485,47 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                                                 pedido.proveedorSnapshot?.nombre ||
                                                 "--"}
                                         </p>
+
                                         <p>
                                             <b>Fecha:</b>{" "}
                                             {pedido.fecha_cotizacion || "--"}
                                         </p>
+
                                         <p>
                                             <b>Pedido realizado:</b>{" "}
                                             {pedido.pedido_realizado ? "Sí" : "No"}
                                         </p>
+
                                         <p>
                                             <b>Pedido recibido:</b>{" "}
                                             {pedido.pedido_recibido ? "Sí" : "No"}
                                         </p>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                generarPDFPedidoProveedor({
+                                                    folio: pedido.folio,
+                                                    proveedor:
+                                                        pedido.proveedorSnapshot?.nombre ||
+                                                        pedido.proveedorSnapshot?.alias ||
+                                                        "",
+                                                    partidas: (pedido.ots || []).flatMap((ot) =>
+                                                        (ot.partidas || []).map((p) => ({
+                                                            cantidad: p.cantidad || 0,
+                                                            descripcion: p.descripcion || "",
+                                                            potencia: String(p.potencia || ""),
+                                                            voltaje: String(p.voltaje || ""),
+                                                        }))
+                                                    ),
+                                                });
+                                            }}
+                                        >
+                                            Guardar PDF
+                                        </button>
                                     </div>
                                 )}
+                                {/*--------------*/ }
                             </div>
                         ))
                     )}
