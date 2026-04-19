@@ -1307,12 +1307,19 @@ const GestionProduccion: React.FC = () => {
                                 background: "#fff",
                             }}
                         >
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                            <table
+                                style={{
+                                    width: "100%",
+                                    borderCollapse: "collapse",
+                                    tableLayout: "fixed",
+                                }}
+                            >
                                 <thead>
-                                    <tr style={{ background: "#f5f5f5" }}>
-                                        <th style={thStyle}>Partida</th>
-                                        <th style={thStyle}>Tipo</th>
-                                        <th style={thStyle}>Acción</th>
+                                    <tr>
+                                        <th style={{ ...thStyle, background: "#f5f5f5" }}>Partida</th>
+                                        <th style={{ ...thStyle, background: "#f5f5f5" }}>Tipo</th>
+                                        <th style={{ ...thStyle, background: "#f5f5f5" }}>Estado</th>
+                                        <th style={{ ...thStyle, background: "#f5f5f5" }}>Acción</th>
                                     </tr>
                                 </thead>
 
@@ -1324,35 +1331,49 @@ const GestionProduccion: React.FC = () => {
                                             </td>
                                         </tr>
                                     ) : (
-                                            trabajosArray.map((trabajo, index) => (
+                                        trabajosArray.map((trabajo, index) => (
                                             <tr key={trabajo.partida || index}>
                                                 <td style={tdStyle}>
                                                     {trabajo.partida || `Partida ${index + 1}`}
                                                 </td>
 
-                                                <td style={tdStyle}>{trabajo.tipo || "--"}</td>
-
                                                 <td style={tdStyle}>
-                                                    {trabajo.estadoProduccion || "en_fila"}
+                                                    {trabajo.tipo || "--"}
                                                 </td>
 
-                                                    <td style={tdStyle}>
-                                                        <button
-                                                            onClick={() => seleccionarPartida(trabajo)}
-                                                            disabled={!puedeSeleccionarPartida(trabajo)}
-                                                            style={{
-                                                                opacity: !puedeSeleccionarPartida(trabajo) ? 0.5 : 1,
-                                                                cursor: !puedeSeleccionarPartida(trabajo) ? "not-allowed" : "pointer",
-                                                            }}
-                                                            title={
-                                                                !puedeSeleccionarPartida(trabajo)
-                                                                    ? "Esta partida especial aún no tiene Pedido recibido"
-                                                                    : ""
-                                                            }
-                                                        >
-                                                            Seleccionar
-                                                        </button>
-                                                    </td>
+                                                <td style={tdStyle}>
+                                                    {trabajo.estadoProduccion === "en_fila"
+                                                        ? "En fila"
+                                                        : trabajo.estadoProduccion === "en_proceso"
+                                                            ? "En proceso"
+                                                            : trabajo.estadoProduccion === "inspeccion"
+                                                                ? "Inspección"
+                                                                : trabajo.estadoProduccion === "terminada"
+                                                                    ? "Terminada"
+                                                                    : trabajo.estadoProduccion === "lista_para_entrega"
+                                                                        ? "Lista para entrega"
+                                                                        : trabajo.estadoProduccion || "En fila"}
+                                                </td>
+
+                                                <td style={tdStyle}>
+                                                    <button
+                                                        onClick={() => seleccionarPartida(trabajo)}
+                                                        disabled={!puedeSeleccionarPartida(trabajo)}
+                                                        style={{
+                                                            opacity: !puedeSeleccionarPartida(trabajo) ? 0.5 : 1,
+                                                            cursor: !puedeSeleccionarPartida(trabajo)
+                                                                ? "not-allowed"
+                                                                : "pointer",
+                                                        }}
+                                                        title={
+                                                            !puedeSeleccionarPartida(trabajo)
+                                                                ? "Esta partida especial aún no tiene Pedido recibido"
+                                                                : ""
+                                                        }
+                                                    >
+                                                        Seleccionar
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))
                                     )}
