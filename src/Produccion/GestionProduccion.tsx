@@ -946,6 +946,38 @@ const GestionProduccion: React.FC = () => {
         }
     };
     // =========================
+    // Progreso en general
+    // =========================
+    const obtenerPorcentajeEstado = (estado?: string) => {
+        switch (estado) {
+            case "cotizando":
+                return 0;
+            case "en_fila":
+                return 20;
+            case "en_proceso":
+                return 50;
+            case "inspeccion":
+                return 75;
+            case "terminada":
+                return 90;
+            case "lista_para_entrega":
+                return 100;
+            default:
+                return 0;
+        }
+    };
+
+    const calcularProgresoOT = (trabajos: any[]) => {
+        if (!trabajos || trabajos.length === 0) return 0;
+
+        const total = trabajos.reduce((acc, trabajo) => {
+            return acc + obtenerPorcentajeEstado(trabajo.estadoProduccion);
+        }, 0);
+
+        return Math.round(total / trabajos.length);
+    };
+    const progresoOT = calcularProgresoOT(trabajosArray);
+    // =========================
     // HTML
     // =========================
     return (
@@ -1226,9 +1258,39 @@ const GestionProduccion: React.FC = () => {
                     <div style={{ marginBottom: 10 }}>
                         <b>Envío:</b> {otSeleccionada.envio ? "Sí" : "No"}
                     </div>
-
+                    {/*Progreso*/ }
                     <div style={{ marginBottom: 20 }}>
-                        <b>Progreso:</b> Aquí luego pondremos la barra
+                        <div style={{ marginBottom: 8, fontWeight: "bold" }}>
+                            Progreso: {progresoOT}%
+                        </div>
+
+                        <div
+                            style={{
+                                width: "100%",
+                                maxWidth: 500,
+                                height: 20,
+                                background: "#e5e7eb",
+                                borderRadius: 999,
+                                overflow: "hidden",
+                                border: "1px solid #d1d5db",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: `${progresoOT}%`,
+                                    height: "100%",
+                                    background:
+                                        progresoOT === 100
+                                            ? "#22c55e"
+                                            : progresoOT >= 75
+                                                ? "#84cc16"
+                                                : progresoOT >= 40
+                                                    ? "#facc15"
+                                                    : "#fb923c",
+                                    transition: "width 0.3s ease",
+                                }}
+                            />
+                        </div>
                     </div>
 
                     {/* =========================

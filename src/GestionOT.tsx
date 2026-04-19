@@ -552,7 +552,64 @@ const GestionOT = () => {
                 return estado || "--";
         }
     };
-  
+    //colores de las partidas
+    const obtenerColorEstado = (estado?: string) => {
+        switch (estado) {
+            case "cotizando":
+                return { bg: "#e5e7eb", color: "#374151" };
+
+            case "en_fila":
+                return { bg: "#fde68a", color: "#92400e" };
+
+            case "en_proceso":
+                return { bg: "#facc15", color: "#78350f" };
+
+            case "inspeccion":
+                return { bg: "#93c5fd", color: "#1e3a8a" };
+
+            case "terminada":
+                return { bg: "#86efac", color: "#065f46" };
+
+            case "contactado":
+                return { bg: "#c4b5fd", color: "#4c1d95" };
+
+            case "lista_para_entrega":
+                return { bg: "#34d399", color: "#064e3b" };
+
+            default:
+                return { bg: "#e5e7eb", color: "#111827" };
+        }
+    };
+    //Barra de progreso
+    const obtenerPorcentajeEstado = (estado?: string) => {
+        switch (estado) {
+            case "cotizando":
+                return 0;
+            case "en_fila":
+                return 20;
+            case "en_proceso":
+                return 50;
+            case "inspeccion":
+                return 75;
+            case "terminada":
+                return 90;
+            case "lista_para_entrega":
+                return 100;
+            default:
+                return 0;
+        }
+    };
+
+    const calcularProgresoOT = (trabajos: any[]) => {
+        if (!trabajos || trabajos.length === 0) return 0;
+
+        const total = trabajos.reduce((acc, trabajo) => {
+            return acc + obtenerPorcentajeEstado(trabajo.estadoProduccion);
+        }, 0);
+
+        return Math.round(total / trabajos.length);
+    };
+    const progresoOT = calcularProgresoOT(trabajosArray);
     //---------------------HTML------------------------------------------------------------------->>
 
     return (
@@ -854,7 +911,39 @@ const GestionOT = () => {
                                 </span>
                             </div>
                         </div>
+                        {/* 🔥 BARRA DE PROGRESO */}
+                        <div style={{ marginBottom: 20 }}>
+                            <div style={{ marginBottom: 6, fontWeight: "bold" }}>
+                                Progreso: {progresoOT}%
+                            </div>
 
+                            <div
+                                style={{
+                                    width: "100%",
+                                    maxWidth: 400,
+                                    height: 18,
+                                    background: "#e5e7eb",
+                                    borderRadius: 999,
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: `${progresoOT}%`,
+                                        height: "100%",
+                                        background:
+                                            progresoOT === 100
+                                                ? "#22c55e"
+                                                : progresoOT >= 75
+                                                    ? "#84cc16"
+                                                    : progresoOT >= 40
+                                                        ? "#facc15"
+                                                        : "#fb923c",
+                                        transition: "width 0.3s ease",
+                                    }}
+                                />
+                            </div>
+                        </div>
                         <div style={{ marginTop: 20, marginBottom: 10 }}>
                             <b>Conceptos:</b>
                         </div>
@@ -870,27 +959,46 @@ const GestionOT = () => {
                             {trabajosArray.length === 0 ? (
                                 <div>No hay partidas</div>
                             ) : (
-                                trabajosArray.map((trabajo, index) => (
-                                    <div
-                                        key={trabajo.partida || index}
-                                        style={{
-                                            padding: "8px 0",
-                                            borderBottom:
-                                                index < trabajosArray.length - 1
-                                                    ? "1px dashed #ccc"
-                                                    : "none",
-                                        }}
-                                    >
-                                        <div>
-                                            <b>{trabajo.partida || `Partida ${index + 1}`}</b>
+                                trabajosArray.map((trabajo, index) => {
+                                    const colores = obtenerColorEstado(trabajo.estadoProduccion);
+
+                                    return (
+                                        <div
+                                            key={trabajo.partida || index}
+                                            style={{
+                                                padding: "8px 0",
+                                                borderBottom:
+                                                    index < trabajosArray.length - 1
+                                                        ? "1px dashed #ccc"
+                                                        : "none",
+                                            }}
+                                        >
+                                            <div>
+                                                <b>{trabajo.partida || `Partida ${index + 1}`}</b>
+                                            </div>
+
+                                            <div>
+                                                {trabajo.descripcion || "--"}
+                                            </div>
+
+                                            {/* 🔥 ESTADO BONITO Colores de estados*/}
+                                            <div
+                                                style={{
+                                                    display: "inline-block",
+                                                    marginTop: 6,
+                                                    padding: "4px 10px",
+                                                    borderRadius: 999,
+                                                    fontSize: 12,
+                                                    fontWeight: 500,
+                                                    backgroundColor: colores.bg,
+                                                    color: colores.color,
+                                                }}
+                                            >
+                                                {formatearEstadoProduccion(trabajo.estadoProduccion)}
+                                            </div>
                                         </div>
-                                        <div>
-                                            {trabajo.descripcion || "--"}</div>
-                                        <p><strong>Estado:</strong> {formatearEstadoProduccion(trabajo.estadoProduccion)}</p>
-                                    </div>
-                                    
-                                    
-                                ))
+                                    );
+                                })
                             )}
                         </div>
 
