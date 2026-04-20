@@ -24,7 +24,7 @@ const CorteCaja: React.FC = () => {
         hoy.getFullYear().toString();
 
     const [transaccion, setTransaccion] = useState<number>(1);
-    const [cantidad, setCantidad] = useState<number>(0);
+    const [cantidad, setCantidad] =  useState<number | null>(null);
     const [metodo, setMetodo] = useState<string>("efectivo");
     const [factura, setFactura] = useState<string>("");
 
@@ -70,7 +70,7 @@ const CorteCaja: React.FC = () => {
     const handleGuardar = async () => {
         let valid = true;
 
-        if (!cantidad || cantidad <= 0) {
+        if (cantidad === null || cantidad <= 0) {
             valid = false;
             setErrorCantidad(true);
         } else {
@@ -118,7 +118,7 @@ const CorteCaja: React.FC = () => {
         const nuevoPago: Pago = {
             id,
             transaccion,
-            cantidad,
+            cantidad: cantidad!,
             metodo,
             factura,
             fecha: new Date().toLocaleDateString(),
@@ -129,14 +129,17 @@ const CorteCaja: React.FC = () => {
         await set(ref(db, `corte-caja/${fecha}/${id}`), nuevoPago);
         alert("💾 Pago registrado correctamente");
 
-        setCantidad(0);
+        setCantidad(null);
+        setCantidadInput("");
         setFactura("");
         setMetodo("efectivo");
+        setErrorCantidad(false);
+        setErrorFactura(false);
     };
 
     // ------------------- CANCELAR PAGO --------------------
     const abrirModalCancelacion = () => {
-        if (!cantidad || !factura.trim()) {
+        if (cantidad === null || cantidad <= 0 || !factura.trim()) {
             return alert("Primero escribe la cantidad y la factura para cancelar.");
         }
         setMostrarCancelar(true);
@@ -152,7 +155,7 @@ const CorteCaja: React.FC = () => {
         await set(ref(db, `corte-caja/${fecha}/${id}`), {
             id,
             transaccion,
-            cantidad,
+            cantidad: cantidad!,
             metodo,
             factura,
             fecha: new Date().toLocaleDateString(),
@@ -165,7 +168,7 @@ const CorteCaja: React.FC = () => {
 
         alert("❌ Pago cancelado correctamente");
 
-        setCantidad(0);
+        setCantidad(null);
         setCantidadInput("");
         setFactura("");
         setMetodo("efectivo");
@@ -227,7 +230,7 @@ const CorteCaja: React.FC = () => {
                             onChange={(e) => {
                                 const { texto, numero } = procesarInputMoneda(e.target.value);
                                 setCantidadInput(texto ? `$${texto}` : "");
-                                setCantidad(numero);
+                                setCantidad(texto ? numero : null);
                             }}
                             className={`input-caja1 ${errorCantidad ? "input-caja1-error" : ""}`}
                         />
