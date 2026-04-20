@@ -55,10 +55,14 @@ interface EmpleadoProduccion {
     activo?: boolean;
 }
 
+interface FacturaItem {
+    factura?: number | string;
+}
+
 interface OrdenTrabajo {
     ot: string;
     otLabel?: string;
-    factura?: number | null;
+    facturas?: Record<string, FacturaItem>;
     fecha?: string;
     clienteId?: string | null;
     clienteSnapshot?: ClienteSnapshot;
@@ -127,6 +131,38 @@ const GestionProduccion: React.FC = () => {
         const anio = String(hoy.getFullYear()).slice(-2);
         return `${dia}/${mes}/${anio}`;
     };
+    // =========================
+    // Bloque de facturas
+    // =========================
+    const obtenerFacturasArray = (ot?: OrdenTrabajo | null): string[] => {
+        if (!ot?.facturas) return [];
+
+        return Object.keys(ot.facturas)
+            .sort((a, b) => Number(a) - Number(b))
+            .map((key) => ot.facturas?.[key]?.factura)
+            .filter((f): f is string | number => f !== null && f !== undefined && String(f).trim() !== "")
+            .map((f) => String(f).trim());
+    };
+
+    const obtenerTextoFacturas = (ot?: OrdenTrabajo | null): string => {
+        const facturas = obtenerFacturasArray(ot);
+
+        if (facturas.length === 0) return "--";
+        if (facturas.length === 1) return facturas[0];
+
+        return facturas.join(", ");
+    };
+
+    const obtenerEtiquetaFacturas = (ot?: OrdenTrabajo | null): string => {
+        const facturas = obtenerFacturasArray(ot);
+        return facturas.length <= 1 ? "Factura" : "Facturas";
+    };
+
+    const obtenerTextoFacturasPDF = (ot?: OrdenTrabajo | null): string | undefined => {
+        const texto = obtenerTextoFacturas(ot);
+        return texto === "--" ? undefined : texto;
+    };
+
     // =========================
     // AUTENTICACION DE USUARIOS
     // =========================
@@ -415,6 +451,27 @@ const GestionProduccion: React.FC = () => {
             return;
         }
 
+        const esEspecial = esTipoEspecial(partidaSeleccionada.tipo);
+
+        if (!esEspecial && estado === "en_proceso") {
+            if (!trabajador) {
+                alert("Para guardar en En proceso debes asignar un trabajador");
+                return;
+            }
+
+            if (!fechaInicio) {
+                alert("Para guardar en En proceso debes capturar la fecha de inicio");
+                return;
+            }
+
+            const esTubular = (partidaSeleccionada.tipo || "").toLowerCase() === "tubular";
+
+            if (esTubular && partidaSeleccionada.materialEntregado !== true) {
+                alert("Para guardar en En proceso debes entregar el material");
+                return;
+            }
+        }
+
         try {
             const db = getDatabase(app);
             const ruta = `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`;
@@ -423,7 +480,6 @@ const GestionProduccion: React.FC = () => {
                 alert("Debes confirmar la revisión antes de guardar la inspección");
                 return;
             }
-            const esEspecial = esTipoEspecial(partidaSeleccionada.tipo);
 
             const datosActualizar: any = {
                 trabajador: esEspecial ? "" : estado === "en_fila" ? "" : trabajador,
@@ -478,7 +534,6 @@ const GestionProduccion: React.FC = () => {
             alert("Error al guardar la partida");
         }
     };
-
     // =========================
     // CARGAR OTS DE PRODUCCIÓN
     // Solo muestra OTs con taller = true
@@ -785,7 +840,7 @@ const GestionProduccion: React.FC = () => {
             ...trabajo,
             otFirebaseKey: ot.firebaseKey,
             otLabel: ot.otLabel || ot.firebaseKey,
-            factura: ot.factura,
+            facturasTexto: obtenerTextoFacturas(ot),
             clienteNombre:
                 ot.clienteSnapshot?.nombre ||
                 ot.clienteSnapshot?.razonSocial ||
@@ -933,10 +988,7 @@ const GestionProduccion: React.FC = () => {
                 telefono: otSeleccionada.clienteSnapshot?.telefono || "",
                 trabajador: partidaSeleccionada.trabajador || "--",
                 envio: !!otSeleccionada.envio,
-                factura:
-                    otSeleccionada.factura === null || otSeleccionada.factura === undefined
-                        ? undefined
-                        : otSeleccionada.factura,
+                factura: obtenerTextoFacturasPDF(otSeleccionada) as any,
                 descripcion: partidaSeleccionada.descripcion || "--",
                 tipo: partidaSeleccionada.tipo || "--",
             });
@@ -1100,9 +1152,7 @@ const GestionProduccion: React.FC = () => {
                                                     <td style={tdStyle}>{ot.otLabel || ot.firebaseKey}</td>
 
                                                     <td style={tdStyle}>
-                                                        {ot.factura === null || ot.factura === undefined
-                                                            ? "--"
-                                                            : ot.factura}
+                                                        {obtenerTextoFacturas(ot)}
                                                     </td>
 
                                                     <td style={tdStyle}>
@@ -1153,7 +1203,7 @@ const GestionProduccion: React.FC = () => {
                                         <th style={thStyle}>Tipo</th>
                                         <th style={thStyle}>Estado</th>
                                             <th style={thStyle}>Cliente</th>
-                                            <th style={thStyle}>Estado</th>
+                                            
                                         <th style={thStyle}>Acción</th>
                                     </tr>
                                 </thead>
@@ -1231,10 +1281,8 @@ const GestionProduccion: React.FC = () => {
                     </div>
 
                     <div style={{ marginBottom: 10 }}>
-                        <b>Factura:</b>{" "}
-                        {otSeleccionada.factura === null || otSeleccionada.factura === undefined
-                            ? "--"
-                            : otSeleccionada.factura}
+                        <b>{obtenerEtiquetaFacturas(otSeleccionada)}:</b>{" "}
+                        {obtenerTextoFacturas(otSeleccionada)}
                     </div>
 
                     <div style={{ marginBottom: 10 }}>
@@ -1673,6 +1721,61 @@ const GestionProduccion: React.FC = () => {
                                     </div>
                                 </div>
                             )}
+                            {/*NUMERO DE SERIE LASER*/}
+                            {(estado === "terminada" ||
+                                partidaSeleccionada?.estadoProduccion === "terminada") && (
+                                    <div
+                                        style={{
+                                            marginBottom: 20,
+                                            padding: 14,
+                                            border: "1px solid #d9d9d9",
+                                            borderRadius: 8,
+                                            background: "#fff",
+                                        }}
+                                    >
+                                        <label
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 8,
+                                                fontWeight: "bold",
+                                                marginBottom: 12,
+                                            }}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={mostrarSeries}
+                                                disabled={mostrarSeries}
+                                                onChange={async (e) => {
+                                                    if (e.target.checked) {
+                                                        await generarNumerosSerie();
+                                                    }
+                                                }}
+                                            />
+                                            Mostrar números de serie
+                                        </label>
+
+                                        {numerosSerie.length > 0 && (
+                                            <div
+                                                style={{
+                                                    border: "1px solid #e5e7eb",
+                                                    borderRadius: 8,
+                                                    background: "#f9fafb",
+                                                    padding: 12,
+                                                }}
+                                            >
+                                                <b>Números de serie:</b>
+                                                <div style={{ marginTop: 10 }}>
+                                                    {numerosSerie.map((serie, index) => (
+                                                        <div key={`${serie}-${index}`} style={{ marginBottom: 4 }}>
+                                                            {serie}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                             {/*SECCION DE BOTONES*/ }
                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -1720,60 +1823,7 @@ const GestionProduccion: React.FC = () => {
                                    
                                 )}
                             </div>
-                            {/*NUMERO DE SERIE LASER*/}
-                            {estado === "terminada" && (
-                                <div
-                                    style={{
-                                        marginBottom: 20,
-                                        padding: 14,
-                                        border: "1px solid #d9d9d9",
-                                        borderRadius: 8,
-                                        background: "#fff",
-                                    }}
-                                >
-                                    <label
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 8,
-                                            fontWeight: "bold",
-                                            marginBottom: 12,
-                                        }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={mostrarSeries}
-                                            disabled={mostrarSeries}
-                                            onChange={async (e) => {
-                                                if (e.target.checked) {
-                                                    await generarNumerosSerie();
-                                                }
-                                            }}
-                                        />
-                                        Mostrar números de serie
-                                    </label>
-
-                                    {numerosSerie.length > 0 && (
-                                        <div
-                                            style={{
-                                                border: "1px solid #e5e7eb",
-                                                borderRadius: 8,
-                                                background: "#f9fafb",
-                                                padding: 12,
-                                            }}
-                                        >
-                                            <b>Números de serie:</b>
-                                            <div style={{ marginTop: 10 }}>
-                                                {numerosSerie.map((serie, index) => (
-                                                    <div key={`${serie}-${index}`} style={{ marginBottom: 4 }}>
-                                                        {serie}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                            
                             {/*TABLA DE ENTREGA DE MATERIAL TUBULAR*/ }
 
                             {(partidaSeleccionada.tipo || "").toLowerCase() === "tubular" && (

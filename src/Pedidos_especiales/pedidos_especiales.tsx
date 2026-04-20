@@ -501,6 +501,7 @@ const PedidosEspeciales: React.FC = () => {
 
             if (pedidoRecibidoFecha) {
                 payloadActualizacion.pedido_recibido = pedidoRecibidoFecha;
+                payloadActualizacion.estadoProduccion = "terminada";
             }
 
             await update(
@@ -582,6 +583,7 @@ const PedidosEspeciales: React.FC = () => {
 
                     if (pedidoRecibidoFecha) {
                         payloadActualizacion.pedido_recibido = pedidoRecibidoFecha;
+                        payloadActualizacion.estadoProduccion = "terminada";
                     }
 
                     if (partida.confirmada && partida.totalCalculado > 0) {

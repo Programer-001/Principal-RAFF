@@ -31,12 +31,16 @@ interface TrabajoItem {
     estadoProduccion?: string;
 }
 
+interface FacturaItem {
+    factura?: number | string;
+}
+
 interface OrdenTrabajo {
     ot: string;
     otLabel?: string;
     tipoDocumento?: "cotizacion" | "orden_trabajo";
     pagado?: boolean;
-    factura?: number | null;
+    facturas?: Record<string, FacturaItem>;
     fecha?: string;
     clienteId?: string | null;
     clienteSnapshot?: ClienteSnapshot;
@@ -53,7 +57,6 @@ interface OrdenTrabajo {
     asesorId?: string | null;
     asesorSnapshot?: AsesorSnapshot | null;
 }
-
 type OrdenTrabajoConClave = OrdenTrabajo & {
     firebaseKey: string;
 };
@@ -70,12 +73,140 @@ const GestionOT = () => {
     const [tipoDocumento, setTipoDocumento] = useState<"cotizacion" | "orden_trabajo">("cotizacion");
 
     // 🔹 input factura
-    const [facturaInput, setFacturaInput] = useState("");
+    //const [facturaInput, setFacturaInput] = useState("");
+    // 🔹 facturas del modal
+    const [facturasInput, setFacturasInput] = useState<string[]>([""]);
+    const [mostrarModalFacturas, setMostrarModalFacturas] = useState(false);
+    const [guardandoFacturas, setGuardandoFacturas] = useState(false);
     // 🔹 username real del usuario logueado
     const [usernameActual, setUsernameActual] = useState("");
     //Seleccionar si es cotizacion o orden de trabajo
     const [filtroCotizaciones, setFiltroCotizaciones] = useState(false);
     const [filtroOrdenesTrabajo, setFiltroOrdenesTrabajo] = useState(false);
+
+    //coleccion de facturas
+    const obtenerFacturasArray = (ot?: OrdenTrabajo | null): string[] => {
+        if (!ot?.facturas) return [];
+
+        return Object.keys(ot.facturas)
+            .sort((a, b) => Number(a) - Number(b))
+            .map((key) => ot.facturas?.[key]?.factura)
+            .filter((f): f is string | number => f !== null && f !== undefined && String(f).trim() !== "")
+            .map((f) => String(f).trim());
+    };
+
+    const obtenerTextoFacturas = (ot?: OrdenTrabajo | null): string => {
+        const facturas = obtenerFacturasArray(ot);
+
+        if (facturas.length === 0) return "--";
+        if (facturas.length === 1) return facturas[0];
+
+        return facturas.join(", ");
+    };
+
+    const obtenerEtiquetaFacturas = (ot?: OrdenTrabajo | null): string => {
+        const facturas = obtenerFacturasArray(ot);
+        return facturas.length <= 1 ? "Factura" : "Facturas";
+    };
+    const obtenerTextoFacturasPDF = (ot?: OrdenTrabajo | null): string | undefined => {
+        const texto = obtenerTextoFacturas(ot);
+        return texto === "--" ? undefined : texto;
+    };
+
+    const construirFacturasDesdeInputs = (inputs: string[]) => {
+        const limpias = inputs
+            .map((f) => f.trim())
+            .filter((f) => f !== "");
+
+        const resultado: Record<string, FacturaItem> = {};
+
+        limpias.forEach((factura, index) => {
+            resultado[String(index + 1)] = {
+                factura,
+            };
+        });
+
+        return resultado;
+    };
+
+    const limpiarFacturasInput = () => {
+        setFacturasInput([""]);
+    };
+    //Actualizar facturas
+    const actualizarFacturaInput = (index: number, value: string) => {
+        setFacturasInput((prev) => {
+            const copia = [...prev];
+            copia[index] = value;
+            return copia;
+        });
+    };
+
+    const agregarFacturaInput = () => {
+        setFacturasInput((prev) => [...prev, ""]);
+    };
+
+    const eliminarFacturaInput = (index: number) => {
+        setFacturasInput((prev) => {
+            if (prev.length === 1) return [""];
+            return prev.filter((_, i) => i !== index);
+        });
+    };
+
+    const cerrarModalFacturas = () => {
+        setMostrarModalFacturas(false);
+        setGuardandoFacturas(false);
+
+        if (otSeleccionada) {
+            const facturas = obtenerFacturasArray(otSeleccionada);
+            setFacturasInput(facturas.length > 0 ? facturas : [""]);
+        } else {
+            limpiarFacturasInput();
+        }
+    };
+
+    const abrirModalFacturas = (facturasIniciales?: string[]) => {
+        if (facturasIniciales && facturasIniciales.length > 0) {
+            setFacturasInput(facturasIniciales);
+        } else {
+            setFacturasInput([""]);
+        }
+
+        setMostrarModalFacturas(true);
+    };
+
+    const finalizarCambioAOrdenTrabajo = async () => {
+        if (!otSeleccionada) return;
+
+        const facturasLimpias = facturasInput
+            .map((f) => f.trim())
+            .filter((f) => f !== "");
+
+        if (facturasLimpias.length === 0) {
+            alert("Debes capturar al menos una factura");
+            return;
+        }
+
+        try {
+            setGuardandoFacturas(true);
+
+            const db = getDatabase(app);
+
+            await update(ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}`), {
+                tipoDocumento: "orden_trabajo",
+                facturas: construirFacturasDesdeInputs(facturasLimpias),
+                pagado: true,
+            });
+
+            setTipoDocumento("orden_trabajo");
+            setFacturasInput(facturasLimpias);
+            setMostrarModalFacturas(false);
+            setGuardandoFacturas(false);
+        } catch (error) {
+            console.error(error);
+            setGuardandoFacturas(false);
+            alert("Error al guardar las facturas");
+        }
+    };
     
     // 🔹 obtener username real desde RH/Empleados usando el correo del auth
     useEffect(() => {
@@ -172,10 +303,7 @@ const GestionOT = () => {
             const clienteNombre =
                 ot.clienteSnapshot?.nombre || ot.clienteSnapshot?.razonSocial || "";
 
-            const facturaTexto =
-                ot.factura === null || ot.factura === undefined
-                    ? ""
-                    : String(ot.factura);
+            const facturasTexto = obtenerTextoFacturas(ot).toLowerCase();
 
             const asesorUsername = (
                 ot.asesorSnapshot?.username ||
@@ -189,7 +317,7 @@ const GestionOT = () => {
                 (ot.otLabel || "").toLowerCase().includes(texto) ||
                 String(ot.ot || "").toLowerCase().includes(texto) ||
                 (ot.fecha || "").toLowerCase().includes(texto) ||
-                facturaTexto.toLowerCase().includes(texto) ||
+                facturasTexto.includes(texto) ||
                 clienteNombre.toLowerCase().includes(texto) ||
                 asesorUsername.includes(texto);
 
@@ -197,25 +325,17 @@ const GestionOT = () => {
                 ? true
                 : asesorUsername === usernameActual;
 
-            // 🔹 filtro por tipo de documento
             const tipoDoc = ot.tipoDocumento || "cotizacion";
 
             let coincideTipo = true;
 
-            // si ninguno está marcado => mostrar todos
             if (!filtroCotizaciones && !filtroOrdenesTrabajo) {
                 coincideTipo = true;
-            }
-            // si ambos están marcados => mostrar ambos
-            else if (filtroCotizaciones && filtroOrdenesTrabajo) {
+            } else if (filtroCotizaciones && filtroOrdenesTrabajo) {
                 coincideTipo = true;
-            }
-            // solo cotizaciones
-            else if (filtroCotizaciones) {
+            } else if (filtroCotizaciones) {
                 coincideTipo = tipoDoc === "cotizacion";
-            }
-            // solo órdenes de trabajo
-            else if (filtroOrdenesTrabajo) {
+            } else if (filtroOrdenesTrabajo) {
                 coincideTipo = tipoDoc === "orden_trabajo";
             }
 
@@ -231,6 +351,7 @@ const GestionOT = () => {
     ]);
 
     // 🔹 carga tipo y factura desde Firebase
+    // 🔹 carga tipo y facturas desde Firebase
     useEffect(() => {
         if (!otSeleccionada) return;
 
@@ -240,11 +361,13 @@ const GestionOT = () => {
             setTipoDocumento("cotizacion");
         }
 
-        setFacturaInput(
-            otSeleccionada.factura === null || otSeleccionada.factura === undefined
-                ? ""
-                : String(otSeleccionada.factura)
-        );
+        const facturas = obtenerFacturasArray(otSeleccionada);
+
+        if (facturas.length > 0) {
+            setFacturasInput(facturas);
+        } else {
+            setFacturasInput([""]);
+        }
     }, [otSeleccionada]);
 
     const seleccionarOT = (ot: OrdenTrabajoConClave) => {
@@ -315,7 +438,7 @@ const GestionOT = () => {
 
         generarPDFOTCliente({
             otLabel: otSeleccionada.otLabel || otSeleccionada.firebaseKey,
-            factura: otSeleccionada.factura ?? undefined,
+            factura: obtenerTextoFacturasPDF(otSeleccionada) as any,
             fecha: formatearFecha(otSeleccionada.fecha),
             asesor:
                 otSeleccionada.asesorSnapshot?.username ||
@@ -337,6 +460,7 @@ const GestionOT = () => {
         });
     };
     //Guardar ordenes de produccion------>
+    //Nota: si agregas mas tipos de resistenias en el cotizador pon el tipo en minusculas
     const generarPDFProduccion = async () => {
         if (!otSeleccionada) return;
 
@@ -345,9 +469,11 @@ const GestionOT = () => {
         const gruposMap: Record<string, { titulo: string; items: any[] }> = {
             tubular: { titulo: "Tubular", items: [] },
             banda: { titulo: "Banda", items: [] },
-            baja_concentracion: { titulo: "Cartucho baja concentración", items: [] },
-            alta_concentracion: { titulo: "Cartucho alta concentración", items: [] },
-            resorte: { titulo: "Resorte", items: [] },
+            cartuchob: { titulo: "Cartucho baja concentración", items: [] },
+            cartuchoa: { titulo: "Cartucho alta concentración", items: [] },
+            Resorte: { titulo: "Resorte", items: [] },
+            termopar: { titulo: "Termopar", items: [] },
+            cuarzo: { titulo: "Cuarzo", items: [] },
         };
         trabajos.forEach((t: any) => {
             const tipo = (t.tipo || "").toLowerCase();
@@ -382,7 +508,7 @@ const GestionOT = () => {
             clienteNombre:
                 otSeleccionada.clienteSnapshot?.nombre || "",
             razonSocial: otSeleccionada.clienteSnapshot?.razonSocial || "",
-            factura: otSeleccionada.factura ?? undefined,
+            factura: obtenerTextoFacturasPDF(otSeleccionada) as any,
             telefono: otSeleccionada.clienteSnapshot?.telefono || "",    
             envio: otSeleccionada.envio ?? false,
             grupos,
@@ -497,40 +623,25 @@ const GestionOT = () => {
 
         try {
             const db = getDatabase(app);
-
             // 👉 volver a cotización
             if (nuevoTipo === "cotizacion") {
                 await update(ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}`), {
                     tipoDocumento: "cotizacion",
-                    factura: null,
+                    facturas: null,
                     pagado: false,
                 });
 
                 setTipoDocumento("cotizacion");
-                setFacturaInput("");
-         
+                limpiarFacturasInput();
+                setMostrarModalFacturas(false);
                 return;
             }
 
-            // 👉 cambiar a orden de trabajo
-            const numeroFactura = window.prompt("Pon el número de factura");
-
-            if (!numeroFactura || !numeroFactura.trim()) {
-                return;
-            }
-
-            await update(ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}`), {
-                tipoDocumento: "orden_trabajo",
-                factura: Number(numeroFactura),
-                pagado: true,
-            });
-
-            setTipoDocumento("orden_trabajo");
-            setFacturaInput(numeroFactura);
-          
+            const facturasActuales = obtenerFacturasArray(otSeleccionada);
+            abrirModalFacturas(facturasActuales.length > 0 ? facturasActuales : [""]);
         } catch (error) {
             console.error(error);
-            alert("Error al guardar");
+            alert("Error al preparar el cambio de tipo de documento");
         }
     };
     //ESTADOS
@@ -711,11 +822,7 @@ const GestionOT = () => {
                                             >
                                                 <td>{ot.otLabel || ot.firebaseKey}</td>
                                                 <td>{formatearFecha(ot.fecha)}</td>
-                                                <td>
-                                                    {ot.factura === null || ot.factura === undefined
-                                                        ? "--"
-                                                        : ot.factura}
-                                                </td>
+                                                <td>{obtenerTextoFacturas(ot)}</td>
                                                 <td>
                                                     {ot.clienteSnapshot?.nombre ||
                                                         ot.clienteSnapshot?.razonSocial ||
@@ -777,6 +884,139 @@ const GestionOT = () => {
                         marginTop: 10,
                     }}
                 >
+                    {/*Insertar Facturas*/ }
+                    {mostrarModalFacturas && (
+                        <div
+                            style={{
+                                position: "fixed",
+                                inset: 0,
+                                background: "rgba(0,0,0,0.45)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                zIndex: 9999,
+                                padding: 20,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: "100%",
+                                    maxWidth: 520,
+                                    background: "#fff",
+                                    borderRadius: 12,
+                                    padding: 20,
+                                    boxShadow: "0 12px 35px rgba(0,0,0,0.22)",
+                                }}
+                            >
+                                <h3 style={{ marginTop: 0, marginBottom: 16 }}>
+                                    Insertar número de factura
+                                </h3>
+
+                                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                    {facturasInput.map((factura, index) => (
+                                        <div
+                                            key={index}
+                                            style={{
+                                                display: "flex",
+                                                gap: 10,
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <input
+                                                type="text"
+                                                value={factura}
+                                                onChange={(e) =>
+                                                    actualizarFacturaInput(index, e.target.value)
+                                                }
+                                                placeholder={`Factura ${index + 1}`}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: 10,
+                                                    border: "1px solid #ccc",
+                                                    borderRadius: 8,
+                                                }}
+                                            />
+
+                                            <button
+                                                type="button"
+                                                onClick={() => eliminarFacturaInput(index)}
+                                                style={{
+                                                    background: "#ff4d4f",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    borderRadius: 8,
+                                                    padding: "10px 12px",
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                Quitar
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div style={{ marginTop: 14 }}>
+                                    <button
+                                        type="button"
+                                        onClick={agregarFacturaInput}
+                                        style={{
+                                            background: "#1677ff",
+                                            color: "#fff",
+                                            border: "none",
+                                            borderRadius: 8,
+                                            padding: "10px 14px",
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        Ingresar otra factura
+                                    </button>
+                                </div>
+
+                                <div
+                                    style={{
+                                        marginTop: 20,
+                                        display: "flex",
+                                        justifyContent: "flex-end",
+                                        gap: 10,
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={cerrarModalFacturas}
+                                        disabled={guardandoFacturas}
+                                        style={{
+                                            background: "#f3f4f6",
+                                            color: "#111827",
+                                            border: "1px solid #d1d5db",
+                                            borderRadius: 8,
+                                            padding: "10px 16px",
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        Cancelar
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={finalizarCambioAOrdenTrabajo}
+                                        disabled={guardandoFacturas}
+                                        style={{
+                                            background: "#16a34a",
+                                            color: "#fff",
+                                            border: "none",
+                                            borderRadius: 8,
+                                            padding: "10px 16px",
+                                            cursor: "pointer",
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                        {guardandoFacturas ? "Guardando..." : "Finalizar"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {/*fin insertar facturas*/ }
                     {/* X cerrar */}
                     <button
                         onClick={cerrarConsulta}
@@ -821,11 +1061,8 @@ const GestionOT = () => {
                         </div>
 
                         <div style={{ marginBottom: 10 }}>
-                            <b>Factura:</b>{" "}
-                            {otSeleccionada.factura === null ||
-                                otSeleccionada.factura === undefined
-                                ? "--"
-                                : otSeleccionada.factura}
+                            <b>{obtenerEtiquetaFacturas(otSeleccionada)}:</b>{" "}
+                            {obtenerTextoFacturas(otSeleccionada)}
                         </div>
                         {/*EL SELECT COTIZACION ORDEN DE COMPRA*/}
                         {/* 🔹 Tipo de documento */}
@@ -1044,7 +1281,14 @@ const GestionOT = () => {
                                     Generar envío
                                 </button>
                             )}
-
+                            <button
+                                onClick={() => {
+                                    const actuales = obtenerFacturasArray(otSeleccionada);
+                                    abrirModalFacturas(actuales.length > 0 ? actuales : [""]);
+                                }}
+                            >
+                                Editar facturas
+                            </button>
                             <button
                                 onClick={borrarOT}
                                 style={{

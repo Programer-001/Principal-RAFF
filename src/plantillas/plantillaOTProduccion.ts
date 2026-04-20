@@ -1,4 +1,4 @@
-// src/plantillas/plantillaOTProduccion.ts
+﻿// src/plantillas/plantillaOTProduccion.ts
 import jsPDF from "jspdf";
 import "svg2pdf.js";
 
@@ -13,15 +13,15 @@ interface GrupoProduccion {
 }
 
 interface OTProduccionData {
-  otLabel: string;
-  fecha: string;
+    otLabel: string;
+    fecha: string;
     clienteNombre: string;
     razonSocial?: string;
     telefono?: string;
-  asesor?: string;
+    asesor?: string;
     envio: boolean;
-    factura?: number;
-  grupos: GrupoProduccion[];
+    factura?: string;
+    grupos: GrupoProduccion[];
 }
 
 export const generarPDFOTProduccion = async (data: OTProduccionData) => {
@@ -117,7 +117,7 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
     doc.setFont("helvetica", "bold");
     doc.text("Factura:", 90, 70);
     doc.setFont("helvetica", "normal");
-    doc.text(data.factura ? String(data.factura) : "--", 108, 70);
+    doc.text(data.factura && data.factura.trim() !== "" ? data.factura : "--", 108, 70);
 
     doc.setFont("helvetica", "bold");
     doc.text("Fecha:", 150, 70);

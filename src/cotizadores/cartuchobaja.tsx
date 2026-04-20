@@ -91,7 +91,7 @@ const CartuchoBaja = ({ data, onGuardar, setDirty }: Props) => {
   const descripcion = [
     `${cantidadResistencias || 0} RESISTENCIA${
       Number(cantidadResistencias) > 1 ? "S" : ""
-    } CARTUCHO BAJA ${diametro || ""} X ${longitudCm || 0} CM`,
+    } CARTUCHO BAJA CONCENTRACION ${diametro || ""} X ${longitudCm || 0} CM`,
 
     `/ ${voltaje || 0}V - ${watts || 0}W`,
 

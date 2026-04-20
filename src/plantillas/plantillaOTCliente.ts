@@ -10,21 +10,21 @@ interface Concepto {
 }
 
 interface OTClienteData {
-  otLabel: string;
-  factura?: number;
-  fecha: string;
-  clienteNombre: string;
-  telefono?: string;
-  envio: boolean;
-  empresa?: string;
-  razonSocial?: string;
-  asesor?: string;
+    otLabel: string;
+    factura?: string;
+    fecha: string;
+    clienteNombre: string;
+    telefono?: string;
+    envio: boolean;
+    empresa?: string;
+    razonSocial?: string;
+    asesor?: string;
 
-  conceptos: Concepto[];
+    conceptos: Concepto[];
 
-  subtotal: number;
-  iva: number;
-  total: number;
+    subtotal: number;
+    iva: number;
+    total: number;
 }
 
 export const generarPDFOTCliente = async (data: OTClienteData) => {
@@ -117,7 +117,7 @@ export const generarPDFOTCliente = async (data: OTClienteData) => {
     doc.setFont("helvetica", "bold");
     doc.text("Factura:", 90, 70);
     doc.setFont("helvetica", "normal");
-    doc.text(data.factura ? String(data.factura) : "--", 115, 70);
+    doc.text(data.factura && data.factura.trim() !== "" ? data.factura : "--", 115, 70);
 
     doc.setFont("helvetica", "bold");
     doc.text("Fecha:", 150, 70);

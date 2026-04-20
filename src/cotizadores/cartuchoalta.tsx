@@ -109,7 +109,7 @@ const CartuchoAlta = ({ data, onGuardar, setDirty }: Props) => {
   const descripcion = [
     `${cantidadResistencias || 0} RESISTENCIA${
       Number(cantidadResistencias) > 1 ? "S" : ""
-    } TIPO CARTUCHO DE ALTA`,
+    } TIPO CARTUCHO DE ALTA CONCENTRACION`,
 
     `/ ${voltaje || 0}V - ${watts || 0}W`,
 
