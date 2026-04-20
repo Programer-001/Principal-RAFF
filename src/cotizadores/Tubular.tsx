@@ -38,6 +38,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   const [cantidadTermoposo, setCantidadTermoposo] = useState(0);
   const [cantidadTapon, setCantidadTapon] = useState(0);
   const [cantidadResistencias, setCantidadResistencias] = useState(0);
+  const [cantidadDesoldarBase, setCantidadDesoldarBase] = useState(0);
   const [voltaje, setVoltaje] = useState<number>(0);
     const [potencia, setPotencia] = useState<number>(0);
     const [maxWatts, setMaxWatts] = useState(!!data?.datos?.maxWatts);
@@ -186,6 +187,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     tipoTapon !== "NO" && tipoTapon !== ""
       ? (Number(cantidadTapon) || 0) * (Number(precioTapon) || 0)
             : 0;
+    //caclula desoldar base con cantidad
 
     //Calcular aletada por metros
     const totalAleta = aleta ? calcularAletada(longitud) : 0;
@@ -196,16 +198,21 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   const precioTornillo = Number(seleccionados["tornillo"]?.precio) || 0;
   const precioSoldadura =
     Number(seleccionados["soldadura_resistencia"]?.precio) || 0;
-  const precioDesoldarbase =
-    Number(seleccionados["desoldar_base"]?.precio) || 0;
+    
   const precioSello = Number(seleccionados["sellos"]?.precio) || 0;
   const precioServicios = Number(seleccionados["servicios"]?.precio) || 0;
-  const descuento = obtenerDescuento(cantidadResistencias, descuentosTubular);
+    const descuento = obtenerDescuento(cantidadResistencias, descuentosTubular);
+    const tipoDesoldarBase = seleccionados["desoldar_base"]?.tipo || "";
+    const precioDesoldarbase = Number(seleccionados["desoldar_base"]?.precio) || 0;
+    const totalDesoldarBase =
+        tipoDesoldarBase !== "NO" && tipoDesoldarBase !== ""
+            ? precioDesoldarbase * (Number(cantidadDesoldarBase) || 0)
+            : 0;
   let totalResistencia =
     Number(cantidadResistencias) *
       (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo + totalAleta + precioSoldadura ) +
       //precioSoldadura+ <-- LO QUITE POR MIENTRAS
-    precioDesoldarbase +
+     totalDesoldarBase +
     totalCable +
     totalDesoldartornillo +
     totalTapon +
@@ -244,7 +251,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     setTipoPlaca("");
     setPrecioPlaca(0);
     setCantidadPlaca(0);
-
+      setCantidadDesoldarBase(0);
       setServicioExpress(false);
       setAleta(false);
     setDesoldarTornillo(false);
@@ -287,7 +294,10 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
   ${textoDobleces ? `/ ${textoDobleces}` : ""}
   
   ${agregar("TORNILLO", seleccionados["tornillo"]?.tipo)}
-  ${agregar("DESOLDAR BASE", seleccionados["desoldar_base"]?.tipo)}
+  ${tipoDesoldarBase && tipoDesoldarBase !== "NO"
+            ? ` / DESOLDAR BASE: ${tipoDesoldarBase}${cantidadDesoldarBase ? ` (${cantidadDesoldarBase})` : ""
+            }`
+            : ""}
   ${agregar("", seleccionados["soldadura_resistencia"]?.tipo)}
   ${agregar("BORNE", seleccionados["borne"]?.tipo)}
   
@@ -367,6 +377,12 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
       setCantidadTapon(0);
     }
   }, [tipoTapon]);
+
+    useEffect(() => {
+        if (tipoDesoldarBase === "NO" || tipoDesoldarBase === "") {
+            setCantidadDesoldarBase(0);
+        }
+    }, [tipoDesoldarBase]);
   //RESET
   useEffect(() => {
     if (data) {
@@ -388,7 +404,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
 
         // 🔹 flags
         setAleta(!!d.aleta);
-      setDesoldarTornillo(!!d.totalDesoldartornillo);
+        setDesoldarTornillo(!!d.totalDesoldartornillo);
+        setCantidadDesoldarBase(d.cantidadDesoldarBase || 0);
       setPuentes(!!d.totalPuentes);
       setTermoposoBase(!!d.totalTermoposo);
       setServicioExpress(!!d.totalExpress);
@@ -522,7 +539,17 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
             <label>Desoldar Resistencia de Base</label>
             {renderSelect("desoldar_base")}
           </div>
-
+        {tipoDesoldarBase !== "NO" && tipoDesoldarBase !== "" && (
+            <div className="form-row">
+                <label>Cantidad a desoldar de base</label>
+                <input
+                    type="number"
+                    min={0}
+                    value={cantidadDesoldarBase === 0 ? "" : cantidadDesoldarBase}
+                    onChange={(e) => setCantidadDesoldarBase(Number(e.target.value))}
+                />
+            </div>
+        )}
           {/* --------------------------------------------------------------------------------------------------------------------------------------------*/}
 
           {/* Soldadura en resistencia */}
@@ -808,6 +835,8 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
                               totalCable,
 
                               // 🔹 extras
+                              cantidadDesoldarBase,
+                              totalDesoldarBase,
                               totalDesoldartornillo,
                               totalTapon,
                               totalBarrenos,

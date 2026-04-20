@@ -248,8 +248,14 @@ const Productos_editor: React.FC = () => {
 
             {/* RESULTADOS BUSQUEDA */}
             {busqueda && (
-                <div style={{ marginBottom: 20 }}>
-                    {productosFiltrados.slice(0, 5).map((p) => (
+                <div style={{
+                    marginBottom: 20,
+                    maxHeight: 250,
+                    overflowY: "auto",
+                    border: "1px solid #ccc",
+                    borderRadius: 6,
+                }}>
+                    {productosFiltrados.map((p) => (
                         <div
                             key={p.id}
                             style={{
