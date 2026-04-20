@@ -855,7 +855,7 @@ const InvAlmacen: React.FC = () => {
                             </h2>
 
                             {modoPanel !== "ninguno" && (
-                                <button className="btn btn-gray" onClick={cerrarPanel}>
+                                <button className="btn btn-orange" onClick={cerrarPanel}>
                                     Cerrar
                                 </button>
                             )}
@@ -924,7 +924,7 @@ const InvAlmacen: React.FC = () => {
                                         </button>
 
                                         <button
-                                            className="btn btn-dark"
+                                            className="btn btn-green"
                                             type="button"
                                             onClick={() => setModoEntradaStock("manual")}
                                         >
