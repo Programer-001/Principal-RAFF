@@ -932,7 +932,7 @@ const GestionOT = () => {
 
     return (
         <div style={{ padding: 40 }}>
-            <h2>Gestión de OT</h2>
+            <h2>Ordenes de Trabajo</h2>
 
             {!otSeleccionada && (
                 <>
