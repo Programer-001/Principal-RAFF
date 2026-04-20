@@ -281,129 +281,170 @@ const Cotizador = () => {
   const totalConIva = totalConDescuento * (1 + iva);
 
   // 🔥 FINALIZAR OT
-  const finalizarOT = async () => {
-    if (!cotizaciones.length) {
-      alert("No hay cotizaciones");
-      return;
-      }
-      if (!cliente) {
-          alert("Debes seleccionar o Registrar un cliente antes de finalizar la OT");
-          return;
-      }
-
-    try {
-      const db = getDatabase(app);
-
-      let nuevoOt = ot;
-      let claveOt = firebaseKeyOT;
-      let envioFolioReservado = "";
-
-      // SI NO ESTÁS EDITANDO, CREA NUEVA OT
-      if (!modoEdicionOT) {
-        nuevoOt = await obtenerSiguienteCotizacion(); // ej. 00025
-        claveOt = `ot${nuevoOt}`; // ej. ot00025
-        if (envio === "si") {
-          envioFolioReservado = await obtenerSiguienteEnvio();
+    const finalizarOT = async () => {
+        if (!cotizaciones.length) {
+            alert("No hay cotizaciones");
+            return;
         }
-      }
-      if (modoEdicionOT && !envioFolioReservado) {
-        envioFolioReservado = envioFolioOT || "";
-      }
 
-      const trabajosObj = cotizaciones.reduce((acc, item, index) => {
-        const numeroPartida = index + 1;
-        const partidaLabel = `${claveOt}.${numeroPartida}`; // visible
-        const partidaKey = `${claveOt}_${numeroPartida}`; // clave firebase
+        if (!cliente) {
+            alert("Debes seleccionar o Registrar un cliente antes de finalizar la OT");
+            return;
+        }
 
-        acc[partidaKey] = {
-          partida: partidaLabel,
-          tipo: item.tipo,
-          descripcion: item.descripcion,
-          total: item.total,
-          datos: item.datos,
-        };
+        try {
+            const db = getDatabase(app);
 
-        return acc;
-      }, {} as Record<string, any>);
+            let nuevoOt = ot;
+            let claveOt = firebaseKeyOT;
+            let envioFolioReservado = "";
 
-      const ordenTrabajo = {
-        ot: nuevoOt,
-        otLabel: `OT-${nuevoOt}`,
-        factura: factura || null,
-        fecha: fecha,
-          clienteId: cliente?.id && cliente.id !== "TEMP" ? cliente.id : null,
-          clienteSnapshot: cliente || { nombre: "PUBLICO GENERAL" },
-          credito: cliente?.id !== "TEMP" ? cliente?.credito?.activo || false : false,
+            // SI NO ESTÁS EDITANDO, CREA NUEVA OT
+            if (!modoEdicionOT) {
+                nuevoOt = await obtenerSiguienteCotizacion(); // ej. 00025
+                claveOt = `ot${nuevoOt}`; // ej. ot00025
 
-        asesorId: asesor?.id || null,
-          asesorSnapshot: asesor
-              ? {
-                  id: asesor.id || null,
-                  uid: asesor.uid || null,
-                  nombre: asesor.nombre || "",
-                  username: asesor.username || "",
-                  area: asesor.area || "",
-                  puesto: asesor.puesto || "",
-              }
-              : null,
+                if (envio === "si") {
+                    envioFolioReservado = await obtenerSiguienteEnvio();
+                }
+            }
 
-        envio: envio === "si",
-        envioFolio: envio === "si" ? envioFolioReservado : "",
-        envioGenerado: modoEdicionOT ? envioGeneradoOT : false,
-        envioEnviado: modoEdicionOT ? envioEnviadoOT : false,
+            if (modoEdicionOT && !envioFolioReservado) {
+                envioFolioReservado = envioFolioOT || "";
+            }
 
-        subtotal: totalGeneral,
-        descuentoCliente: descuentoCliente,
-        totalConDescuento: totalConDescuento,
-        totalConIva: totalConIva,
-        trabajos: trabajosObj,
-        tipoDocumento,
-        pagado,
-      };
+            // 🔥 Si estás editando, intenta conservar trabajos ya existentes
+            const trabajosActuales =
+                modoEdicionOT && (location.state as any)?.otData?.trabajos
+                    ? (location.state as any).otData.trabajos
+                    : {};
 
-        await set(ref(db, `ordenes_trabajo/${claveOt}`), ordenTrabajo);
-        sessionStorage.removeItem(DRAFT_KEY);
-        const otGuardada = {
-            firebaseKey: claveOt,
-            ...ordenTrabajo,
-        };
+            const trabajosObj = cotizaciones.reduce((acc, item, index) => {
+                const numeroPartida = index + 1;
+                const partidaLabel = `${claveOt}.${numeroPartida}`; // visible
+                const partidaKey = `${claveOt}_${numeroPartida}`; // clave firebase
 
-      alert(
-        modoEdicionOT
-          ? `OT actualizada: OT-${nuevoOt}`
-          : `OT guardada: OT-${nuevoOt}`
-      );
+                const trabajoPrevio = trabajosActuales?.[partidaKey] || {};
 
-      // limpiar
-      setCotizaciones([]);
-      setCliente(null);
-      setBuscar("");
-      setCotizadorActivo("tubular");
-      setFormDirty(false);
-      setItemEditando(null);
-      setOt("");
-      setFactura("");
-      setEnvio("no");
+                acc[partidaKey] = {
+                    ...trabajoPrevio,
+                    partida: partidaLabel,
+                    tipo: item.tipo,
+                    descripcion: item.descripcion,
+                    total: item.total,
+                    datos: item.datos,
+                    estadoProduccion:
+                        trabajoPrevio.estadoProduccion ||
+                        (tipoDocumento === "orden_trabajo" ? "en_fila" : ""),
+                };
 
-      setModoEdicionOT(false);
-      setFirebaseKeyOT("");
+                return acc;
+            }, {} as Record<string, any>);
 
-      setEnvioFolioOT("");
-      setEnvioGeneradoOT(false);
-        setEnvioEnviadoOT(false);
-        navigate("/consultaot", {
-            state: {
-                abrirOT: true,
-                firebaseKeyOT: claveOt,
-            },
-        });
+            const ordenTrabajo = {
+                ot: nuevoOt,
+                otLabel: `OT-${nuevoOt}`,
+                factura: factura || null,
+                fecha: fecha,
 
-    } catch (error) {
-      console.error("Error al finalizar OT:", error);
-      alert("Error al guardar la OT");
-      }
+                clienteId: cliente?.id && cliente.id !== "TEMP" ? cliente.id : null,
+                clienteSnapshot: cliente || { nombre: "PUBLICO GENERAL" },
+                credito:
+                    cliente?.id !== "TEMP" ? cliente?.credito?.activo || false : false,
 
-  };
+                asesorId: asesor?.id || null,
+                asesorSnapshot: asesor
+                    ? {
+                        id: asesor.id || null,
+                        uid: asesor.uid || null,
+                        nombre: asesor.nombre || "",
+                        username: asesor.username || "",
+                        area: asesor.area || "",
+                        puesto: asesor.puesto || "",
+                    }
+                    : null,
+
+                envio: envio === "si",
+                envioFolio: envio === "si" ? envioFolioReservado : "",
+                envioGenerado: modoEdicionOT ? envioGeneradoOT : false,
+                envioEnviado: modoEdicionOT ? envioEnviadoOT : false,
+
+                subtotal: totalGeneral,
+                descuentoCliente: descuentoCliente,
+                totalConDescuento: totalConDescuento,
+                totalConIva: totalConIva,
+                trabajos: trabajosObj,
+                tipoDocumento,
+                pagado,
+
+                estadoGeneral:
+                    modoEdicionOT && (location.state as any)?.otData?.estadoGeneral
+                        ? (location.state as any).otData.estadoGeneral
+                        : "cotizacion",
+            };
+
+            const otRef = ref(db, `ordenes_trabajo/${claveOt}`);
+
+            if (!modoEdicionOT) {
+                await set(otRef, ordenTrabajo);
+            } else {
+                const snapshotActual = await get(otRef);
+                const otActual = snapshotActual.exists() ? snapshotActual.val() : {};
+
+                await set(otRef, {
+                    ...otActual,
+                    ...ordenTrabajo,
+
+                    // 🔥 conservar campos de producción / flujo general
+                    taller: otActual.taller ?? false,
+                    Entrada_Almacen: otActual.Entrada_Almacen ?? "",
+                    estadoGeneral:
+                        otActual.estadoGeneral ?? ordenTrabajo.estadoGeneral ?? "cotizacion",
+                    envioGenerado: otActual.envioGenerado ?? ordenTrabajo.envioGenerado ?? false,
+                    envioEnviado: otActual.envioEnviado ?? ordenTrabajo.envioEnviado ?? false,
+                    envioFolio: ordenTrabajo.envio
+                        ? (otActual.envioFolio || ordenTrabajo.envioFolio || "")
+                        : "",
+                });
+            }
+
+            sessionStorage.removeItem(DRAFT_KEY);
+
+            alert(
+                modoEdicionOT
+                    ? `OT actualizada: OT-${nuevoOt}`
+                    : `OT guardada: OT-${nuevoOt}`
+            );
+
+            // limpiar
+            setCotizaciones([]);
+            setCliente(null);
+            setBuscar("");
+            setCotizadorActivo("tubular");
+            setFormDirty(false);
+            setItemEditando(null);
+            setOt("");
+            setFactura("");
+            setEnvio("no");
+
+            setModoEdicionOT(false);
+            setFirebaseKeyOT("");
+
+            setEnvioFolioOT("");
+            setEnvioGeneradoOT(false);
+            setEnvioEnviadoOT(false);
+
+            navigate("/consultaot", {
+                state: {
+                    abrirOT: true,
+                    firebaseKeyOT: claveOt,
+                },
+            });
+        } catch (error) {
+            console.error("Error al finalizar OT:", error);
+            alert("Error al guardar la OT");
+        }
+    };
 
   //Eliminar Item de ticket
   const eliminarItem = (id: string) => {

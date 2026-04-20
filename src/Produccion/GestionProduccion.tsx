@@ -278,6 +278,7 @@ const GestionProduccion: React.FC = () => {
             await update(ref(db, `ordenes_trabajo/${encontradaKey}`), {
                 taller: true,
                 Entrada_Almacen: entradaAlmacen,
+                estadoGeneral: "fabricacion",
                 ...updatesTrabajos, // 🔥 AQUÍ se agregan los estados automáticamente
             });
 
@@ -500,6 +501,27 @@ const GestionProduccion: React.FC = () => {
             }
 
             await update(ref(db, ruta), datosActualizar);
+
+            // 🔥 VERIFICAR SI TODA LA OT YA ESTÁ COMPLETADA
+            const trabajosActualizados = {
+                ...(otSeleccionada.trabajos || {}),
+                [partidaSeleccionada.key!]: {
+                    ...(otSeleccionada.trabajos?.[partidaSeleccionada.key!] || {}),
+                    ...datosActualizar,
+                },
+            };
+
+            const todasListas = Object.values(trabajosActualizados).length > 0 &&
+                Object.values(trabajosActualizados).every(
+                    (t: any) => t.estadoProduccion === "lista_para_entrega"
+                );
+
+            if (todasListas) {
+                const db = getDatabase(app);
+                await update(ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}`), {
+                    estadoGeneral: "completada",
+                });
+            }
 
             setOtSeleccionada((prev) => {
                 if (!prev || !prev.trabajos) return prev;
@@ -1202,8 +1224,7 @@ const GestionProduccion: React.FC = () => {
                                         <th style={thStyle}>Partida</th>
                                         <th style={thStyle}>Tipo</th>
                                         <th style={thStyle}>Estado</th>
-                                            <th style={thStyle}>Cliente</th>
-                                            
+                                            <th style={thStyle}>Cliente</th>  
                                         <th style={thStyle}>Acción</th>
                                     </tr>
                                 </thead>

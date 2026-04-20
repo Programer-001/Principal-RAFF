@@ -34,7 +34,16 @@ interface TrabajoItem {
 interface FacturaItem {
     factura?: number | string;
 }
-
+interface CorteCajaItem {
+    cantidad?: number | string;
+    comentarios?: string;
+    estatus?: boolean;
+    factura?: number | string;
+    fecha?: string;
+    id?: string;
+    metodo?: string;
+    transaccion?: number;
+}
 interface OrdenTrabajo {
     ot: string;
     otLabel?: string;
@@ -56,6 +65,7 @@ interface OrdenTrabajo {
     envioEnviado?: boolean;
     asesorId?: string | null;
     asesorSnapshot?: AsesorSnapshot | null;
+    estadoGeneral?: string;
 }
 type OrdenTrabajoConClave = OrdenTrabajo & {
     firebaseKey: string;
@@ -78,8 +88,20 @@ const GestionOT = () => {
     const [facturasInput, setFacturasInput] = useState<string[]>([""]);
     const [mostrarModalFacturas, setMostrarModalFacturas] = useState(false);
     const [guardandoFacturas, setGuardandoFacturas] = useState(false);
+    const [facturaHover, setFacturaHover] = useState<string | null>(null);
+    const [previewFactura, setPreviewFactura] = useState<{
+        factura: string;
+        cantidad?: number | string;
+        metodo?: string;
+        fecha?: string;
+        encontrado: boolean;
+    } | null>(null);
+    const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
+    const [cargandoPreviewFactura, setCargandoPreviewFactura] = useState(false);
+
     // 🔹 username real del usuario logueado
     const [usernameActual, setUsernameActual] = useState("");
+    const [areaActual, setAreaActual] = useState("");
     //Seleccionar si es cotizacion o orden de trabajo
     const [filtroCotizaciones, setFiltroCotizaciones] = useState(false);
     const [filtroOrdenesTrabajo, setFiltroOrdenesTrabajo] = useState(false);
@@ -195,6 +217,7 @@ const GestionOT = () => {
                 tipoDocumento: "orden_trabajo",
                 facturas: construirFacturasDesdeInputs(facturasLimpias),
                 pagado: true,
+                estadoGeneral: "pendiente_taller",
             });
 
             setTipoDocumento("orden_trabajo");
@@ -216,6 +239,7 @@ const GestionOT = () => {
 
                 if (!correo) {
                     setUsernameActual("");
+                    setAreaActual("");
                     return;
                 }
 
@@ -224,6 +248,7 @@ const GestionOT = () => {
 
                 if (!snapshot.exists()) {
                     setUsernameActual("");
+                    setAreaActual("");
                     return;
                 }
 
@@ -234,16 +259,26 @@ const GestionOT = () => {
                     return emailEmpleado === correo;
                 }) as any;
 
-                if (empleadoEncontrado?.username) {
-                    setUsernameActual(
-                        String(empleadoEncontrado.username).toLowerCase().trim()
+                if (empleadoEncontrado) {
+                    if (empleadoEncontrado?.username) {
+                        setUsernameActual(
+                            String(empleadoEncontrado.username).toLowerCase().trim()
+                        );
+                    } else {
+                        setUsernameActual("");
+                    }
+
+                    setAreaActual(
+                        String(empleadoEncontrado.area || "").trim()
                     );
                 } else {
                     setUsernameActual("");
+                    setAreaActual("");
                 }
             } catch (error) {
                 console.error("Error obteniendo username actual:", error);
                 setUsernameActual("");
+                setAreaActual("");
             }
         };
 
@@ -382,6 +417,11 @@ const GestionOT = () => {
     const borrarOT = async () => {
         if (!otSeleccionada) return;
 
+        if (areaActual !== "Administración") {
+            alert("Solo el área de Administración puede borrar OTs");
+            return;
+        }
+
         const confirmar = window.confirm(
             `¿Seguro que deseas borrar la OT ${otSeleccionada.otLabel || otSeleccionada.firebaseKey
             }?`
@@ -394,7 +434,6 @@ const GestionOT = () => {
 
             alert("OT borrada correctamente");
             setOtSeleccionada(null);
-        
         } catch (error) {
             console.error("Error al borrar OT:", error);
             alert("No se pudo borrar la OT");
@@ -629,6 +668,7 @@ const GestionOT = () => {
                     tipoDocumento: "cotizacion",
                     facturas: null,
                     pagado: false,
+                    estadoGeneral: "cotizacion",
                 });
 
                 setTipoDocumento("cotizacion");
@@ -644,7 +684,100 @@ const GestionOT = () => {
             alert("Error al preparar el cambio de tipo de documento");
         }
     };
-    //ESTADOS
+    const buscarPreviewFactura = async (numeroFactura: string) => {
+        const facturaBuscada = String(numeroFactura || "").trim();
+
+        if (!facturaBuscada) {
+            setPreviewFactura(null);
+            return;
+        }
+
+        try {
+            setCargandoPreviewFactura(true);
+
+            const db = getDatabase(app);
+            const snapshot = await get(ref(db, "corte-caja"));
+
+            if (!snapshot.exists()) {
+                setPreviewFactura({
+                    factura: facturaBuscada,
+                    encontrado: false,
+                });
+                return;
+            }
+
+            const data = snapshot.val();
+            let encontrada: CorteCajaItem | null = null;
+
+            for (const grupoKey of Object.keys(data || {})) {
+                const grupo = data[grupoKey] || {};
+
+                for (const movKey of Object.keys(grupo || {})) {
+                    const mov = grupo[movKey] as CorteCajaItem;
+                    const facturaMovimiento = String(mov?.factura ?? "").trim();
+
+                    if (facturaMovimiento === facturaBuscada) {
+                        encontrada = mov;
+                        break;
+                    }
+                }
+
+                if (encontrada) break;
+            }
+
+            if (encontrada) {
+                const encontradaFinal: CorteCajaItem = encontrada;
+
+                setPreviewFactura({
+                    factura: facturaBuscada,
+                    cantidad: encontradaFinal.cantidad,
+                    metodo: encontradaFinal.metodo,
+                    fecha: encontradaFinal.fecha,
+                    encontrado: true,
+                });
+            } else {
+                setPreviewFactura({
+                    factura: facturaBuscada,
+                    encontrado: false,
+                });
+            }
+        } catch (error) {
+            console.error("Error buscando factura en corte-caja:", error);
+            setPreviewFactura({
+                factura: facturaBuscada,
+                encontrado: false,
+            });
+        } finally {
+            setCargandoPreviewFactura(false);
+        }
+    };
+
+    const manejarMouseEnterFactura = async (
+        factura: string,
+        event: React.MouseEvent<HTMLSpanElement>
+    ) => {
+        setFacturaHover(factura);
+        setPreviewPos({
+            x: event.clientX + 12,
+            y: event.clientY + 12,
+        });
+
+        await buscarPreviewFactura(factura);
+    };
+
+    const manejarMouseMoveFactura = (event: React.MouseEvent<HTMLSpanElement>) => {
+        setPreviewPos({
+            x: event.clientX + 12,
+            y: event.clientY + 12,
+        });
+    };
+
+    const manejarMouseLeaveFactura = () => {
+        setFacturaHover(null);
+        setPreviewFactura(null);
+        setCargandoPreviewFactura(false);
+    };
+    //ESTADOS------------------------------------------------------------------------>>
     const formatearEstadoProduccion = (estado?: string) => {
         switch (estado) {
             case "en_fila":
@@ -659,6 +792,22 @@ const GestionOT = () => {
                 return "Contactado";
             case "lista_para_entrega":
                 return "Lista para entrega";
+            default:
+                return estado || "--";
+        }
+    };
+    const formatearEstadoGeneral = (estado?: string) => {
+        switch (estado) {
+            case "cotizacion":
+                return "Cotización";
+            case "pendiente_taller":
+                return "Pendiente de taller";
+            case "fabricacion":
+                return "Fabricación";
+            case "completada":
+                return "Completada";
+            case "entregada":
+                return "Entregada";
             default:
                 return estado || "--";
         }
@@ -691,6 +840,61 @@ const GestionOT = () => {
                 return { bg: "#e5e7eb", color: "#111827" };
         }
     };
+    //Colores estados generales de la ot
+    const obtenerColorEstadoGeneral = (estado?: string) => {
+        switch (estado) {
+            case "cotizacion":
+                return { bg: "#e5e7eb", color: "#374151" };
+
+            case "pendiente_taller":
+                return { bg: "#fde68a", color: "#92400e" };
+
+            case "fabricacion":
+                return { bg: "#93c5fd", color: "#1e3a8a" };
+
+            case "completada":
+                return { bg: "#86efac", color: "#065f46" };
+
+            case "entregada":
+                return { bg: "#34d399", color: "#064e3b" };
+
+            default:
+                return { bg: "#e5e7eb", color: "#111827" };
+        }
+    };
+
+    //Entregar al Cliente
+    const marcarEntregadaAlCliente = async () => {
+        if (!otSeleccionada) return;
+
+        const confirmar = window.confirm(
+            `¿Deseas marcar la ${otSeleccionada.otLabel || otSeleccionada.firebaseKey} como entregada al cliente?`
+        );
+
+        if (!confirmar) return;
+
+        try {
+            const db = getDatabase(app);
+
+            await update(ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}`), {
+                estadoGeneral: "entregada",
+            });
+
+            setOtSeleccionada((prev) => {
+                if (!prev) return prev;
+
+                return {
+                    ...prev,
+                    estadoGeneral: "entregada",
+                };
+            });
+
+            alert("OT marcada como entregada al cliente ✅");
+        } catch (error) {
+            console.error("Error al marcar como entregada:", error);
+            alert("No se pudo marcar como entregada al cliente");
+        }
+    };
     //Barra de progreso
     const obtenerPorcentajeEstado = (estado?: string) => {
         switch (estado) {
@@ -720,7 +924,10 @@ const GestionOT = () => {
 
         return Math.round(total / trabajos.length);
     };
-    const progresoOT = calcularProgresoOT(trabajosArray);
+    const progresoOT =
+        otSeleccionada?.estadoGeneral === "cotizacion"
+            ? 0
+            : calcularProgresoOT(trabajosArray);
     //---------------------HTML------------------------------------------------------------------->>
 
     return (
@@ -842,19 +1049,24 @@ const GestionOT = () => {
 
                                                 {/* 🔥 COLUMNA ESTADO */}
                                                 <td>
-                                                    {otCompleta ? (
-                                                        <span
-                                                            style={{
-                                                                color: "green",
-                                                                fontSize: 18,
-                                                                fontWeight: "bold",
-                                                            }}
-                                                        >
-                                                            ✔
-                                                        </span>
-                                                    ) : (
-                                                        "--"
-                                                    )}
+                                                    {(() => {
+                                                        const colores = obtenerColorEstadoGeneral(ot.estadoGeneral);
+
+                                                        return (
+                                                            <span
+                                                                style={{
+                                                                    padding: "4px 10px",
+                                                                    borderRadius: 999,
+                                                                    fontSize: 12,
+                                                                    fontWeight: 500,
+                                                                    backgroundColor: colores.bg,
+                                                                    color: colores.color,
+                                                                }}
+                                                            >
+                                                                {formatearEstadoGeneral(ot.estadoGeneral)}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </td>
 
                                                 <td>
@@ -1059,10 +1271,30 @@ const GestionOT = () => {
                         <div style={{ marginBottom: 10 }}>
                             <b>Fecha:</b> {formatearFecha(otSeleccionada.fecha)}
                         </div>
-
+                        {/*Facturacion*/ }
                         <div style={{ marginBottom: 10 }}>
                             <b>{obtenerEtiquetaFacturas(otSeleccionada)}:</b>{" "}
-                            {obtenerTextoFacturas(otSeleccionada)}
+                            {obtenerFacturasArray(otSeleccionada).length === 0 ? (
+                                "--"
+                            ) : (
+                                obtenerFacturasArray(otSeleccionada).map((factura, index, arr) => (
+                                    <React.Fragment key={`${factura}-${index}`}>
+                                        <span
+                                            onMouseEnter={(e) => manejarMouseEnterFactura(factura, e)}
+                                            onMouseMove={manejarMouseMoveFactura}
+                                            onMouseLeave={manejarMouseLeaveFactura}
+                                            style={{
+                                                cursor: "pointer",
+                                                textDecoration: "underline",
+                                                textUnderlineOffset: 2,
+                                            }}
+                                        >
+                                            {factura}
+                                        </span>
+                                        {index < arr.length - 1 ? ", " : ""}
+                                    </React.Fragment>
+                                ))
+                            )}
                         </div>
                         {/*EL SELECT COTIZACION ORDEN DE COMPRA*/}
                         {/* 🔹 Tipo de documento */}
@@ -1219,20 +1451,22 @@ const GestionOT = () => {
                                             </div>
 
                                             {/* 🔥 ESTADO BONITO Colores de estados*/}
-                                            <div
-                                                style={{
-                                                    display: "inline-block",
-                                                    marginTop: 6,
-                                                    padding: "4px 10px",
-                                                    borderRadius: 999,
-                                                    fontSize: 12,
-                                                    fontWeight: 500,
-                                                    backgroundColor: colores.bg,
-                                                    color: colores.color,
-                                                }}
-                                            >
-                                                {formatearEstadoProduccion(trabajo.estadoProduccion)}
-                                            </div>
+                                            {otSeleccionada?.estadoGeneral !== "cotizacion" && (
+                                                <div
+                                                    style={{
+                                                        display: "inline-block",
+                                                        marginTop: 6,
+                                                        padding: "4px 10px",
+                                                        borderRadius: 999,
+                                                        fontSize: 12,
+                                                        fontWeight: 500,
+                                                        backgroundColor: colores.bg,
+                                                        color: colores.color,
+                                                    }}
+                                                >
+                                                    {formatearEstadoProduccion(trabajo.estadoProduccion)}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })
@@ -1289,22 +1523,94 @@ const GestionOT = () => {
                             >
                                 Editar facturas
                             </button>
-                            <button
-                                onClick={borrarOT}
-                                style={{
-                                    background: "red",
-                                    color: "white",
-                                    border: "none",
-                                    padding: "8px 12px",
-                                    cursor: "pointer",
-                                }}
-                            >
-                                Borrar OT
-                            </button>
+                            {otSeleccionada?.estadoGeneral === "completada" && (
+                                <button onClick={marcarEntregadaAlCliente}>
+                                    Entregada al cliente
+                                </button>
+                            )}
+                            {areaActual === "Administración" && (
+                                <button
+                                    onClick={borrarOT}
+                                    style={{
+                                        background: "red",
+                                        color: "white",
+                                        border: "none",
+                                        padding: "8px 12px",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Borrar OT
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
+            {/*visor de facturas*/ }
+            {facturaHover && (
+                <div
+                    style={{
+                        position: "fixed",
+                        top: previewPos.y,
+                        left: previewPos.x,
+                        zIndex: 10000,
+                        background: "#fff",
+                        border: "1px solid #d1d5db",
+                        borderRadius: 10,
+                        padding: 12,
+                        minWidth: 220,
+                        boxShadow: "0 10px 25px rgba(0,0,0,0.18)",
+                        pointerEvents: "none",
+                    }}
+                >
+                    {(() => {
+                        if (cargandoPreviewFactura) {
+                            return <div>Cargando factura...</div>;
+                        }
+
+                        if (!previewFactura || !previewFactura.encontrado) {
+                            return (
+                                <>
+                                    <div style={{ fontWeight: "bold", marginBottom: 6 }}>
+                                        Factura: {facturaHover}
+                                    </div>
+                                    <div>No encontrada en las facturas</div>
+                                </>
+                            );
+                        }
+
+                        const previewActual: {
+                            factura: string;
+                            cantidad?: number | string;
+                            metodo?: string;
+                            fecha?: string;
+                            encontrado: boolean;
+                        } = previewFactura;
+
+                        return (
+                            <>
+                                <div style={{ fontWeight: "bold", marginBottom: 8 }}>
+                                    Factura: {previewActual.factura}
+                                </div>
+                                <div style={{ marginBottom: 4 }}>
+                                    <b>Cantidad:</b>{" "}
+                                    {previewActual.cantidad !== undefined &&
+                                        previewActual.cantidad !== null
+                                        ? previewActual.cantidad
+                                        : "--"}
+                                </div>
+                                <div style={{ marginBottom: 4 }}>
+                                    <b>Método:</b> {previewActual.metodo || "--"}
+                                </div>
+                                <div>
+                                    <b>Fecha:</b> {previewActual.fecha || "--"}
+                                </div>
+                            </>
+                        );
+                    })()}
+                </div>
+            )}
+            {/*fin de visor de facturas*/ }
         </div>
     );
 };
