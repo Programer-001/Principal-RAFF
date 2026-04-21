@@ -1138,6 +1138,7 @@ const Cotizador = () => {
             data={itemEditando || undefined}
             onGuardar={guardarCotizacion}
             setDirty={setFormDirty}
+            perfil={asesor || undefined}
           />
         )}
 
@@ -1153,6 +1154,7 @@ const Cotizador = () => {
             data={itemEditando || undefined}
             onGuardar={guardarCotizacion}
             setDirty={setFormDirty}
+            perfil={asesor || undefined}
           />
         )}
 
@@ -1161,6 +1163,7 @@ const Cotizador = () => {
             data={itemEditando || undefined}
             onGuardar={guardarCotizacion}
             setDirty={setFormDirty}
+            perfil={asesor || undefined}
           />
         )}
 
@@ -1169,6 +1172,7 @@ const Cotizador = () => {
             data={itemEditando || undefined}
             onGuardar={guardarCotizacion}
             setDirty={setFormDirty}
+            perfil={asesor || undefined}
           />
          )}
         {cotizadorActivo === "termopar" && (
@@ -1176,6 +1180,7 @@ const Cotizador = () => {
                 data={itemEditando || undefined}
                 onGuardar={guardarCotizacion}
                 setDirty={setFormDirty}
+                perfil={asesor || undefined}
             />
         )}
         {cotizadorActivo === "cuarzo" && (

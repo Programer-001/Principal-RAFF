@@ -4,9 +4,14 @@ import { formatearMoneda } from "../funciones/formato_moneda";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 interface Props {
-  data?: ItemCotizado;
-  onGuardar: (item: ItemCotizado) => void;
-  setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    data?: ItemCotizado;
+    onGuardar: (item: ItemCotizado) => void;
+    setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    perfil?: {
+        area?: string;
+        puesto?: string;
+        username?: string;
+    };
 }
 
 interface OpcionFirebase {
@@ -17,7 +22,7 @@ interface OpcionFirebase {
   [key: string]: any;
 }
 
-const Resorte = ({ data, onGuardar, setDirty }: Props) => {
+const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
   const [cantidadResortes, setCantidadResortes] = useState("");
   const [ohms, setohms] = useState("");
   const [TipoAlambre, setTipoAlambre] = useState("");
@@ -28,7 +33,8 @@ const Resorte = ({ data, onGuardar, setDirty }: Props) => {
   const [alambreSeleccionado, setAlambreSeleccionado] = useState("");
   const [terminalSeleccionada, setTerminalSeleccionada] = useState("");
   const [cantidadTerminales, setCantidadTerminales] = useState("");
-
+    //Area administracion
+    const esAdministracion = perfil?.area === "Administración";
   //------------------useEffect-------------------------------->>
   // cargar terminales una vez
   useEffect(() => {
@@ -308,7 +314,8 @@ const Resorte = ({ data, onGuardar, setDirty }: Props) => {
       </div>
       {/*Fin de los inputs */}
 
-      <button
+          <button
+              className="btn btn-blue"
         onClick={() => {
           onGuardar({
             id: data?.id || Date.now().toString(),
@@ -351,51 +358,55 @@ const Resorte = ({ data, onGuardar, setDirty }: Props) => {
         }}
       >
         {data ? "ACTUALIZAR" : "AGREGAR"}
-      </button>
-      {/*Mostrar los resultados*/}
-          <div style={{ marginTop: "20px" }}>
-              <h1> <strong>Total general:</strong> ${formatearMoneda(totalGeneral * 1.16)}</h1>
-              <h2> <strong>subtotal general:</strong> ${formatearMoneda(totalGeneral)}</h2> 
-        <h3>Resultados</h3>
+          </button>
+          <h2> <strong>Subtotal:</strong> ${formatearMoneda(totalGeneral)}</h2>
+          <h1> <strong>Total:</strong> ${formatearMoneda(totalGeneral * 1.16)}</h1>
+          {/*Mostrar los resultados*/}
+          {esAdministracion && (
+              <div style={{ marginTop: "20px" }}>
 
-        <div>
-          <strong>Resistencia del alambre (ohms x metro):</strong>{" "}
-                  {resistenciaPorMetro.toFixed(4)} Ω/m
-        </div>
 
-        <div>
-          <strong>Metros necesarios por resorte:</strong>{" "}
-          {metrosNecesarios.toFixed(2)} m
-        </div>
+                  <h3>Resultados</h3>
 
-        <div>
-                  <strong>Precio por metro:</strong> ${formatearMoneda(precioAlambrePorMetro)}
-        </div>
+                  <div>
+                      <strong>Resistencia del alambre (ohms x metro):</strong>{" "}
+                      {resistenciaPorMetro.toFixed(4)} Ω/m
+                  </div>
 
-        <div>
-          <strong>Costo del alambre por resorte:</strong> $
-                  ${formatearMoneda(costoAlambre)}
-        </div>
+                  <div>
+                      <strong>Metros necesarios por resorte:</strong>{" "}
+                      {metrosNecesarios.toFixed(2)} m
+                  </div>
 
-        {mostrarCantidadTerminales && (
-          <div>
-            <strong>Terminales por resorte:</strong> {cantidadTerminalesNum} x $
-                      {formatearMoneda(precioTerminal)} = ${formatearMoneda(costoTerminales)}
-          </div>
-        )}
+                  <div>
+                      <strong>Precio por metro:</strong> ${formatearMoneda(precioAlambrePorMetro)}
+                  </div>
 
-        <div>
-                  <strong>50% fabricación:</strong> ${formatearMoneda(costoFabricacion)}
-        </div>
+                  <div>
+                      <strong>Costo del alambre por resorte:</strong> $
+                      ${formatearMoneda(costoAlambre)}
+                  </div>
 
-        <div>
-                  <strong>subtotal por resorte:</strong> ${formatearMoneda(totalPorResorte)}
-        </div>
+                  {mostrarCantidadTerminales && (
+                      <div>
+                          <strong>Terminales por resorte:</strong> {cantidadTerminalesNum} x $
+                          {formatearMoneda(precioTerminal)} = ${formatearMoneda(costoTerminales)}
+                      </div>
+                  )}
 
-        <div>
-                  <strong>subtotal general:</strong> ${formatearMoneda(totalGeneral)}
+                  <div>
+                      <strong>50% fabricación:</strong> ${formatearMoneda(costoFabricacion)}
+                  </div>
+
+                  <div>
+                      <strong>subtotal por resorte:</strong> ${formatearMoneda(totalPorResorte)}
+                  </div>
+
+                  <div>
+                      <strong>subtotal general:</strong> ${formatearMoneda(totalGeneral)}
+                  </div>
               </div>
-      </div>
+          )}
     </>
   );
 };

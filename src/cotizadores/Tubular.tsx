@@ -11,12 +11,17 @@ import {
 import { ItemCotizado } from "../cotizador";
 
 interface Props {
-  data?: ItemCotizado;
-  onGuardar: (item: ItemCotizado) => void;
-  setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    data?: ItemCotizado;
+    onGuardar: (item: ItemCotizado) => void;
+    setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    perfil?: {
+        area?: string;
+        puesto?: string;
+        username?: string;
+    };
 }
 
-const Tubular = ({ data, onGuardar, setDirty }: Props) => {
+const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const [diametro, setDiametro] = useState<TipoResistencia | "">("");
   const [longitud, setLongitud] = useState<number>(0); //Longitud
   //const [soldarCable, setSoldarCable] = useState("");
@@ -46,6 +51,7 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
     const [aleta, setAleta] = useState(false);
     const [datosAdicionales, setDatosAdicionales] = useState("");
+    const esAdministracion = perfil?.area === "Administración";
   //-------------------------------------------------------------------------------->>
   const [catalogos, setCatalogos] = useState<any>({});
   const [seleccionados, setSeleccionados] = useState<any>({});
@@ -867,66 +873,71 @@ const Tubular = ({ data, onGuardar, setDirty }: Props) => {
     
 
           {/* -------------------------------------------------------VARIABLES CUADRO----------------------------------------------------->> */}
-          <div style={{ marginBottom: 10 }}>
-              <label style={{ cursor: "pointer", fontWeight: "bold" }}>
-                  <input
-                      type="checkbox"
-                      checked={mostrarDetalle}
-                      onChange={(e) => setMostrarDetalle(e.target.checked)}
-                      style={{ marginRight: 8 }}
-                  />
-                  Mostrar detalle técnico
-              </label>
-          </div>
-          {mostrarDetalle && (
-              <h3>
-                  Voltaje: {voltaje || "--"}V
-                  <br />
-                  Potencia: {potencia || "--"}W
-                  <br />
-                  Cantidad de resistencias: {cantidadResistencias || "--"}
-                  <br />
-                  Total Tubular: {totalTubo ? `$ ${totalTubo.toFixed(2)}` : "--"}
-                  <br />
-                  Precio por cm:{" "}
-                  {diametro ? obtenerPrecioPorCm(diametro, longitud) : "--"}
-                  <br />
-                  Tornillo: {seleccionados["tornillo"]?.precio ?? "--"}
-                  <br />
-                  Borne: {seleccionados["borne"]?.precio ?? "--"}
-                  <br />
-                  Desoldar de base: {seleccionados["desoldar_base"]?.precio ?? "--"}
-                  <br />
-                  Dobleces: {seleccionados["dobleces"]?.precio ?? "--"}
-                  <br />
-                  Soldadura en resistencia:{" "}
-                  {seleccionados["soldadura_resistencia"]?.precio ?? "--"}
-                  <br />
-                  Soldar cable: {tipoSoldarCable || "--"}
-                  <br />
-                  Total cable: {totalCable ? `$ ${totalCable.toFixed(2)}` : "--"}
-                  <br />
-                  Desoldar tornillo:{" "}
-                  {totalDesoldartornillo ? `$ ${totalDesoldartornillo}` : "--"}
-                  <br />
-                  Tapon macho: {totalTapon ? `$ ${totalTapon}` : "--"}
-                  <br />
-                  Barrenos: {totalBarrenos ? `$ ${totalBarrenos}` : "--"}
-                  <br />
-                  Termoposo: {totalTermoposo ? `$ ${totalTermoposo}` : "--"}
-                  <br />
-                  Tipo{tipoPlaca}: {totalPlaca ? `$ ${totalPlaca.toFixed(2)}` : "--"}
-                  <br />
-                  Puentes: {totalPuentes ? `$ ${totalPuentes}` : "--"}
-                  <br />
-                  Sello: {seleccionados["sellos"]?.precio ?? "--"}
-                  <br />
-                  Aleta: {totalAleta ? `$ ${totalAleta.toFixed(2)}` : "--"}
-                  <br />
-                  Otros Servicios: {seleccionados["servicios"]?.precio ?? "--"}
-                  <br />
-                  Servicio express: % {totalExpress.toFixed(2)}
-              </h3>
+          {esAdministracion && (
+              <>
+                  <div style={{ marginBottom: 10 }}>
+                      <label style={{ cursor: "pointer", fontWeight: "bold" }}>
+                          <input
+                              type="checkbox"
+                              checked={mostrarDetalle}
+                              onChange={(e) => setMostrarDetalle(e.target.checked)}
+                              style={{ marginRight: 8 }}
+                          />
+                          Mostrar detalle técnico
+                      </label>
+                  </div>
+
+                  {mostrarDetalle && (
+                      <h3>
+                          Voltaje: {voltaje || "--"}V
+                          <br />
+                          Potencia: {potencia || "--"}W
+                          <br />
+                          Cantidad de resistencias: {cantidadResistencias || "--"}
+                          <br />
+                          Total Tubular: {totalTubo ? `$ ${totalTubo.toFixed(2)}` : "--"}
+                          <br />
+                          Precio por cm:{" "}
+                          {diametro ? obtenerPrecioPorCm(diametro, longitud) : "--"}
+                          <br />
+                          Tornillo: {seleccionados["tornillo"]?.precio ?? "--"}
+                          <br />
+                          Borne: {seleccionados["borne"]?.precio ?? "--"}
+                          <br />
+                          Desoldar de base: {seleccionados["desoldar_base"]?.precio ?? "--"}
+                          <br />
+                          Dobleces: {seleccionados["dobleces"]?.precio ?? "--"}
+                          <br />
+                          Soldadura en resistencia:{" "}
+                          {seleccionados["soldadura_resistencia"]?.precio ?? "--"}
+                          <br />
+                          Soldar cable: {tipoSoldarCable || "--"}
+                          <br />
+                          Total cable: {totalCable ? `$ ${totalCable.toFixed(2)}` : "--"}
+                          <br />
+                          Desoldar tornillo:{" "}
+                          {totalDesoldartornillo ? `$ ${totalDesoldartornillo}` : "--"}
+                          <br />
+                          Tapon macho: {totalTapon ? `$ ${totalTapon}` : "--"}
+                          <br />
+                          Barrenos: {totalBarrenos ? `$ ${totalBarrenos}` : "--"}
+                          <br />
+                          Termoposo: {totalTermoposo ? `$ ${totalTermoposo}` : "--"}
+                          <br />
+                          Tipo {tipoPlaca || "--"}: {totalPlaca ? `$ ${totalPlaca.toFixed(2)}` : "--"}
+                          <br />
+                          Puentes: {totalPuentes ? `$ ${totalPuentes}` : "--"}
+                          <br />
+                          Sello: {seleccionados["sellos"]?.precio ?? "--"}
+                          <br />
+                          Aleta: {totalAleta ? `$ ${totalAleta.toFixed(2)}` : "--"}
+                          <br />
+                          Otros Servicios: {seleccionados["servicios"]?.precio ?? "--"}
+                          <br />
+                          Servicio express: % {totalExpress.toFixed(2)}
+                      </h3>
+                  )}
+              </>
           )}
           {/* --------------------------------------------FIN DE CUADRO VARIABLES------------------------------------------------------------------>> */}
     </>

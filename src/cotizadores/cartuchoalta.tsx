@@ -7,11 +7,16 @@ import { ItemCotizado } from "../cotizador";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 interface Props {
-  data?: ItemCotizado;
-  onGuardar: (item: ItemCotizado) => void;
-  setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    data?: ItemCotizado;
+    onGuardar: (item: ItemCotizado) => void;
+    setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    perfil?: {
+        area?: string;
+        puesto?: string;
+        username?: string;
+    };
 }
-const CartuchoAlta = ({ data, onGuardar, setDirty }: Props) => {
+const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const [cantidadResistencias, setCantidadResistencias] = useState("");
   const [voltaje, setVoltaje] = useState("");
   const [watts, setWatts] = useState("");
@@ -27,7 +32,8 @@ const CartuchoAlta = ({ data, onGuardar, setDirty }: Props) => {
   const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<any[]>([]);
   const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
     useState<any>(null);
-
+    //Area administracion
+    const esAdministracion = perfil?.area === "Administración";
   //-------------------------------------useEffect-------------------------------------------->>
   useEffect(() => {
     const cargarSoldarCable = async () => {
@@ -312,7 +318,7 @@ const CartuchoAlta = ({ data, onGuardar, setDirty }: Props) => {
         </div>
 
         <div className="form-row textarea-row">
-          <label>DATOS ADICIONALES:</label>
+        <label>Datos Adicionales:</label>
           <textarea
             value={datosAdicionales}
             onChange={(e) => setDatosAdicionales(e.target.value)}
@@ -332,14 +338,19 @@ const CartuchoAlta = ({ data, onGuardar, setDirty }: Props) => {
         >
           <h3>Descripción</h3>
           <p style={{ fontSize: "14px" }}>{descripcion}</p>
-        </div>
-        {/* TOTAL */}
+              </div>
+
+              <h2><strong>Subtotal</strong>${formatearMoneda(total)}</h2>
+              <h1><strong>Total</strong>${formatearMoneda(total*1.16)}</h1>
+              {/* TOTAL */}
+              {esAdministracion && (
         <div>
                   <p>Precio del cable: ${formatearMoneda(precioSoldarCable)}</p>
                   <p>Precio cable: ${formatearMoneda(totalCable)}</p>
                   <p>Precio de resistencia: ${formatearMoneda(totalPorResistencia)}</p>
           <p>Subtotal: ${formatearMoneda(total)}</p>
         </div>
+              )}
 
         <button
           className="btn btn-blue"

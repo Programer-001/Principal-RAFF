@@ -7,11 +7,16 @@ import { ItemCotizado } from "../cotizador";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 interface Props {
-  data?: ItemCotizado;
-  onGuardar: (item: ItemCotizado) => void;
-  setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    data?: ItemCotizado;
+    onGuardar: (item: ItemCotizado) => void;
+    setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    perfil?: {
+        area?: string;
+        puesto?: string;
+        username?: string;
+    };
 }
-const CartuchoBaja = ({ data, onGuardar, setDirty }: Props) => {
+const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
   const [cantidadResistencias, setCantidadResistencias] = useState("");
   const [voltaje, setVoltaje] = useState("");
   const [watts, setWatts] = useState("");
@@ -24,7 +29,8 @@ const CartuchoBaja = ({ data, onGuardar, setDirty }: Props) => {
   const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<any[]>([]);
   const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
         useState<any>(null);
-
+    //Area administracion
+    const esAdministracion = perfil?.area === "Administración";
 
   //-------------------------------------useEffect-------------------------------------------->>
   useEffect(() => {
@@ -253,7 +259,7 @@ const CartuchoBaja = ({ data, onGuardar, setDirty }: Props) => {
               </div>
 
         <div className="form-row textarea-row">
-          <label>DATOS ADICIONALES: </label>
+          <label>Datos Adicionales: </label>
           <textarea
             value={datosAdicionales}
             onChange={(e) => setDatosAdicionales(e.target.value)}
@@ -267,19 +273,24 @@ const CartuchoBaja = ({ data, onGuardar, setDirty }: Props) => {
             <p className="descripcion-texto">{descripcion}</p>
           </div>
         </div>
-      </div>
-      {/* TOTAL */}
-      <div className="form-row textarea-row">
-        <label>Total</label>
-        <div>
-                  <p>Precio del cable: ${formatearMoneda(precioSoldarCable)}</p>
-                  <p>Precio cable: ${formatearMoneda(totalCable)}</p>
-                  <p>Precio de resistencia: ${formatearMoneda(totalPorResistencia)}</p>
-                  <p>Total: ${formatearMoneda(total)}</p>
-        </div>
-      </div>
+          </div>
+          <h2><strong>Subtotal:</strong> ${formatearMoneda(total)}</h2>
+          <h1><strong>Total:</strong> ${formatearMoneda(total*1.16)}</h1>
+      {/* TOTAL con variables */}
+          {esAdministracion && (
+              <div className="form-row textarea-row">
+                  <label>Total</label>
+                  <div>
+                      <p>Precio del cable: ${formatearMoneda(precioSoldarCable)}</p>
+                      <p>Precio cable: ${formatearMoneda(totalCable)}</p>
+                      <p>Precio de resistencia: ${formatearMoneda(totalPorResistencia)}</p>
+                      <p>Subtotal: ${formatearMoneda(total)}</p>
+                  </div>
+              </div>
+          )}
 
-      <button
+          <button
+              className="btn btn-blue"
         onClick={() => {
           onGuardar({
             id: data?.id || Date.now().toString(),

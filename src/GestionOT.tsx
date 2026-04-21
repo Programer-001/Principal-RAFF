@@ -1596,7 +1596,10 @@ const GestionOT = () => {
                                     <b>Cantidad:</b>{" "}
                                     {previewActual.cantidad !== undefined &&
                                         previewActual.cantidad !== null
-                                        ? previewActual.cantidad
+                                        ? `$${Number(previewActual.cantidad).toLocaleString("es-MX", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}`
                                         : "--"}
                                 </div>
                                 <div style={{ marginBottom: 4 }}>

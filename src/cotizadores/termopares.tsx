@@ -1,15 +1,21 @@
 ﻿// src/cotizadores/termopares.tsx
 import React, { useEffect, useState } from "react";
 import { termoparJ, termoparK, bulboTornilloTermopar } from "../datos/Termopares";
+import { formatearMoneda } from "../funciones/formato_moneda";
 import { ItemCotizado } from "../cotizador";
 
 interface Props {
     data?: ItemCotizado;
     onGuardar: (item: ItemCotizado) => void;
     setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+    perfil?: {
+        area?: string;
+        puesto?: string;
+        username?: string;
+    };
 }
 
-const termopar = ({ data, onGuardar, setDirty }: Props) => {
+const termopar = ({ data, onGuardar, setDirty,perfil }: Props) => {
     const [cantidad, setCantidad] = useState<number>(0);
     const [tipo, setTipo] = useState<string>("");
 
@@ -23,6 +29,8 @@ const termopar = ({ data, onGuardar, setDirty }: Props) => {
     const [termoparEspecialP, setTermoparEspecialP] = useState<boolean>(false);
 
     const [datosAdicionales, setDatosAdicionales] = useState<string>("");
+    //Area administracion
+    const esAdministracion = perfil?.area === "Administración";
 
     useEffect(() => {
         if (data) {
@@ -303,7 +311,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             </div>
 
             <div className="form-row textarea-row">
-                <label>Datos adicionales:</label>
+                <label>Datos Adicionales:</label>
                 <textarea
                     value={datosAdicionales}
                     onChange={(e) => setDatosAdicionales(e.target.value)}
@@ -317,14 +325,23 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
                     <p className="descripcion-texto">{descripcionTermopar}</p>
                 </div>
             </div>
+
+            {esAdministracion && (
+                <div style={{ marginTop: "20px" }}>
             <h3> Base: ${totalBase.toFixed(2)} | Cerámica: ${totalCeramica.toFixed(2)}</h3>
             <h3>Bulbo/Tornillo: ${totalBulboTornillo.toFixed(2)}</h3>
             <h1>
                 Precio base: ${resultado.precio.toFixed(2)} | Medida tomada: {resultado.medidaSeleccionada} cm
             </h1>
+                </div>
+            )}
 
+
+            <h2>
+                <strong>Subtotal:</strong> ${formatearMoneda(total)}
+            </h2>
             <h1>
-                Total: ${total.toFixed(2)}
+                <strong>Total:</strong> ${formatearMoneda(total*1.16)}
             </h1>
             <button
                 className="btn btn-blue"

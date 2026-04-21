@@ -62,6 +62,7 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
     //Datos adicionales
     const [datosAdicionales, setDatosAdicionales] = useState("");
 
+
   useEffect(() => {
     if (data) {
       setDiametro(data.datos.diametro || 0);
