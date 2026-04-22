@@ -120,9 +120,10 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
     doc.text(data.factura && data.factura.trim() !== "" ? data.factura : "--", 108, 70);
 
     doc.setFont("helvetica", "bold");
-    doc.text("Fecha:", 150, 70);
+    doc.setFontSize(11);
+    doc.text("Fecha:", 150, 58);
     doc.setFont("helvetica", "normal");
-    doc.text(data.fecha, 165, 70);
+    doc.text(data.fecha || "--", 165, 58);
 
     // Fila derecha
     doc.setFont("helvetica", "bold");
