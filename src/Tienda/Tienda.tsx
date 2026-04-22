@@ -106,6 +106,7 @@ const Tienda: React.FC = () => {
     const [cliente, setCliente] = useState<Cliente | null>(null);
     const [buscar, setBuscar] = useState("");
     const [clientes, setClientes] = useState<Cliente[]>([]);
+    const [envio, setEnvio] = useState<"si" | "no">("no");
 
     const [asesor, setAsesor] = useState<AsesorSnapshot | null>(null);
 
@@ -507,6 +508,7 @@ const Tienda: React.FC = () => {
                 fecha,
                 clienteId: cliente?.id && cliente.id !== "TEMP" ? cliente.id : null,
                 clienteSnapshot: cliente,
+                envio: envio === "si",
                 asesorId: asesor?.id || null,
                 asesorSnapshot: asesor
                     ? {
@@ -540,6 +542,7 @@ const Tienda: React.FC = () => {
             setServicioActivo("tubular");
             setItemServicioEditando(null);
             setFormDirty(false);
+            setEnvio("no");
 
             setProductoSeleccionado(null);
             setBusquedaProducto("");
@@ -572,6 +575,7 @@ const Tienda: React.FC = () => {
         setBusquedaProducto("");
         setCantidadProducto(1);
         setPrecioProducto(0);
+        setEnvio("no");
 
         setUsarDescuento(false);
         setTipoDescuento("manual");
@@ -610,9 +614,10 @@ const Tienda: React.FC = () => {
                         <span>Tienda</span>
                     </div>
                 </div>
-
+                {/* ========================= CLIENTES ========================= */}
                 <h2>Clientes</h2>
 
+                {/* BUSCADOR */}
                 {!cliente && (
                     <div className="search-bar">
                         <input
@@ -648,6 +653,7 @@ const Tienda: React.FC = () => {
                     </div>
                 )}
 
+                {/* RESULTADOS */}
                 {!cliente && buscar.trim() !== "" && clientes.length > 0 && (
                     <div className="clientes-resultados-scroll">
                         <table className="caja-table">
@@ -671,6 +677,7 @@ const Tienda: React.FC = () => {
                                                     setCliente(c);
                                                     setClientes([]);
                                                     setBuscar("");
+                                                    setEnvio("no");
                                                 }}
                                             >
                                                 Seleccionar
@@ -683,10 +690,14 @@ const Tienda: React.FC = () => {
                     </div>
                 )}
 
+                {/* SIN RESULTADOS */}
                 {!cliente && buscar.trim() !== "" && clientes.length === 0 && (
-                    <div style={{ marginTop: 10 }}>No se encontraron clientes.</div>
+                    <div style={{ marginTop: 10 }}>
+                        No se encontraron clientes.
+                    </div>
                 )}
 
+                {/* CLIENTE SELECCIONADO */}
                 {cliente && (
                     <div
                         style={{
@@ -698,11 +709,13 @@ const Tienda: React.FC = () => {
                             background: "#f9f9f9",
                         }}
                     >
+                        {/* BOTÓN CERRAR */}
                         <button
                             onClick={() => {
                                 setCliente(null);
                                 setClientes([]);
                                 setBuscar("");
+                                setEnvio("no");
                             }}
                             style={{
                                 position: "absolute",
@@ -721,6 +734,7 @@ const Tienda: React.FC = () => {
                             ✕
                         </button>
 
+                        {/* DATOS CLIENTE */}
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                             {esClienteTemporal ? (
                                 <>
@@ -797,7 +811,8 @@ const Tienda: React.FC = () => {
                             ) : (
                                 <>
                                     <div>
-                                        <b>Nombre:</b> {cliente.nombre || cliente.razonSocial || "SIN NOMBRE"}
+                                        <b>Nombre:</b>{" "}
+                                        {cliente.nombre || cliente.razonSocial || "SIN NOMBRE"}
                                     </div>
                                     <div>
                                         <b>Teléfono:</b> {cliente.telefono || "--"}
@@ -809,11 +824,196 @@ const Tienda: React.FC = () => {
                                             : "0%"}
                                     </div>
                                     <div>
-                                        <b>Crédito:</b> {cliente.credito?.activo ? "ACTIVO" : "NO"}
+                                        <b>Crédito:</b>{" "}
+                                        {cliente.credito?.activo ? "ACTIVO" : "NO"}
                                     </div>
                                 </>
                             )}
                         </div>
+
+                        {/* ================= ENVÍO ================= */}
+                        <div style={{ marginTop: 10 }}>
+                            <b>Envío:</b>{" "}
+                            <select
+                                value={envio}
+                                onChange={(e) => setEnvio(e.target.value as "si" | "no")}
+                            >
+                                <option value="no">No</option>
+                                <option value="si">Sí</option>
+                            </select>
+                        </div>
+
+                        {envio === "si" &&
+                            (!cliente.direccion || !cliente.colonia || !cliente.cp) && (
+                                <div style={{ color: "red", marginTop: 5 }}>
+                                    ⚠️ Dirección incompleta
+                                </div>
+                            )}
+
+                        {/* DIRECCIÓN */}
+                        {envio === "si" && (
+                            <div
+                                style={{
+                                    marginTop: 10,
+                                    padding: 10,
+                                    border: "1px solid #ddd",
+                                    borderRadius: 6,
+                                    background: "#fff",
+                                }}
+                            >
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                                    {esClienteTemporal ? (
+                                        <>
+                                            <div style={{ minWidth: 220 }}>
+                                                <b>Calle:</b>
+                                                <input
+                                                    type="text"
+                                                    value={cliente.direccion || ""}
+                                                    onChange={(e) =>
+                                                        setCliente((prev) =>
+                                                            prev
+                                                                ? { ...prev, direccion: e.target.value }
+                                                                : prev
+                                                        )
+                                                    }
+                                                    style={{ width: "100%" }}
+                                                />
+                                            </div>
+
+                                            <div style={{ minWidth: 120 }}>
+                                                <b>Número exterior:</b>
+                                                <input
+                                                    type="text"
+                                                    value={cliente.numeroExterior || ""}
+                                                    onChange={(e) =>
+                                                        setCliente((prev) =>
+                                                            prev
+                                                                ? {
+                                                                    ...prev,
+                                                                    numeroExterior: e.target.value,
+                                                                }
+                                                                : prev
+                                                        )
+                                                    }
+                                                    style={{ width: "100%" }}
+                                                />
+                                            </div>
+
+                                            <div style={{ minWidth: 120 }}>
+                                                <b>Número interior:</b>
+                                                <input
+                                                    type="text"
+                                                    value={cliente.numeroInterior || ""}
+                                                    onChange={(e) =>
+                                                        setCliente((prev) =>
+                                                            prev
+                                                                ? {
+                                                                    ...prev,
+                                                                    numeroInterior: e.target.value,
+                                                                }
+                                                                : prev
+                                                        )
+                                                    }
+                                                    style={{ width: "100%" }}
+                                                />
+                                            </div>
+
+                                            <div style={{ minWidth: 180 }}>
+                                                <b>Colonia:</b>
+                                                <input
+                                                    type="text"
+                                                    value={cliente.colonia || ""}
+                                                    onChange={(e) =>
+                                                        setCliente((prev) =>
+                                                            prev
+                                                                ? { ...prev, colonia: e.target.value }
+                                                                : prev
+                                                        )
+                                                    }
+                                                    style={{ width: "100%" }}
+                                                />
+                                            </div>
+
+                                            <div style={{ minWidth: 120 }}>
+                                                <b>CP:</b>
+                                                <input
+                                                    type="text"
+                                                    value={cliente.cp || ""}
+                                                    onChange={(e) =>
+                                                        setCliente((prev) =>
+                                                            prev ? { ...prev, cp: e.target.value } : prev
+                                                        )
+                                                    }
+                                                    style={{ width: "100%" }}
+                                                />
+                                            </div>
+
+                                            <div style={{ minWidth: 180 }}>
+                                                <b>Municipio:</b>
+                                                <input
+                                                    type="text"
+                                                    value={cliente.municipio || ""}
+                                                    onChange={(e) =>
+                                                        setCliente((prev) =>
+                                                            prev
+                                                                ? { ...prev, municipio: e.target.value }
+                                                                : prev
+                                                        )
+                                                    }
+                                                    style={{ width: "100%" }}
+                                                />
+                                            </div>
+
+                                            <div style={{ minWidth: 180 }}>
+                                                <b>Estado:</b>
+                                                <input
+                                                    type="text"
+                                                    value={cliente.estado || ""}
+                                                    onChange={(e) =>
+                                                        setCliente((prev) =>
+                                                            prev
+                                                                ? { ...prev, estado: e.target.value }
+                                                                : prev
+                                                        )
+                                                    }
+                                                    style={{ width: "100%" }}
+                                                />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div>
+                                                <b>Calle:</b> {cliente.direccion || "--"}
+                                            </div>
+
+                                            <div>
+                                                <b>Número:</b>{" "}
+                                                {(cliente.numeroExterior || "") +
+                                                    (cliente.numeroInterior
+                                                        ? ` Int ${cliente.numeroInterior}`
+                                                        : "") || "--"}
+                                            </div>
+
+                                            <div>
+                                                <b>Colonia:</b> {cliente.colonia || "--"}
+                                            </div>
+
+                                            <div>
+                                                <b>CP:</b> {cliente.cp || "--"}
+                                            </div>
+
+                                            <div>
+                                                <b>Municipio:</b> {cliente.municipio || "--"}
+                                            </div>
+
+                                            <div>
+                                                <b>Estado:</b> {cliente.estado || "--"}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

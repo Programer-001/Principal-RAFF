@@ -21,6 +21,8 @@ const MENU_BASE: Record<string, MenuItem> = {
     //almacen
     gestion: { key: "gestionproduccion", label: "Gestion de produccion" },
     inventario_almacen: { key: "invalmacen", label: "Inventario de almacen" },
+    //tienda
+    tienda: { key:"tienda_productos",label:"Tienda" },
 
     //submenus
     rh: {
@@ -36,8 +38,8 @@ const MENU_BASE: Record<string, MenuItem> = {
         label: "Sistema de caja",
         children: [
             { key: "caja", label: "Caja" },
-            { key: "mostrarcaja", label: "Consulta de factura" },
-            { key: "cajacorteporfecha", label: "Registrar factura" },
+            { key: "mostrarcaja", label: "Corte de caja" },
+            { key: "cajacorteporfecha", label: "Factura Extemporanea" },
             { key: "cortedia", label: "Corte del día" },
             { key: "gastos", label: "Gastos" },
             { key: "consultagastos", label: "Consulta de gastos" },
@@ -117,6 +119,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.contabilidad,
             MENU_BASE.produccion,
             MENU_BASE.administracion,
+            MENU_BASE.tienda,
 
         ],
     },
