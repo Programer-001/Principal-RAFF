@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState, useRef } from "react";
 import { getDatabase, ref, get, set, remove } from "firebase/database";
 import { app } from "../firebase/config";
 
@@ -28,6 +28,7 @@ const Notas: React.FC<NotasProps> = ({ empleadoId }) => {
 
     const tituloLimpio = useMemo(() => titulo.trim(), [titulo]);
     const contenidoLimpio = useMemo(() => contenido.trim(), [contenido]);
+    const notaRef = useRef<HTMLDivElement | null>(null);
 
     const cargarNotas = async () => {
         if (!empleadoId) return;
@@ -60,6 +61,22 @@ const Notas: React.FC<NotasProps> = ({ empleadoId }) => {
     useEffect(() => {
         cargarNotas();
     }, [empleadoId]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!abierta) return;
+
+            if (notaRef.current && !notaRef.current.contains(event.target as Node)) {
+                limpiarFormulario(); // 🔥 cierra sin guardar
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [abierta]);
 
     const insertarVineta = () => {
         setContenido((prev) => {
@@ -161,7 +178,7 @@ const Notas: React.FC<NotasProps> = ({ empleadoId }) => {
         <div className="notas-layout">
             {/* IZQUIERDA */}
             <div className="notas-panel-izquierdo">
-                <div className="notas-card">
+                <div className="notas-card" ref={notaRef}>
                     {!abierta ? (
                         <div className="nota-cerrada" onClick={abrirNuevaNota}>
                             Crear una nota...
