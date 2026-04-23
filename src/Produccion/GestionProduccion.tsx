@@ -81,6 +81,7 @@ interface OrdenTrabajo {
     taller?: boolean;
     tipoDocumento?: string;
     Entrada_Almacen?: string;
+    estadoGeneral?: string;
 }
 
 type OrdenTrabajoConClave = OrdenTrabajo & {
@@ -1051,6 +1052,66 @@ const GestionProduccion: React.FC = () => {
         return Math.round(total / trabajos.length);
     };
     const progresoOT = calcularProgresoOT(trabajosArray);
+
+    // =========================
+    // ESTADOS
+    // =========================
+
+    const formatearEstadoGeneral = (estado?: string) => {
+        switch (estado) {
+            case "cotizacion":
+                return "Cotización";
+            case "pendiente_taller":
+                return "Pendiente de taller";
+            case "fabricacion":
+                return "Fabricación";
+            case "completada":
+                return "Completada";
+            case "entregada":
+                return "Entregada";
+            default:
+                return estado || "--";
+        }
+    };
+
+    const obtenerColorEstadoGeneral = (estado?: string) => {
+        switch (estado) {
+            case "cotizacion":
+                return { bg: "#e5e7eb", color: "#374151" };
+
+            case "pendiente_taller":
+                return { bg: "#fde68a", color: "#92400e" };
+
+            case "fabricacion":
+                return { bg: "#93c5fd", color: "#1e3a8a" };
+
+            case "completada":
+                return { bg: "#86efac", color: "#065f46" };
+
+            case "entregada":
+                return { bg: "#34d399", color: "#064e3b" };
+
+            default:
+                return { bg: "#e5e7eb", color: "#111827" };
+        }
+    };
+    // =========================
+    // Resistencias nombres completos
+    // =========================
+    const TIPOS_MAP: Record<string, string> = {
+        tubular: "Tubular",
+        banda: "Banda",
+        cartuchob: "Cartucho de Baja concentración",
+        cartuchoa: "Cartucho de Alta concentración",
+        resorte: "Resorte",
+        termopar: "Termopar",
+        cuarzo: "Cuarzo",
+    };
+    const obtenerTipoLabel = (tipo?: string) => {
+        const key = (tipo || "").toLowerCase();
+        return TIPOS_MAP[key] || tipo || "--";
+    };
+
     // =========================
     // HTML
     // =========================
@@ -1185,13 +1246,26 @@ const GestionProduccion: React.FC = () => {
 
                                                     {/* 🔥 NUEVA COLUMNA ESTADO */}
                                                     <td style={tdStyle}>
-                                                        {otCompleta ? (
-                                                            <span style={{ color: "green", fontSize: 18, fontWeight: "bold" }}>
-                                                                ✔
-                                                            </span>
-                                                        ) : (
-                                                            "--"
-                                                        )}
+                                                        {(() => {
+                                                            const estadoMostrar = ot.estadoGeneral || (otCompleta ? "completada" : "--");
+                                                            const colores = obtenerColorEstadoGeneral(estadoMostrar);
+
+                                                            return (
+                                                                <span
+                                                                    style={{
+                                                                        padding: "4px 10px",
+                                                                        borderRadius: 999,
+                                                                        fontSize: 12,
+                                                                        fontWeight: 500,
+                                                                        backgroundColor: colores.bg,
+                                                                        color: colores.color,
+                                                                        display: "inline-block",
+                                                                    }}
+                                                                >
+                                                                    {formatearEstadoGeneral(estadoMostrar)}
+                                                                </span>
+                                                            );
+                                                        })()}
                                                     </td>
 
                                                     <td style={tdStyle}>
@@ -1241,7 +1315,7 @@ const GestionProduccion: React.FC = () => {
                                             <tr key={`${trabajo.otFirebaseKey}-${trabajo.key}-${index}`}>
                                                 <td style={tdStyle}>{trabajo.otLabel}</td>
                                                 <td style={tdStyle}>{trabajo.partida || "--"}</td>
-                                                <td style={tdStyle}>{trabajo.tipo || "--"}</td>
+                                                <td style={tdStyle}> {obtenerTipoLabel(trabajo.tipo)}</td>
                                                 <td style={tdStyle}>{trabajo.estadoProduccion || "en_fila"}</td>
                                                 <td style={tdStyle}>{trabajo.clienteNombre}</td>
                                                 <td style={tdStyle}>
@@ -1407,7 +1481,7 @@ const GestionProduccion: React.FC = () => {
                                                 </td>
 
                                                 <td style={tdStyle}>
-                                                    {trabajo.tipo || "--"}
+                                                    {obtenerTipoLabel(trabajo.tipo)}
                                                 </td>
 
                                                 <td style={tdStyle}>
@@ -1598,9 +1672,7 @@ const GestionProduccion: React.FC = () => {
                                             const valor = e.target.value;
                                             setFechaFin(valor);
 
-                                            if (valor) {
-                                                setEstado("inspeccion");
-                                            }
+
                                         }}
                                         disabled={
                                             !trabajador ||
