@@ -169,9 +169,6 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
     else if (cantidad >= 30 && cantidad < 40) resultado *= 0.8;
     else if (cantidad >= 40) resultado *= 0.75;
 
-    if (servicioExpress) {
-      resultado *= 1.3;
-    }
 
     return resultado;
   };
@@ -276,7 +273,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
 
       <div className="form-row">
         <label>
-          <strong>Cantidad:</strong>
+          Cantidad:
         </label>
         <input
           type="number"
@@ -287,7 +284,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
 
       <div className="form-row">
         <label>
-          <strong>Tipo:</strong>
+          Tipo:
         </label>
         <select
           value={selector}
@@ -341,7 +338,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
       {selector !== 5 && (
         <div className="form-row">
           <label>
-            <strong>Diámetro (cm):</strong>
+           Diámetro (cm):
           </label>
           <input
             type="number"
@@ -355,7 +352,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
         <>
           <div className="form-row">
             <label>
-              <strong>Longitud (cm):</strong>
+              Longitud (cm):
             </label>
             <input
               type="number"
@@ -368,7 +365,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
 
           <div className="form-row">
             <label>
-              <strong>Ancho (cm):</strong>
+              Ancho (cm):
             </label>
             <input type="number" value={4} disabled />
           </div>
@@ -376,7 +373,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
       ) : (
         <div className="form-row">
           <label>
-            <strong>Ancho (cm):</strong>
+            Ancho (cm):
           </label>
           <input
             type="number"
@@ -388,7 +385,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
 
       <div className="form-row">
         <label>
-          <strong>Voltaje (Volts):</strong>
+          Voltaje (Volts):
         </label>
         <input
           type="number"
@@ -399,7 +396,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
 
       <div className="form-row">
         <label>
-          <strong>Potencia (Watts):</strong>
+          Potencia (Watts):
         </label>
         <input
           type="number"
@@ -584,15 +581,6 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
           )}
 
           <div className="form-row checkbox-row">
-            <label>Servicio Express (+30%)</label>
-            <input
-              type="checkbox"
-              checked={express}
-              onChange={(e) => setExpress(e.target.checked)}
-            />
-          </div>
-
-          <div className="form-row checkbox-row">
             <label>Excedente de Banda (+25%)</label>
             <input
               type="checkbox"
@@ -601,14 +589,14 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             />
           </div>
 
-          <div className="form-row checkbox-row">
-            <label>Servicio Express</label>
+        <div className="form-row checkbox-row">
+            <label>Servicio Express (+30%)</label>
             <input
-              type="checkbox"
-              checked={servicioExpress}
-              onChange={() => setServicioExpress(!servicioExpress)}
+                type="checkbox"
+                checked={express}
+                onChange={(e) => setExpress(e.target.checked)}
             />
-          </div>
+        </div>
 
 
         </>
