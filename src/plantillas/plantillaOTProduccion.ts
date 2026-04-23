@@ -125,11 +125,6 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
     doc.setFont("helvetica", "normal");
     doc.text(data.fecha || "--", 165, 58);
 
-    // Fila derecha
-    doc.setFont("helvetica", "bold");
-    doc.text("Envío:", 150, 76);
-    doc.setFont("helvetica", "normal");
-    doc.text(data.envio ? "Sí" : "No", 165, 76);
 
     // Bloque dinámico izquierdo
     let yInfo = 76;
@@ -157,6 +152,11 @@ export const generarPDFOTProduccion = async (data: OTProduccionData) => {
         doc.text(data.telefono, 42, yInfo);
         yInfo += 6;
     }
+    // 👇 NUEVO: Envío debajo
+    doc.setFont("helvetica", "bold");
+    doc.text("Envío:", 20, yInfo);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.envio ? "Sí" : "No", 42, yInfo);
 
     let y = yInfo + 10;
     const marginX = 20;
