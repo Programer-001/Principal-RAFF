@@ -1194,14 +1194,9 @@ const GestionProduccion: React.FC = () => {
                     </div>
                     {!hayFiltros ? (
                         <div
-                            style={{
-                                border: "1px solid #ccc",
-                                borderRadius: 8,
-                                overflow: "hidden",
-                                background: "#fff",
-                            }}
+                            className="table-scroll-gestion"
                         >
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                            <table className="gestionot-table">
                                 <thead>
                                     <tr style={{ background: "#f5f5f5" }}>
                                         <th style={thStyle}>OT</th>
@@ -1284,14 +1279,9 @@ const GestionProduccion: React.FC = () => {
                     ) : (
                           
                         <div
-                            style={{
-                                border: "1px solid #ccc",
-                                borderRadius: 8,
-                                overflow: "hidden",
-                                background: "#fff",
-                            }}
+                                className="table-scroll-gestion"
                         >
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                <table className="gestionot-table">
                                 <thead>
                                     <tr style={{ background: "#f5f5f5" }}>
                                         <th style={thStyle}>OT</th>

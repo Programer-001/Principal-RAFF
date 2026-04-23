@@ -1,7 +1,8 @@
 ﻿import { signOut, onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "../firebase/config";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { ref, get } from "firebase/database";
+import { ReactComponent as Campana } from "../Notificaciones/svg/campana.svg";
 import { obtenerMenuPorPerfil } from "./menuConfig";
 import "../css/menu.css";
 
@@ -22,6 +23,8 @@ type EmpleadoPerfil = {
 const Menu = ({ vista, setVista }: Props) => {
     const [user, setUser] = useState<User | null>(null);
     const [perfil, setPerfil] = useState<EmpleadoPerfil | null>(null);
+    const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
+    const notiRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const unsub = onAuthStateChanged(auth, async (usuario) => {
@@ -59,6 +62,22 @@ const Menu = ({ vista, setVista }: Props) => {
         });
 
         return () => unsub();
+    }, []);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                notiRef.current &&
+                !notiRef.current.contains(event.target as Node)
+            ) {
+                setNotificacionesAbiertas(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
     }, []);
 
     const cerrarSesion = async () => {
@@ -131,7 +150,44 @@ const Menu = ({ vista, setVista }: Props) => {
 
 
             <div className="menu-user-area">
-                <div className="menu-user-name">👤 {textoUsuario}</div>
+                <div className="menu-notificaciones-wrap" ref={notiRef}>
+                    <button
+                        className={`menu-campana-btn ${notificacionesAbiertas ? "activa" : ""}`}
+                        onClick={() => setNotificacionesAbiertas((prev) => !prev)}
+                    >
+                        <Campana  className="menu-campana-icono" />
+                        <span className="menu-campana-badge">3</span>
+                    </button>
+
+                    {notificacionesAbiertas && (
+                        <div className="menu-notificaciones-panel">
+                            <div className="menu-notificaciones-header">
+                                Notificaciones
+                            </div>
+
+                            <div className="menu-notificaciones-lista">
+                                <div className="menu-notificacion-item">
+                                    Pedido listo
+                                </div>
+                                <div className="menu-notificacion-item">
+                                    Material solicitado
+                                </div>
+                                <div className="menu-notificacion-item">
+                                    OT terminada
+                                </div>
+                            </div>
+
+                            <div className="menu-notificaciones-footer">
+                                Ver todas
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="menu-user-info">
+                <div className="menu-user-name">
+
+
+                    👤 {textoUsuario}</div>
 
                 <button
                     className="menu-user-action"
@@ -145,7 +201,8 @@ const Menu = ({ vista, setVista }: Props) => {
                     onClick={cerrarSesion}
                 >
                     Cerrar sesión
-                </button>
+                    </button>
+                </div>
             </div>
         </header>
     );
