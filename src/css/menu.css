@@ -144,8 +144,8 @@
     top: calc(100% + 10px);
     right: 0;
     width: 280px;
-    background: rgba(0, 0, 0, 0.09); /* 👈 transparencia */
-    backdrop-filter: blur(1px); /* 👈 efecto vidrio */
+    background: rgba(255, 255, 255, 0.9); /* 👈 transparencia */
+    backdrop-filter: blur(1.5px); /* 👈 efecto vidrio */
     -webkit-backdrop-filter: blur(1px); /* soporte Safari */
 
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -227,7 +227,7 @@
 }
 
     .menu-notificacion-item:hover {
-        background: #f9fafb;
+        background: rgba(217, 160, 30, 0.25);
     }
 
 /* FOOTER */
