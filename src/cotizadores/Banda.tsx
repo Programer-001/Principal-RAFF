@@ -113,23 +113,27 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
     let diametroPulgadas = diametro / 2.54;
     const anchoPulgadas = ancho / 2.54;
 
-    if (selector === 5) {
-      const longitudPulgadas = longitudTiraCm / 2.54;
-      const longitudRedondeada = Math.ceil(longitudPulgadas / 2) * 2;
+      if (selector === 5) {
+          const longitudPulgadas = longitudTiraCm / 2.54;
+          const longitudRedondeada = Math.ceil(longitudPulgadas / 2) * 2;
 
-      const precioTira = tira.find(
-        (t) => t.longitud === longitudRedondeada
-      )?.precio;
+          const precioTira = tira.find(
+              (t) => t.longitud === longitudRedondeada
+          )?.precio;
 
-      if (!precioTira) return 0;
+          if (!precioTira) return 0;
 
-      resultado = precioTira * cantidad;
-    } else {
-      if (selector === 2) diametroPulgadas = (diametroPulgadas * 2) / Math.PI;
-      if (selector === 3) diametroPulgadas = diametroPulgadas / Math.PI;
+          resultado = precioTira * cantidad;
+      }
+      else {
+          if (selector === 2) diametroPulgadas = (diametroPulgadas * 2) / Math.PI;
+          if (selector === 3) diametroPulgadas = diametroPulgadas / Math.PI;
 
-      resultado = calcularPrecio(diametroPulgadas, anchoPulgadas) ?? 0;
-    }
+          resultado = calcularPrecio(diametroPulgadas, anchoPulgadas) ?? 0;
+          if (selector === 4) {
+              resultado *= 2;
+          }
+      }
 
     if (barrilCincho) resultado += 300;
     if (stuck) resultado += 80;
