@@ -22,7 +22,8 @@ const MENU_BASE: Record<string, MenuItem> = {
     gestion: { key: "gestionproduccion", label: "Gestion de produccion" },
     inventario_almacen: { key: "invalmacen", label: "Inventario de almacen" },
     //tienda
-    tienda: { key:"tienda_productos",label:"Tienda" },
+    tienda: { key: "tienda", label: "Tienda" },
+    Gestion_tienda: { key:"gestion_tienda",label:"Consulta de ticket" },
 
     //submenus
     rh: {
@@ -120,6 +121,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.produccion,
             MENU_BASE.administracion,
             MENU_BASE.tienda,
+            MENU_BASE.Gestion_tienda,
 
         ],
     },

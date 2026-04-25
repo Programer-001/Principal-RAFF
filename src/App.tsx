@@ -38,6 +38,7 @@ import ComisionesMostrador from "./Administracion/comisiones_mostrador";
 import PagosBanda from "./pagos_banda/PagosBanda";
 import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiales"
 import Tienda from "./Tienda/Tienda"
+import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
@@ -74,6 +75,8 @@ function AppLayout() {
         if (pathname.startsWith("/pago_banda")) return "pago_banda";
         if (pathname.startsWith("/pago_banda")) return "visor_pedidos_especiales";
         if (pathname.startsWith("/tienda_productos")) return "tienda_productos";
+        if (pathname.startsWith("/tienda")) return "tienda";
+        if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
         return "home";
@@ -108,7 +111,9 @@ function AppLayout() {
             proveedores: "/proveedores",
             pago_banda: "/pago_banda",
             visor_pedidos_especiales: "/visor_pedidos_especiales",
-            tienda_productos:"/tienda_productos",
+            tienda_productos: "/tienda_productos",
+            tienda: "/tienda",
+            gestion_tienda:"/gestion_tienda",
             perfil: "/perfil",
             home: "/home",
             
@@ -149,7 +154,9 @@ function AppLayout() {
                 <Route path="/proveedores" element={<Proveedores />} />
                 <Route path="/pago_banda" element={<PagosBanda />} />
                 <Route path="/visor_pedidos_especiales" element={<VisorPedidosEspeciales />} />
-                <Route path="/tienda_productos" element={<Tienda />} />
+                <Route path="/tienda_productos" element={<TiendaProductos />} />
+                <Route path="/tienda" element={<Tienda />} />
+                <Route path="/gestion_tienda" element={<GestionTienda />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>

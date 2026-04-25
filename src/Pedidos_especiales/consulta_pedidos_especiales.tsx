@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿//src/Pedidos_especiales/consulta_pedidos_especiales.tsx
+import React, { useEffect, useMemo, useState } from "react";
 import { onValue, ref, remove } from "firebase/database";
 import { db } from "../firebase/config";
 import { generarPDFPedidoProveedor } from "../plantillas/plantillaPedidoEspecial";

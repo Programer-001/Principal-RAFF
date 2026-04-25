@@ -66,6 +66,7 @@ interface OrdenTrabajo {
     asesorId?: string | null;
     asesorSnapshot?: AsesorSnapshot | null;
     estadoGeneral?: string;
+    origen?: string;
 }
 type OrdenTrabajoConClave = OrdenTrabajo & {
     firebaseKey: string;
@@ -928,6 +929,8 @@ const GestionOT = () => {
         otSeleccionada?.estadoGeneral === "cotizacion"
             ? 0
             : calcularProgresoOT(trabajosArray);
+
+    const esTienda = otSeleccionada?.origen === "tienda";
     //---------------------HTML------------------------------------------------------------------->>
 
     return (
@@ -1359,27 +1362,29 @@ const GestionOT = () => {
                             )}
                         </div>
                         {/*Totales */} 
-                        <div style={{ marginBottom: 10 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", width: 200, marginBottom: 10 }}>
-                                <b>Subtotal:</b>
-                                <span>
-                                    ${Number(otSeleccionada.totalConDescuento || 0).toLocaleString("es-MX", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                                </span>
-                            </div>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", width: 200, marginBottom: 10 }}>
-                                <b>Total:</b>
-                                <span>
-                                    ${Number(otSeleccionada.totalConIva || 0).toLocaleString("es-MX", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                                </span>
-                            </div>
+                        {!esTienda && (
+                    <div style={{ marginBottom: 10 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", width: 200, marginBottom: 10 }}>
+                            <b>Subtotal:</b>
+                            <span>
+                                ${Number(otSeleccionada.totalConDescuento || 0).toLocaleString("es-MX", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
+                            </span>
                         </div>
+
+                        <div style={{ display: "flex", justifyContent: "space-between", width: 200, marginBottom: 10 }}>
+                            <b>Total:</b>
+                            <span>
+                                ${Number(otSeleccionada.totalConIva || 0).toLocaleString("es-MX", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
+                            </span>
+                        </div>
+                        </div>
+                        )}
                         {/* 🔥 BARRA DE PROGRESO */}
                         <div style={{ marginBottom: 20 }}>
                             <div style={{ marginBottom: 6, fontWeight: "bold" }}>

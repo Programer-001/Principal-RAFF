@@ -4,6 +4,7 @@ import { auth, db } from "../firebase/config";
 import { get, ref, runTransaction, set } from "firebase/database";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { obtenerSiguienteCotizacion, obtenerSiguienteEnvio } from "../firebase/consecutivos";
 import Tubular from "../cotizadores/Tubular";
 import Banda from "../cotizadores/Banda";
 import CartuchoBaja from "../cotizadores/cartuchobaja";
@@ -494,6 +495,18 @@ const Tienda: React.FC = () => {
             const numeroConsecutivo = Number(resultado.snapshot.val()) || 1;
             const folioFinal = `FC-${String(numeroConsecutivo).padStart(3, "0")}`;
             const keyVenta = `fc${String(numeroConsecutivo).padStart(5, "0")}`;
+            const servicios = items.filter((item) => item.origen === "servicio");
+            const articulos = items.filter((item) => item.origen === "articulo");
+
+            let nuevoOtGenerado = "";
+            let claveOtGenerada = "";
+
+            if (servicios.length > 0) {
+                const resultadoOT = await crearOTDesdeTienda(servicios, folioFinal, keyVenta);
+                nuevoOtGenerado = resultadoOT.nuevoOt;
+                claveOtGenerada = resultadoOT.claveOt;
+            }
+
 
             const itemsObj = items.reduce((acc, item, index) => {
                 const key = `item_${index + 1}`;
@@ -537,11 +550,23 @@ const Tienda: React.FC = () => {
                 descuentoMonto: montoDescuento,
                 total: totalPagar,
                 items: itemsObj,
+                otGenerada: nuevoOtGenerado || "",
+                firebaseKeyOT: claveOtGenerada || "",
+                tieneServicios: servicios.length > 0,
+                totalServicios: servicios.reduce((acc, item) => acc + item.total, 0),
+                totalArticulos: articulos.reduce((acc, item) => acc + item.total, 0),
             };
 
             await set(ref(db, `tienda_ventas/${keyVenta}`), payload);
 
-            alert(`Venta guardada correctamente: ${folioFinal}`);
+
+
+            alert(
+                nuevoOtGenerado
+                    ? `Folio guardado: ${folioFinal}. Se generó la OT-${nuevoOtGenerado}`
+                    : `Folio guardado correctamente: ${folioFinal}`
+            );
+  
 
             setItems([]);
             setCliente(null);
@@ -564,6 +589,15 @@ const Tienda: React.FC = () => {
 
             const siguiente = numeroConsecutivo + 1;
             setFolio(`FC-${String(siguiente).padStart(3, "0")}`);
+
+            navigate("/gestion_tienda", {
+                state: {
+                    abrirFolioCompra: true,
+                    folioCompra: folioFinal,
+                    folioCompraKey: keyVenta,
+                },
+            });
+
         } catch (error) {
             console.error("Error al guardar venta de tienda:", error);
             alert("Error al guardar la venta.");
@@ -724,8 +758,109 @@ const Tienda: React.FC = () => {
             restaurarBorradorTienda(state.clienteActualizadoId);
         }
     }, [location.state]);
+    // -------------------- Generar Orden de trabajo --------------------
+    const crearOTDesdeTienda = async (
+        servicios: ItemTienda[],
+        folioFinal: string,
+        keyVenta: string
+    ) => {
+        if (!servicios.length) {
+            return { nuevoOt: "", claveOt: "" };
+        }
 
-    // -------------------- RENDER HTML--------------------
+        if (!cliente) {
+            throw new Error("No hay cliente para generar OT.");
+        }
+
+        const nuevoOt = await obtenerSiguienteCotizacion();
+        const claveOt = `ot${nuevoOt}`;
+
+        let envioFolioReservado = "";
+
+        if (envio === "si") {
+            envioFolioReservado = await obtenerSiguienteEnvio();
+        }
+
+        const trabajosObj = servicios.reduce((acc, item, index) => {
+            const numeroPartida = index + 1;
+            const partidaLabel = `${claveOt}.${numeroPartida}`;
+            const partidaKey = `${claveOt}_${numeroPartida}`;
+
+            acc[partidaKey] = {
+                partida: partidaLabel,
+                tipo: item.tipo,
+                descripcion: item.descripcion,
+                total: item.total,
+                datos: item.datos || {},
+                estadoProduccion: "",
+            };
+
+            return acc;
+        }, {} as Record<string, any>);
+
+        const subtotalServicios = servicios.reduce((acc, item) => acc + item.total, 0);
+
+        const descuentoClienteOT =
+            cliente?.id !== "TEMP" ? cliente?.descuento ?? 0 : 0;
+
+        const totalConDescuentoOT = subtotalServicios * (1 - descuentoClienteOT);
+        const totalConIvaOT = totalConDescuentoOT * 1.16;
+
+        const ordenTrabajo = {
+            ot: nuevoOt,
+            otLabel: `OT-${nuevoOt}`,
+
+            // 🔥 Relación con Folio de compra
+            folioCompra: folioFinal,
+            folioCompraKey: keyVenta,
+            origen: "tienda",
+
+            factura: null,
+            facturas: null,
+            fecha,
+
+            clienteId: cliente?.id && cliente.id !== "TEMP" ? cliente.id : null,
+            clienteSnapshot: cliente || { nombre: "PUBLICO GENERAL" },
+            credito:
+                cliente?.id !== "TEMP" ? cliente?.credito?.activo || false : false,
+
+            asesorId: asesor?.id || null,
+            asesorSnapshot: asesor
+                ? {
+                    id: asesor.id || null,
+                    uid: asesor.uid || null,
+                    nombre: asesor.nombre || "",
+                    username: asesor.username || "",
+                    area: asesor.area || "",
+                    puesto: asesor.puesto || "",
+                }
+                : null,
+
+            envio: envio === "si",
+            envioFolio: envio === "si" ? envioFolioReservado : "",
+            envioGenerado: false,
+            envioEnviado: false,
+
+            subtotal: subtotalServicios,
+            descuentoCliente: descuentoClienteOT,
+            totalConDescuento: totalConDescuentoOT,
+            totalConIva: totalConIvaOT,
+
+            trabajos: trabajosObj,
+
+            tipoDocumento: "orden_trabajo",
+            pagado: true,
+            taller: false,
+            estadoGeneral: "pendiente_taller",
+        };
+
+        await set(ref(db, `ordenes_trabajo/${claveOt}`), ordenTrabajo);
+
+        return { nuevoOt, claveOt };
+    };
+
+
+    // -------------------- RENDER HTML-----------------------------------------------------------
     return (
         <div className="tienda-layout" style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
             {/* IZQUIERDA */}
