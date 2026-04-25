@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { get, onValue, ref, update } from "firebase/database";
 import { db } from "../firebase/config";
 import { useLocation, useNavigate } from "react-router-dom";
+import { generarPDFFolioCompra } from "../plantillas/plantillaFolioCompra";
 import { ReactComponent as LogoNegro } from "../Imagenes/svg/logo_negro.svg";
 import { ReactComponent as MaterialEntregado } from "../Imagenes/svg/sello_material_entregado.svg";
 import { formatearMoneda } from "../funciones/formato_moneda";
@@ -439,7 +440,57 @@ No aplica garantía en productos fabricados conforme a especificaciones del clie
         setCargandoPreviewFactura(false);
     };
 
+    // =====================================================================================
+    // Generar folio de compra pdf
+    // =====================================================================================
+    const generarPDFFolioCompraDesdeFolio = async (folio: FolioCompra) => {
+        const items = Object.values(folio.items || {});
 
+        const servicios = items
+            .filter((item) => item.origen === "servicio")
+            .map((item) => ({
+                partida: item.partida || "--",
+                descripcion: item.descripcion || "--",
+                total: Number(item.total || 0),
+            }));
+
+        const articulos = items
+            .filter((item) => item.origen === "articulo")
+            .map((item) => ({
+                partida: item.partida || "--",
+                descripcion: item.descripcion || "--",
+                cantidad: Number(item.cantidad || 0),
+                precioUnitario: Number(item.precioUnitario || 0),
+                total: Number(item.total || 0),
+                materialEntregado: !!item.materialEntregado,
+            }));
+
+        await generarPDFFolioCompra({
+            folio: folio.folio,
+            fecha: folio.fecha || "--",
+            asesor:
+                folio.asesorSnapshot?.username ||
+                folio.asesorSnapshot?.nombre ||
+                "--",
+            clienteNombre:
+                folio.clienteSnapshot?.nombre ||
+                folio.clienteSnapshot?.razonSocial ||
+                "--",
+            razonSocial: folio.clienteSnapshot?.razonSocial || "",
+            telefono: folio.clienteSnapshot?.telefono || "",
+            envio: !!folio.envio,
+            otGenerada: folio.otGenerada ? `OT-${folio.otGenerada}` : "--",
+
+            servicios,
+            articulos,
+
+            subtotal: Number(folio.subtotal || 0),
+            iva: Number(folio.iva || 0),
+            descuento: Number(folio.descuentoMonto || 0),
+            total: Number(folio.total || 0),
+            materialEntregado: !!folio.materialEntregado,
+        });
+    };
     // =====================================================================================
     // HTML
     // =====================================================================================
@@ -842,7 +893,11 @@ No aplica garantía en productos fabricados conforme a especificaciones del clie
                                                 </button>
                                             )}
                                             <div style={{ height: 14 }} />
-                                            <button type="button" className="btn btn-green" onClick={() => alert("Pendiente por programar")}>
+                                            <button
+                                                type="button"
+                                                className="btn btn-green"
+                                                onClick={() => generarPDFFolioCompraDesdeFolio(folio)}
+                                            >
                                                 Generar Folio de compra
                                             </button>
 
