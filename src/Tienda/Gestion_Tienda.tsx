@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { get, onValue, ref, update } from "firebase/database";
 import { db } from "../firebase/config";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ReactComponent as LogoNegro } from "../Imagenes/svg/logo_negro.svg";
 import { ReactComponent as MaterialEntregado } from "../Imagenes/svg/sello_material_entregado.svg";
 import { formatearMoneda } from "../funciones/formato_moneda";
@@ -54,6 +54,8 @@ const GestionTienda: React.FC = () => {
     const [facturasInput, setFacturasInput] = useState<string[]>([""]);
     const [guardandoFacturas, setGuardandoFacturas] = useState(false);
 
+    const navigate = useNavigate();
+
     const [facturaHover, setFacturaHover] = useState<string | null>(null);
     const [previewFactura, setPreviewFactura] = useState<{
         factura: string;
@@ -64,6 +66,19 @@ const GestionTienda: React.FC = () => {
     } | null>(null);
     const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
     const [cargandoPreviewFactura, setCargandoPreviewFactura] = useState(false);
+    const textoTerminos = `
+Tiempo de entrega para resistencias tubulares, de banda y cartucho de baja concentración: de 15 a 20 días hábiles.
+
+Tiempo de entrega para resistencias de cartucho de alta concentración: 25 días hábiles.
+
+En caso de que el producto sea terminado antes del plazo indicado, se notificará oportunamente al cliente.
+
+Cualquier validación de garantía deberá solicitarse dentro de un periodo máximo de 5 días hábiles a partir de la entrega del trabajo.
+
+La garantía aplica únicamente por defectos de fabricación, quedando excluidos los daños ocasionados por instalación incorrecta, puesta en marcha inadecuada, manipulación o alteración del producto, o uso distinto al recomendado.
+
+No aplica garantía en productos fabricados conforme a especificaciones del cliente cuando se hayan recomendado previamente otras características de diseño o fabricación.
+`;
 
     const location = useLocation();
 
@@ -424,6 +439,7 @@ const GestionTienda: React.FC = () => {
         setCargandoPreviewFactura(false);
     };
 
+
     // =====================================================================================
     // HTML
     // =====================================================================================
@@ -437,17 +453,8 @@ const GestionTienda: React.FC = () => {
                         <p>Selecciona un folio del lado derecho para ver su detalle.</p>
                     </div>
                 ) : (
-                    <div
-                        className="visor-documento"
-                        style={{
-                            background: "#fff",
-                            maxWidth: 820,
-                            margin: "0 auto",
-                            padding: 28,
-                            border: "1px solid #d1d5db",
-                            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-                        }}
-                    >
+                        <div className="documento-word-fondo">
+                            <div className="documento-hoja">
                         {/* ENCABEZADO TIPO HOJA */}
                         <div style={{ display: "flex", justifyContent: "space-between" }}>
                             <div style={{ display: "flex", gap: 18 }}>
@@ -543,7 +550,8 @@ const GestionTienda: React.FC = () => {
 
                             {servicios.length === 0 ? (
                                 <p>No hay servicios en este folio.</p>
-                            ) : (
+                                    ) : (
+                                        
                                         <table className="caja-table">
                                             <thead>
                                                 <tr>
@@ -573,6 +581,7 @@ const GestionTienda: React.FC = () => {
                                                 ))}
                                             </tbody>
                                         </table>
+                                        
                             )}
                         </div>
 
@@ -676,9 +685,20 @@ const GestionTienda: React.FC = () => {
                                     Total:{" "}
                                     {formatearMoneda(Number(folioSeleccionado.total || 0))}
                                 </h3>
+                                    </div>
+                                    {/*FIN TOTALES*/ }
+                                </div>
+                                {/*TERMINOS Y CONDICIONES*/ }
+                                <div className="terminos-box">
+                                    <h3>Términos y condiciones</h3>
+                                    <p style={{ whiteSpace: "pre-line" }}>
+                                        {textoTerminos}
+                                    </p>
+                                </div>
+                                {/*documento-hoja*/}
                             </div>
+                            {/*documento-word-fondo*/ }
                         </div>
-                    </div>
                 )}
             </div>
 
@@ -776,7 +796,7 @@ const GestionTienda: React.FC = () => {
                                                 />
                                                 Se entregó material
                                             </label>
-
+                                            <div style={{ height: 14 }} />
                                             {(folio.materialEntregado || folio.materialEntregadoParcial) && (
                                                 <button
                                                     type="button"
@@ -784,15 +804,7 @@ const GestionTienda: React.FC = () => {
                                                         setFolioSeleccionado(folio);
                                                         eliminarAccionMaterial();
                                                     }}
-                                                    style={{
-                                                        marginTop: 8,
-                                                        background: "#ef4444",
-                                                        color: "#fff",
-                                                        border: "none",
-                                                        borderRadius: 6,
-                                                        padding: "6px 10px",
-                                                        cursor: "pointer",
-                                                    }}
+                                                    className="btn btn-red"
                                                 >
                                                     Eliminar acción
                                                 </button>
@@ -802,6 +814,7 @@ const GestionTienda: React.FC = () => {
 
                                             <button
                                                 type="button"
+                                                className="btn btn-orange"
                                                 onClick={() => {
                                                     setFolioSeleccionado(folio);
                                                     abrirModalFacturas(obtenerFacturasArray(folio));
@@ -813,10 +826,26 @@ const GestionTienda: React.FC = () => {
 
 
                                             <div style={{ height: 14 }} />
-
-                                            <button type="button" onClick={() => alert("Pendiente por programar")}>
+                                            {folio.otGenerada && (
+                                                <button
+                                                    className="btn btn-purple"
+                                                    onClick={() => {
+                                                        navigate("/consultaot", {
+                                                            state: {
+                                                                abrirOT: true,
+                                                                firebaseKeyOT: folio.firebaseKeyOT,
+                                                            },
+                                                        });
+                                                    }}
+                                                >
+                                                    Ir a OT-{folio.otGenerada}
+                                                </button>
+                                            )}
+                                            <div style={{ height: 14 }} />
+                                            <button type="button" className="btn btn-green" onClick={() => alert("Pendiente por programar")}>
                                                 Generar Folio de compra
                                             </button>
+
                                         </div>
                                     </div>
                                 )}

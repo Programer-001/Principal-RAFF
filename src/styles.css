@@ -1431,6 +1431,32 @@
 }
 
 /* =========================
+   DOCUMENTO TIPO WORD / HOJA
+========================= */
+
+.documento-word-fondo {
+    background: #e5e5e5;
+    padding: 40px 0;
+    min-height: 100vh;
+}
+
+.documento-hoja {
+    width: 816px;
+    min-height: 1056px;
+    background: #fff;
+    margin: 0 auto 40px auto;
+    padding: 75px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    box-sizing: border-box;
+}
+
+    .documento-hoja table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+/* =========================
    RESPONSIVE
 ========================= */
 @media (max-width: 1150px) {
