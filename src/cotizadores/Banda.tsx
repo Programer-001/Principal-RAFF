@@ -112,7 +112,8 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
 
     let diametroPulgadas = diametro / 2.54;
     const anchoPulgadas = ancho / 2.54;
-
+      //import { tipoCable, termopar, tira } from "../datos/tipoCable";
+      //aqui saca el tipo TIRA
       if (selector === 5) {
           const longitudPulgadas = longitudTiraCm / 2.54;
           const longitudRedondeada = Math.ceil(longitudPulgadas / 2) * 2;
@@ -135,11 +136,11 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
           }
       }
 
-    if (barrilCincho) resultado += 300;
-    if (stuck) resultado += 80;
-    if (caja) resultado += 70;
-    if (barrenos && numBarrenos > 0) resultado += numBarrenos * 30;
-    if (colocarCables > 0) resultado += colocarCables;
+      if (selector !== 5 && barrilCincho) resultado += 300;
+      if (stuck) resultado += 80;
+      if (selector !== 5 && caja) resultado += 70;
+      if (selector !== 5 && barrenos && numBarrenos > 0) resultado += numBarrenos * 30;
+      if (colocarCables > 0) resultado += colocarCables;
 
       if (
           usarCables &&
@@ -163,9 +164,9 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
     }
 
     if (fabricar440) resultado *= 1.1;
-    if (trifasica) resultado *= 1.2;
+    if (selector !== 5 && trifasica) resultado *= 1.2;
     if (express) resultado *= 1.3;
-    if (excedente) resultado *= 1.25;
+    if (selector !== 5 && excedente) resultado *= 1.25;
     if (selector !== 5) resultado *= cantidad ?? 1;
 
     if (cantidad >= 10 && cantidad < 20) resultado *= 0.95;
@@ -292,43 +293,45 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
         </label>
         <select
           value={selector}
-          onChange={(e) => {
-            const nuevoSelector = parseFloat(e.target.value);
+                  onChange={(e) => {
+                      const nuevoSelector = parseFloat(e.target.value);
 
-            setSelector(nuevoSelector);
+                      setSelector(nuevoSelector);
 
-            if (nuevoSelector === 5) {
-              setDiametro(0);
-              setAncho(4);
-            } else {
-              setLongitudTiraCm(0);
-            }
+                      if (nuevoSelector === 5) {
+                          setDiametro(0);
+                          setAncho(4);
 
-            setPrecio(0);
-            setBarrilCincho(false);
-            setStuck(false);
-            setBarrenos(false);
-            setFabricar440(false);
-            setTrifasica(false);
-            setCaja(false);
-            setExpress(false);
-            setExcedente(false);
-            setServicioExpress(false);
+                          // 🔥 limpiar opciones que no aplican a TIRA
+                          setBarrilCincho(false);
+                          setBarrenos(false);
+                          setCaja(false);
+                          setTrifasica(false);
+                          setExcedente(false);
+                      } else {
+                          setLongitudTiraCm(0);
+                      }
 
-            setColocarCables(0);
-            setNumBarrenos(0);
+                      setPrecio(0);
+                      setStuck(false);
+                      setFabricar440(false);
+                      setExpress(false);
+                      setServicioExpress(false);
 
-            setUsarCables(false);
-            setTipoCableSeleccionado("");
-            setLongitudCm(0);
+                      setColocarCables(0);
+                      setNumBarrenos(0);
 
-            setUsarTermopar(false);
-            setTipoTermoparSeleccionado("");
-            setLongitudTermoparCm(0);
+                      setUsarCables(false);
+                      setTipoCableSeleccionado("");
+                      setLongitudCm(0);
 
-              setMuestra("");
-              setDatosAdicionales("");
-          }}
+                      setUsarTermopar(false);
+                      setTipoTermoparSeleccionado("");
+                      setLongitudTermoparCm(0);
+
+                      setMuestra("");
+                      setDatosAdicionales("");
+                  }}
         >
           <option value={0}>Seleccione...</option>
           <option value={1}>MICA</option>
@@ -411,17 +414,21 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
 
       {mostrarOpciones && (
         <>
-          <h3>Opciones adicionales</h3>
+            <h3>Opciones adicionales</h3>
+                  {/*Barril y sincho*/ }
 
-          <div className="form-row checkbox-row">
-            <label>Barril y Cincho (+$300 + IVA)</label>
-            <input
-              type="checkbox"
-              checked={barrilCincho}
-              onChange={(e) => setBarrilCincho(e.target.checked)}
-            />
-          </div>
+            {selector !== 5 && (
+                <div className="form-row checkbox-row">
+                    <label>Barril y Cincho (+$300 + IVA)</label>
+                    <input
+                        type="checkbox"
+                        checked={barrilCincho}
+                        onChange={(e) => setBarrilCincho(e.target.checked)}
+                    />
+                </div>
+                  )}
 
+                  {/*Stuck*/}
           <div className="form-row checkbox-row">
             <label>Stuck (+$80 + IVA)</label>
             <input
@@ -430,29 +437,31 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
               onChange={(e) => setStuck(e.target.checked)}
             />
           </div>
+          {/*Barrenos o Resaques*/}
+                  {selector !== 5 && (
+                      <>
+                          <div className="form-row checkbox-row">
+                              <label>Barrenos o Resaques (+$30 + IVA)</label>
+                              <input
+                                  type="checkbox"
+                                  checked={barrenos}
+                                  onChange={(e) => setBarrenos(e.target.checked)}
+                              />
+                          </div>
 
-          <div className="form-row checkbox-row">
-            <label>Barrenos o Resaques (+$30 + IVA)</label>
-            <input
-              type="checkbox"
-              checked={barrenos}
-              onChange={(e) => setBarrenos(e.target.checked)}
-            />
-          </div>
-
-          {barrenos && (
-            <div className="form-row">
-              <label>Número de barrenos</label>
-              <input
-                type="number"
-                value={numBarrenos === 0 ? "" : numBarrenos}
-                onChange={(e) =>
-                  setNumBarrenos(parseFloat(e.target.value) || 0)
-                }
-              />
-            </div>
-          )}
-
+                          {barrenos && (
+                              <div className="form-row">
+                                  <label>Número de barrenos</label>
+                                  <input
+                                      type="number"
+                                      value={numBarrenos === 0 ? "" : numBarrenos}
+                                      onChange={(e) => setNumBarrenos(parseFloat(e.target.value) || 0)}
+                                  />
+                              </div>
+                          )}
+                      </>
+                  )}
+        {/*Colocar Cables*/}
           <div className="form-row checkbox-row">
             <label>Colocar Cables</label>
             <input
@@ -471,40 +480,40 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             />
           </div>
 
-                  {usarCables && (
-                      <>
-                          <div className="form-row">
-                              <label>Tipo de cable</label>
-                              <select
-                                  value={tipoCableSeleccionado}
-                                  onChange={(e) => {
-                                      const value = e.target.value;
-                                      setTipoCableSeleccionado(value);
+            {usarCables && (
+                <>
+                    <div className="form-row">
+                        <label>Tipo de cable</label>
+                        <select
+                            value={tipoCableSeleccionado}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setTipoCableSeleccionado(value);
 
-                                      if (!value) {
-                                          setLongitudCm(0);
-                                          setCantidadCables(0);
-                                      }
-                                  }}
-                              >
-                                  <option value="">Seleccione...</option>
-                                  {tipoCable.map((cable, index) => (
-                                      <option key={index} value={cable.nombre}>
-                                          {cable.nombre} (${cable.precio.toFixed(2)} / m)
-                                      </option>
-                                  ))}
-                              </select>
-                          </div>
-
-                          <div className="form-row">
-                              <label>Longitud (cm)</label>
-                              <input
-                                  type="number"
-                                  disabled={!tipoCableSeleccionado}
-                                  value={longitudCm === 0 ? "" : longitudCm}
-                                  onChange={(e) => setLongitudCm(parseFloat(e.target.value) || 0)}
-                              />
-                          </div>
+                                if (!value) {
+                                    setLongitudCm(0);
+                                    setCantidadCables(0);
+                                }
+                            }}
+                        >
+                            <option value="">Seleccione...</option>
+                            {tipoCable.map((cable, index) => (
+                                <option key={index} value={cable.nombre}>
+                                    {cable.nombre} (${cable.precio.toFixed(2)} / m)
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                          
+                <div className="form-row">
+                    <label>Longitud (cm)</label>
+                    <input
+                        type="number"
+                        disabled={!tipoCableSeleccionado}
+                        value={longitudCm === 0 ? "" : longitudCm}
+                        onChange={(e) => setLongitudCm(parseFloat(e.target.value) || 0)}
+                    />
+                </div>
 
                           <div className="form-row">
                               <label>Cantidad de cables</label>
@@ -517,7 +526,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
                           </div>
                       </>
                   )}
-
+                  {/*Fabricar a 440V*/}
           <div className="form-row checkbox-row">
             <label>Fabricar a 440V (+10%)</label>
             <input
@@ -526,25 +535,29 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
               disabled
             />
           </div>
-
-          <div className="form-row checkbox-row">
-            <label>Trifasica (+20%)</label>
-            <input
-              type="checkbox"
-              checked={trifasica}
-              onChange={(e) => setTrifasica(e.target.checked)}
-            />
-          </div>
-
-          <div className="form-row checkbox-row">
-            <label>Caja ($70 + IVA)</label>
-            <input
-              type="checkbox"
-              checked={caja}
-              onChange={(e) => setCaja(e.target.checked)}
-            />
-          </div>
-
+                  {/*Trifasica*/ }
+        {selector !== 5 && (
+            <div className="form-row checkbox-row">
+                <label>Trifasica (+20%)</label>
+                <input
+                    type="checkbox"
+                    checked={trifasica}
+                    onChange={(e) => setTrifasica(e.target.checked)}
+                />
+            </div>
+        )}
+                  {/*Caja*/ }
+        {selector !== 5 && (
+            <div className="form-row checkbox-row">
+                <label>Caja ($70 + IVA)</label>
+                <input
+                    type="checkbox"
+                    checked={caja}
+                    onChange={(e) => setCaja(e.target.checked)}
+                />
+            </div>
+        )}
+                  {/*Termopar*/ }
           <div className="form-row checkbox-row">
             <label>Termopar</label>
             <input
@@ -583,16 +596,18 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
               </div>
             </>
           )}
-
-          <div className="form-row checkbox-row">
-            <label>Excedente de Banda (+25%)</label>
-            <input
-              type="checkbox"
-              checked={excedente}
-              onChange={(e) => setExcedente(e.target.checked)}
-            />
-          </div>
-
+            {/*Excedente de Banda*/ }
+        {selector !== 5 && (
+            <div className="form-row checkbox-row">
+                <label>Excedente de Banda (+25%)</label>
+                <input
+                    type="checkbox"
+                    checked={excedente}
+                    onChange={(e) => setExcedente(e.target.checked)}
+                />
+            </div>
+        )}
+        {/*Servicio Express*/ }
         <div className="form-row checkbox-row">
             <label>Servicio Express (+30%)</label>
             <input

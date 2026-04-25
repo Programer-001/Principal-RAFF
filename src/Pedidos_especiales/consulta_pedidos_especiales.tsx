@@ -130,16 +130,28 @@ const ConsultaPedidosEspeciales: React.FC = () => {
         if (!texto) return pedidos;
 
         return pedidos.filter((pedido) => {
-            const folio = (pedido.folio || "").toLowerCase();
-            const alias = (pedido.proveedorSnapshot?.alias || "").toLowerCase();
-            const nombre = (pedido.proveedorSnapshot?.nombre || "").toLowerCase();
-            const cotizacion = (pedido.cotizacion || "").toLowerCase();
+            const folio = String(pedido.folio || "").toLowerCase();
+            const alias = String(pedido.proveedorSnapshot?.alias || "").toLowerCase();
+            const nombre = String(pedido.proveedorSnapshot?.nombre || "").toLowerCase();
+            const cotizacion = String(pedido.cotizacion || "").toLowerCase();
+
+            const coincideOT = (pedido.ots || []).some((ot) =>
+                String(ot.otLabel || "").toLowerCase().includes(texto) ||
+                String(ot.clienteSnapshot?.nombre || "").toLowerCase().includes(texto) ||
+                String(ot.clienteSnapshot?.razonSocial || "").toLowerCase().includes(texto) ||
+                (ot.partidas || []).some((p) =>
+                    String(p.partida || "").toLowerCase().includes(texto) ||
+                    String(p.descripcion || "").toLowerCase().includes(texto) ||
+                    String(p.tipo || "").toLowerCase().includes(texto)
+                )
+            );
 
             return (
                 folio.includes(texto) ||
                 alias.includes(texto) ||
                 nombre.includes(texto) ||
-                cotizacion.includes(texto)
+                cotizacion.includes(texto) ||
+                coincideOT
             );
         });
     }, [pedidos, busquedaFolio]);
