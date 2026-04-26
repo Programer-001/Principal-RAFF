@@ -1480,7 +1480,7 @@
 /* =========================
    RESPONSIVE TABLET (iPad)
 ========================= */
-@media (max-width: 1024px) {
+@media (max-width: 1366px) {
     .consulta-pedidos-layout {
         display: flex;
         flex-direction: column;
