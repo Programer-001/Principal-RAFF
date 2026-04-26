@@ -478,6 +478,7 @@ No aplica garantía en productos fabricados conforme a especificaciones del clie
                 "--",
             razonSocial: folio.clienteSnapshot?.razonSocial || "",
             telefono: folio.clienteSnapshot?.telefono || "",
+            facturas: obtenerFacturasArray(folio),
             envio: !!folio.envio,
             otGenerada: folio.otGenerada ? `OT-${folio.otGenerada}` : "--",
 

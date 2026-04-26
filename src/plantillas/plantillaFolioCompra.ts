@@ -37,6 +37,7 @@ interface FolioCompraPDFData {
     total: number;
 
     materialEntregado?: boolean;
+    facturas?: string[];
 }
 
 export const generarPDFFolioCompra = async (data: FolioCompraPDFData) => {
@@ -166,18 +167,40 @@ export const generarPDFFolioCompra = async (data: FolioCompraPDFData) => {
         doc.text(clienteLineas, 128, 90);
     }
 
+    // TELÉFONO
     doc.setFont("helvetica", "bold");
     doc.text("Teléfono:", 20, y);
     doc.setFont("helvetica", "normal");
     doc.text(data.telefono || "--", 45, y);
 
+    y += 6;
+
+    // FACTURAS
+    if (data.facturas && data.facturas.length > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.text(
+            data.facturas.length === 1 ? "Factura:" : "Facturas:",
+            20,
+            y
+        );
+
+        doc.setFont("helvetica", "normal");
+
+        const facturasTexto = data.facturas.join("\n");
+        const lineas = doc.splitTextToSize(facturasTexto, 80);
+
+        doc.text(lineas, 45, y);
+
+        y += lineas.length * 5 + 2;
+    }
+
+    // ENVÍO 
     doc.setFont("helvetica", "bold");
-    doc.text("Envío:", 110, y+5);
+    doc.text("Envío:", 110, 103);
     doc.setFont("helvetica", "normal");
-    doc.text(data.envio ? "Sí" : "No", 128, y+5);
+    doc.text(data.envio ? "Sí" : "No", 128, 103);
 
-    y += 12;
-
+    y += 5;
     // =========================
     // SERVICIOS
     // =========================
@@ -298,7 +321,7 @@ export const generarPDFFolioCompra = async (data: FolioCompraPDFData) => {
     // =========================
     // SELLO MATERIAL ENTREGADO
     // =========================
-    if (data.materialEntregado) {
+   /* if (data.materialEntregado) {
         try {
             const responseSello = await fetch("svg/sello_material_entregado.svg");
             const svgSelloText = await responseSello.text();
@@ -317,17 +340,18 @@ export const generarPDFFolioCompra = async (data: FolioCompraPDFData) => {
         } catch (error) {
             console.warn("No se pudo cargar sello de material entregado:", error);
         }
-    }
+    }*/
 
     // =========================
     // TOTALES
     // =========================
-    const altoBloqueTotales = 35;
+    const altoBloqueTotales = 5;
 
     if (y + altoBloqueTotales > pageHeight - marginBottom) {
         doc.addPage();
-        await agregarEncabezado();
-        y = 65;
+        //await agregarEncabezado();
+        //y = 65;
+        y = marginTop;
     }
 
     const totalesX = pageWidth - 80;
