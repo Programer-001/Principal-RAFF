@@ -1,7 +1,7 @@
 ﻿import React, { useState } from "react";
 import { loginConUsername } from "./Login";
 import { useNavigate } from "react-router-dom";
-import { ReactComponent as LogoBlanco } from "../auth/logo_blanco.svg";
+import { ReactComponent as LogoBlanco } from "../Imagenes/svg/logo_blanco.svg";
 import "../css/svg.css";
 
 const Login: React.FC = () => {

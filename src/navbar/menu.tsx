@@ -1,8 +1,11 @@
 ﻿import { signOut, onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "../firebase/config";
 import { useEffect, useState, useMemo, useRef } from "react";
-import { ref, get } from "firebase/database";
-import { ReactComponent as Campana } from "../Notificaciones/svg/campana.svg";
+import { ref, get, onValue } from "firebase/database";
+import { NotificacionSistema } from "../Notificaciones/tiposNotificaciones";
+import { crearNotificacionSistema } from "../Notificaciones/centralNotificaciones";
+import { marcarNotificacionVista } from "../Notificaciones/marcarNotificacionVista";
+import { ReactComponent as Campana } from "../Imagenes/svg/notificaciones/campana.svg";
 import { obtenerMenuPorPerfil } from "./menuConfig";
 import "../css/menu.css";
 
@@ -24,6 +27,7 @@ const Menu = ({ vista, setVista }: Props) => {
     const [user, setUser] = useState<User | null>(null);
     const [perfil, setPerfil] = useState<EmpleadoPerfil | null>(null);
     const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
+    const [notificaciones, setNotificaciones] = useState<NotificacionSistema[]>([]);
     const notiRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -80,6 +84,43 @@ const Menu = ({ vista, setVista }: Props) => {
         };
     }, []);
 
+    useEffect(() => {
+        if (!user?.uid) {
+            setNotificaciones([]);
+            return;
+        }
+
+        const notificacionesRef = ref(db, "notificaciones");
+
+        const unsub = onValue(notificacionesRef, (snapshot) => {
+            if (!snapshot.exists()) {
+                setNotificaciones([]);
+                return;
+            }
+
+            const data = snapshot.val() as Record<string, NotificacionSistema>;
+            const ahora = Date.now();
+
+            const lista = Object.entries(data)
+                .map(([id, notificacion]) => ({
+                    ...notificacion,
+                    id,
+                }))
+                .filter((notificacion) => {
+                    const esParaUsuario = notificacion.destinatariosUids?.includes(user.uid);
+                    const noEstaExpirada = notificacion.fechaExpiracion > ahora;
+                    const noVista = notificacion.vistaPor?.[user.uid] !== true;
+
+                    return esParaUsuario && noEstaExpirada && noVista;
+                })
+                .sort((a, b) => b.fechaCreacion - a.fechaCreacion);
+
+            setNotificaciones(lista);
+        });
+
+        return () => unsub();
+    }, [user?.uid]);
+
     const cerrarSesion = async () => {
         try {
             localStorage.clear();
@@ -95,6 +136,7 @@ const Menu = ({ vista, setVista }: Props) => {
         perfil?.username || perfil?.nombre || user?.email || "Sin sesión";
 
     const itemsMenu = obtenerMenuPorPerfil(perfil?.area, perfil?.puesto);
+    const totalNotificacionesPendientes = notificaciones.length;
 
     console.log("itemsMenu final:", itemsMenu);
 
@@ -102,6 +144,39 @@ const Menu = ({ vista, setVista }: Props) => {
     console.log("area actual:", perfil?.area);
     console.log("puesto actual:", perfil?.puesto);
 
+    // =========================
+    // FUNCION DE PRUEBA NOTIFICACIONES
+    // =========================
+    const crearNotificacionPrueba = async () => {
+        if (!user?.uid) {
+            alert("No hay usuario activo");
+            return;
+        }
+
+        await crearNotificacionSistema({
+            tipo: "pedido_listo",
+            destino: {
+                tipo: "uid",
+                uid: user.uid,
+            },
+            origen: {
+                modulo: "Menu",
+                referencia: "PRUEBA",
+            },
+            mensaje: "Esta es una notificación de prueba.",
+            creadoPorUid: user.uid,
+            creadoPorNombre: textoUsuario,
+        });
+    };
+
+    const marcarVista = async (notificacionId?: string) => {
+        if (!notificacionId || !user?.uid) return;
+
+        await marcarNotificacionVista(notificacionId, user.uid);
+    };
+    // =========================
+    // HTML
+    // =========================
     return (
         <header className="menu-header">
             <div
@@ -156,7 +231,13 @@ const Menu = ({ vista, setVista }: Props) => {
                         onClick={() => setNotificacionesAbiertas((prev) => !prev)}
                     >
                         <Campana  className="menu-campana-icono" />
-                        <span className="menu-campana-badge">3</span>
+                        {totalNotificacionesPendientes > 0 && (
+                            <span className="menu-campana-badge">
+                                {totalNotificacionesPendientes > 99
+                                    ? "99+"
+                                    : totalNotificacionesPendientes}
+                            </span>
+                        )}
                     </button>
 
                     {notificacionesAbiertas && (
@@ -166,23 +247,47 @@ const Menu = ({ vista, setVista }: Props) => {
                             </div>
 
                             <div className="menu-notificaciones-lista">
-                                <div className="menu-notificacion-item">
-                                    Pedido listo
-                                </div>
-                                <div className="menu-notificacion-item">
-                                    Material solicitado
-                                </div>
-                                <div className="menu-notificacion-item">
-                                    OT terminada
-                                </div>
+                                {notificaciones.length === 0 ? (
+                                    <div className="menu-notificacion-item">
+                                        Sin notificaciones
+                                    </div>
+                                ) : (
+                                    notificaciones.map((notificacion) => (
+                                        <div
+                                            key={notificacion.id}
+                                            className="menu-notificacion-item"
+                                        >
+                                            <div className="menu-notificacion-contenido">
+                                                <strong>{notificacion.titulo}</strong>
+                                                <br />
+                                                <span>{notificacion.mensaje}</span>
+                                            </div>
+
+                                            <button
+                                                className="menu-notificacion-visto"
+                                                onClick={() => marcarVista(notificacion.id)}
+                                                title="Marcar como visto"
+                                            >
+                                                ✓
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
                             </div>
 
                             <div className="menu-notificaciones-footer">
                                 Ver todas
                             </div>
+                            <div
+                                className="menu-notificaciones-footer"
+                                onClick={crearNotificacionPrueba}
+                            >
+                                Crear prueba
+                            </div>
                         </div>
                     )}
                 </div>
+
                 <div className="menu-user-info">
                 <div className="menu-user-name">
 

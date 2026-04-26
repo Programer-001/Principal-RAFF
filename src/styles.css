@@ -1477,3 +1477,37 @@
         position: static;
     }
 }
+/* =========================
+   RESPONSIVE TABLET (iPad)
+========================= */
+@media (max-width: 1024px) {
+    .consulta-pedidos-layout {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .consulta-pedidos-visor {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .consulta-pedidos-lista {
+        width: 100%;
+        max-width: 100%;
+        border-left: none;
+        border-top: 1px solid #d1d5db;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+
+    .documento-word-fondo {
+        padding: 20px 10px;
+        overflow-x: auto;
+    }
+
+    .documento-hoja {
+        width: 816px; /* conserva tamaño carta visual */
+        min-width: 816px;
+        padding: 75px;
+    }
+}
