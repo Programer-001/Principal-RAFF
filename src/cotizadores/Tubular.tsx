@@ -47,6 +47,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const [voltaje, setVoltaje] = useState<number>(0);
     const [potencia, setPotencia] = useState<number>(0);
     const [maxWatts, setMaxWatts] = useState(!!data?.datos?.maxWatts);
+    const [sacarWatts, setSacarWatts] = useState(!!data?.datos?.sacarWatts);
     const [muestra, setMuestra] = useState(data?.datos?.muestra || "");
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
     const [aleta, setAleta] = useState(false);
@@ -266,6 +267,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
       setMuestra("");
       setDatosAdicionales("");
       setMaxWatts(false);
+      setSacarWatts(false);
   };
 
   //descripcion
@@ -292,7 +294,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
     const descripcion = `
   ${cantidadResistencias || 0} RESISTENCIA ${diametro || ""} DE ${longitud || 0
         } CM
-  /  ${voltaje || 0}V - ${maxWatts ? "MAX WATTS" : `${potencia || 0}W`}
+  /  ${voltaje || 0}V - ${maxWatts ? "MAX WATTS" : sacarWatts ? "SACAR WATTS" : `${potencia || 0}W`}
   / TUBO: ${diametro || ""}
 
   ${aleta ? " / CON ALETA" : ""}
@@ -341,10 +343,12 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
     //----------------------useEffect-----------------------------------
     //max potencia
     useEffect(() => {
-        if (maxWatts) {
-            setPotencia(0);
-        }
+        if (maxWatts) setSacarWatts(false);
     }, [maxWatts]);
+    //sacar watts
+    useEffect(() => {
+        if (sacarWatts) setMaxWatts(false);
+    }, [sacarWatts]);
   // Reset cable
   useEffect(() => {
     if (tipoSoldarCable === "NO" || tipoSoldarCable === "") {
@@ -400,7 +404,8 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
       setCantidadResistencias(d.cantidadResistencias || 0);
       setVoltaje(d.voltaje || 0);
       setPotencia(d.potencia || 0);
-      setMaxWatts(!!d.maxWatts);
+    setMaxWatts(!!d.maxWatts);
+    setSacarWatts(!!d.sacarWatts);
       // 🔹 seleccionados
       setSeleccionados(d.seleccionados || {});
 
@@ -474,7 +479,24 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
             <input
                 type="checkbox"
                 checked={maxWatts}
-                onChange={(e) => setMaxWatts(e.target.checked)}
+                onChange={(e) => {
+                    const value = e.target.checked;
+                    setMaxWatts(value);
+                    if (value) setSacarWatts(false);
+                }}
+            />
+                  </div>
+        {/* Sacar Watts */}
+        <div className="form-row checkbox-row">
+            <label>SACAR WATTS</label>
+            <input
+                type="checkbox"
+                checked={sacarWatts}
+                onChange={(e) => {
+                    const value = e.target.checked;
+                    setSacarWatts(value);
+                    if (value) setMaxWatts(false);
+                }}
             />
         </div>
           {/* Longitud */}
@@ -830,6 +852,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
                               voltaje,
                               potencia,
                               maxWatts,
+                              sacarWatts,
 
                               // 🔹 selección
                               seleccionados,
