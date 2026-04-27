@@ -230,11 +230,11 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
       precioSello +
     precioServicios;
   // aplicar descuento
-  const totalConDescuento = totalResistencia * (1 - descuento);
+    let totalConDescuento = totalResistencia * (1 - descuento);
+    if (servicioExpress) {
+        totalConDescuento = totalConDescuento * totalExpress;
+    }
   let totalconiva = totalConDescuento * 1.16;
-  if (servicioExpress) {
-    totalconiva = totalconiva * totalExpress;
-  }
 
   //FUNCION RESET
   const resetForm = () => {
