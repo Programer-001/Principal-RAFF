@@ -31,16 +31,37 @@ export const precios = [
   [895.34, 989.93, 1075.84, 1166.25],
   [949.7, 1044.77, 1128.35, 1218.8],
 ];
+
+
 export const obtenerPrecioCartuchoBaja = (
-  diametro: string,
-  longitud: number
+    diametro: string,
+    longitud: number
 ): number => {
-  const diametroLimpio = diametro.replace(/"/g, "").trim();
+    const diametroLimpio = diametro.replace(/"/g, "").trim();
 
-  const col = diametros.findIndex((d) => d.label === diametroLimpio);
-  const fila = anchos.findIndex((a) => a === longitud);
+    const col = diametros.findIndex((d) => d.label === diametroLimpio);
+    if (col === -1 || !longitud) return 0;
 
-  if (col === -1 || fila === -1) return 0;
+    // CASO 1: Precio real de tabla 2–20"
+    if (longitud >= 2 && longitud <= 20) {
+        const fila = anchos.findIndex((a) => a === longitud);
 
-  return precios[fila][col] ?? 0;
+        if (fila !== -1) {
+            return precios[fila][col] ?? 0;
+        }
+    }
+
+    // CASO 2: Precio proporcional de 21–40"
+    // Usa como base el precio de 12"
+    if (longitud > 20 && longitud <= 40) {
+        const filaBase12 = anchos.findIndex((a) => a === 12);
+
+        if (filaBase12 === -1) return 0;
+
+        const precioBase12 = precios[filaBase12][col];
+
+        return Number(((precioBase12 / 12) * longitud).toFixed(2));
+    }
+
+    return 0;
 };
