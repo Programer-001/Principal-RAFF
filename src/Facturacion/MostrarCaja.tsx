@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { app } from "../firebase/config";
 import { generarExcelCorteCaja } from "../plantillas/excel";
+import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 //import "../css/caja.css";
 
 interface Pago {
@@ -117,14 +118,14 @@ const MostrarCaja: React.FC = () => {
             <div className="resumen-caja">
                 <h3>Totales por Método</h3>
 
-                <p>Efectivo: ${totales.efectivo.toFixed(2)}</p>
-                <p>Tarjeta de débito: ${totales.debito.toFixed(2)}</p>
-                <p>Tarjeta de crédito: ${totales.credito_tarjeta.toFixed(2)}</p>
-                <p>Crédito de Clientes: ${totales.credito_clientes.toFixed(2)}</p>
-                <p>Transferencias: ${totales.transferencia.toFixed(2)}</p>
-                <p>Cheque: ${totales.cheque.toFixed(2)}</p>
+                <p>Efectivo: ${formatearMoneda(totales.efectivo)}</p>
+                <p>Tarjeta de débito: ${formatearMoneda(totales.debito)}</p>
+                <p>Tarjeta de crédito: ${formatearMoneda(totales.credito_tarjeta)}</p>
+                <p>Crédito de Clientes: ${formatearMoneda(totales.credito_clientes)}</p>
+                <p>Transferencias: ${formatearMoneda(totales.transferencia)}</p>
+                <p>Cheque: ${formatearMoneda(totales.cheque)}</p>
                 <hr />
-                <h4>Total General: ${totales.total.toFixed(2)}</h4>
+                <h4>Total General: ${formatearMoneda(totales.total)}</h4>
             </div>
 
             {/* ================= TABLA ================= */}
@@ -206,7 +207,7 @@ const MostrarCaja: React.FC = () => {
                                     <td>{p.fecha || "-"}</td>
                                     <td>{p.factura || "-"}</td>
                                     <td>{p.metodo.replace("_", " ")}</td>
-                                    <td>${p.cantidad.toFixed(2)}</td>
+                                    <td>${formatearMoneda(p.cantidad)}</td>
                                     <td
                                         className={
                                             p.estatus ? "estatus-vigente" : "estatus-cancelada"
