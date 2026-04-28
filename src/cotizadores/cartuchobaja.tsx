@@ -279,8 +279,8 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
       {/* TOTAL con variables */}
           {esAdministracion && (
               <div className="form-row textarea-row">
-                  <label>Total</label>
                   <div>
+                      <p>Potencia maxima por resistencia: {Number(longitudCm)*10 }Watts </p>
                       <p>Precio del cable: ${formatearMoneda(precioSoldarCable)}</p>
                       <p>Precio cable: ${formatearMoneda(totalCable)}</p>
                       <p>Precio de resistencia: ${formatearMoneda(totalPorResistencia)}</p>
