@@ -2,6 +2,7 @@
 import { getDatabase, ref, onValue } from "firebase/database";
 import { generarExcelGastos } from "../plantillas/excel_gastos";
 import { generarPDFGastos } from "../plantillas/pdf_gastos";
+import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 import { app } from "../firebase/config";
 import "../css/animacion_calendario.css";
 

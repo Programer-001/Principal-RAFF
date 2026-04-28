@@ -1,6 +1,7 @@
 ﻿// src/components/CorteDia.tsx
 import React, { useState } from "react";
 import { getDatabase, ref, onValue } from "firebase/database";
+import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 import { app } from "../firebase/config";
 
 interface CorteData {
@@ -118,23 +119,23 @@ const CorteDia: React.FC = () => {
                         <tbody>
                             <tr>
                                 <td>Efectivo</td>
-                                <td>${resumen.efectivo.toFixed(2)}</td>
+                                <td>${formatearMoneda(resumen.efectivo)}</td>
                             </tr>
                             <tr>
                                 <td>Crédito (Tarjeta)</td>
-                                <td>${resumen.creditoTarjeta.toFixed(2)}</td>
+                                <td>${formatearMoneda(resumen.creditoTarjeta)}</td>
                             </tr>
                             <tr>
                                 <td>Crédito Clientes</td>
-                                <td>${resumen.creditoClientes.toFixed(2)}</td>
+                                <td>${formatearMoneda(resumen.creditoClientes)}</td>
                             </tr>
                             <tr>
                                 <td>Débito</td>
-                                <td>${resumen.debito.toFixed(2)}</td>
+                                <td>${formatearMoneda(resumen.debito)}</td>
                             </tr>
                             <tr>
                                 <td>Transferencia</td>
-                                <td>${resumen.transferencia.toFixed(2)}</td>
+                                <td>${formatearMoneda(resumen.transferencia)}</td>
                             </tr>
 
                             <tr className="total-row">
@@ -142,7 +143,7 @@ const CorteDia: React.FC = () => {
                                     <strong>Total</strong>
                                 </td>
                                 <td>
-                                    <strong>${total.toFixed(2)}</strong>
+                                    <strong>${formatearMoneda(total)}</strong>
                                 </td>
                             </tr>
                         </tbody>

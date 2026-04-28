@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "svg2pdf.js";
 import { getDatabase, ref, get } from "firebase/database";
+import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 import { app } from "../firebase/config";
 
 const convertirFecha = (f: string): string => {
@@ -122,10 +123,7 @@ export const generarPDFGastos = async (desde: string, hasta: string) => {
             limpiarTextoPDF(fecha),
             limpiarTextoPDF(g.descripcion || ""),
             limpiarTextoPDF(g.tipo || ""),
-            Number(g.cantidad || 0).toLocaleString("es-MX", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            }),
+            formatearMoneda(Number(g.cantidad)),
         ];
     });
 
@@ -156,20 +154,23 @@ export const generarPDFGastos = async (desde: string, hasta: string) => {
         },
     });
 
-    const totalGeneral = filtrados.reduce(
-        (acc, g) => acc + Number(g.cantidad || 0),
-        0
-    );
+    const totalEntradas = filtrados
+        .filter((g) => g.tipo === "entrada")
+        .reduce((acc, g) => acc + Number(g.cantidad || 0), 0);
+
+    const totalGastos = filtrados
+        .filter((g) => g.tipo === "gasto")
+        .reduce((acc, g) => acc + Math.abs(Number(g.cantidad || 0)), 0);
+
+    const fondoFinal = totalEntradas - totalGastos;
+
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(
-        `Total General: ${totalGeneral.toLocaleString("es-MX", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        })}`,
+        `Fondo final: ${formatearMoneda(fondoFinal)}`,
         14,
         finalY
     );
