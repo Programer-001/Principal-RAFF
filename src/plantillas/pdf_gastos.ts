@@ -174,6 +174,11 @@ export const generarPDFGastos = async (desde: string, hasta: string) => {
         14,
         finalY
     );
+    doc.text(
+        `Gastos totales: ${formatearMoneda(totalGastos)}`,
+        14,
+        finalY + 7
+    );
 
     doc.save(`Gastos_${desdeForm}_a_${hastaForm}.pdf`);
 };
