@@ -11,6 +11,65 @@ export const anchos = [
 ];
 
 export const precios = [
+    [515.56, 454.23, 507.9, 534.73, 688.06],
+    [515.56, 454.23, 507.9, 550.07, 707.22],
+    [471.24, 454.23, 490.66, 527.08, 647.81],
+    [481.07, 427.39, 505.98, 540.49, 668.89],
+    [492.57, 436.99, 515.56, 574.99, 688.06],
+    [519.4, 452.32, 540.49, 622.91, 726.4],
+    [528.99, 473.4, 573.06, 647.81, 768.57],
+    [551.98, 500.24, 594.13, 670.82, 810.72],
+    [563.48, 519.4, 620.97, 741.73, 856.72],
+    [609.44, 563.48, 674.65, 741.73, 942.98],
+    [632.49, 605.9, 703.4, 778.15, 992.81],
+    [670.82, 632.49, 732.15, 816.49, 1063.73],
+    [689.99, 649.73, 758.98, 852.9, 1117.39],
+    [714.89, 670.82, 806.89, 889.31, 1163.1],
+    [760.89, 689.99, 835.65, 912.32, 1190.22],
+    [783.92, 711.06, 860.55, 929.57, 1217.06],
+    [808.81, 734.06, 900.81, 996.64, 1263.05],
+    [839.48, 760.89, 965.98, 1040.72, 1312.89],
+    [866.32, 785.82, 996.64, 1079.06, 1368.47],
+    [919.99, 808.81, 1027.31, 1119.31, 1441.31],
+    [958.32, 845.23, 1090.55, 1186.38, 1494.98],
+    [996.64, 864.4, 1109.72, 1228.56, 1544.81],
+    [1059.89, 887.39, 1140.39, 1261.14, 1600.39],
+];
+
+export const obtenerPrecioCartuchoAlta = (
+    diametro: string,
+    longitud: number
+): number => {
+    const diametroLimpio = diametro.replace(/"/g, "").trim();
+
+    const col = diametros.findIndex((d) => d.label === diametroLimpio);
+
+    if (col === -1 || !longitud) return 0;
+
+    // La tabla llega hasta 22 pulgadas
+    const longitudMaxTabla = 22;
+
+    // Si se pasa de 22", usamos el precio de 22"
+    const longitudBase = longitud > longitudMaxTabla ? longitudMaxTabla : longitud;
+
+    const fila = anchos.findIndex((a) => a === longitudBase);
+
+    if (fila === -1) return 0;
+
+    let precioBase = precios[fila][col] ?? 0;
+
+    // Excedente en CM
+    if (longitud > longitudMaxTabla) {
+        const excedentePulgadas = longitud - longitudMaxTabla;
+        const excedenteCm = excedentePulgadas * 2.54;
+
+        precioBase += excedenteCm * 1.5;
+    }
+
+    return precioBase * 1.16 * 1.70;
+};
+/*
+export const precios = [
   [656.17, 578.12, 646.42, 680.57, 875.71],
   [653.18, 575.49, 643.48, 696.9, 896.01],
   [594.31, 572.86, 618.79, 664.73, 816.99],
@@ -49,3 +108,4 @@ export const obtenerPrecioCartuchoAlta = (
 
   return precios[fila][col] ?? 0;
 };
+*/

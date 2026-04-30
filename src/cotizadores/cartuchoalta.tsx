@@ -79,7 +79,8 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
 
   const precioUnitario =
     diametro && pulgadas ? obtenerPrecioCartuchoAlta(diametro, pulgadas) : 0;
-  const extraMilimetrica = milimetrica ? precioUnitario * 0.1 : 0;
+
+    const extraMilimetrica = milimetrica ? precioUnitario * 0.1 : 0;
 
   const totalTerminal90 = terminal90 ? 150 : 0;
   const totalTuboZapa = tubozapa ? 130 : 0;
