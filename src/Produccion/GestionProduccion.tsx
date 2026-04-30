@@ -948,20 +948,21 @@ const GestionProduccion: React.FC = () => {
     };
     //Función para saber cuántas piezas tiene la partida*
     const obtenerCantidadParaGrabado = (trabajo: TrabajoItem) => {
-        const tipo = (trabajo.tipo || "").toLowerCase();
+        const datos = trabajo.datos || {};
 
-        if (tipo === "tubular") {
-            const cantidadTubular = Number(trabajo.datos?.cantidadResistencias);
+        // 🔹 Buscar primero campos específicos
+        const posiblesCampos = [
+            datos.cantidadResistencias,
+            datos.cantidad,
+            datos.Cantidad,
+            datos["Cantidad de resistencias"],
+        ];
 
-            if (cantidadTubular && cantidadTubular > 0) {
-                return cantidadTubular;
+        for (const valor of posiblesCampos) {
+            const num = Number(valor);
+            if (num && num > 0) {
+                return num;
             }
-        }
-
-        const cantidadGeneral = Number(trabajo.datos?.cantidad);
-
-        if (cantidadGeneral && cantidadGeneral > 0) {
-            return cantidadGeneral;
         }
 
         return 1;

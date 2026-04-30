@@ -1,6 +1,6 @@
 ﻿//src/Pedidos_especiales/consulta_pedidos_especiales.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { onValue, ref, remove } from "firebase/database";
+import { onValue, ref, remove, update,get } from "firebase/database";
 import { db } from "../firebase/config";
 import { generarPDFPedidoProveedor } from "../plantillas/plantillaPedidoEspecial";
 //import "../css/consulta_pedidos_especiales.css";
@@ -256,6 +256,57 @@ const ConsultaPedidosEspeciales: React.FC = () => {
             ),
         });
     };
+    /* =========================
+   Pedido recibido
+========================= */
+    const manejarCheckRecibido = async (folio: string) => {
+        const confirmar = window.confirm(
+            `¿Seguro que deseas marcar este pedido como recibido?\n\nDespués ya no se podrá modificar.`
+        );
+
+        if (!confirmar) return;
+
+        try {
+            // 1. Marcar en pedidos_especiales
+            await update(ref(db, `pedidos_especiales/${folio}`), {
+                pedido_recibido: true,
+                fecha_pedido_recibido: new Date().toISOString(),
+            });
+
+            // 2. 🔥 BUSCAR Y ACTUALIZAR TODAS LAS PARTIDAS RELACIONADAS
+            const snapshot = await get(ref(db, "ordenes_trabajo"));
+
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                const updates: any = {};
+
+                Object.keys(data).forEach((otKey) => {
+                    const trabajos = data[otKey]?.trabajos || {};
+
+                    Object.keys(trabajos).forEach((trabajoKey) => {
+                        const trabajo = trabajos[trabajoKey];
+
+                        if (trabajo.folio_pedido_especial === folio) {
+                            updates[
+                                `ordenes_trabajo/${otKey}/trabajos/${trabajoKey}/pedido_recibido`
+                            ] = true;
+                        }
+                    });
+                });
+
+                if (Object.keys(updates).length > 0) {
+                    await update(ref(db), updates);
+                }
+            }
+
+        } catch (error) {
+            console.error("Error al actualizar:", error);
+            alert("Error al marcar como recibido");
+        }
+    };
+    /* =========================
+   HTML
+========================= */
     return (
         <div className="consulta-pedidos-layout">
             {/* VISOR IZQUIERDO CUANDO NO TENEMOS SELECCIONADO NADA */}
@@ -510,8 +561,15 @@ const ConsultaPedidosEspeciales: React.FC = () => {
                                         </p>
 
                                         <p>
-                                            <b>Pedido recibido:</b>{" "}
-                                            {pedido.pedido_recibido ? "Sí" : "No"}
+                                            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!pedido.pedido_recibido}
+                                                    disabled={!!pedido.pedido_recibido}
+                                                    onChange={() => manejarCheckRecibido(pedido.folio)}
+                                                />
+                                                <b>Pedido recibido</b>
+                                            </label>
                                         </p>
 
                                         <button
