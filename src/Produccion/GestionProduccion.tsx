@@ -114,6 +114,9 @@ const GestionProduccion: React.FC = () => {
 
     const [mostrarSeries, setMostrarSeries] = useState(false);
     const [numerosSerie, setNumerosSerie] = useState<string[]>([]);
+
+    const [busqueda, setBusqueda] = useState("");
+
     // =========================
     // FORMATEAR NÚMERO OT
     // Ejemplo: 36 -> 00036
@@ -835,7 +838,9 @@ const GestionProduccion: React.FC = () => {
     // =========================
     // FILTROS DE BUSQUEDA
     // =========================
-    const hayFiltros = filtrosEstado.length > 0 || !!filtroTrabajador;
+    const hayFiltros =
+        filtrosEstado.length > 0 ||
+        !!filtroTrabajador;
     const ESTADOS_PRODUCCION = [
         { value: "en_fila", label: "En fila" },
         { value: "en_proceso", label: "En proceso" },
@@ -855,9 +860,40 @@ const GestionProduccion: React.FC = () => {
             }
         });
     };
+    // =========================
+    // BUSCADOR
+    // =========================
+    const ordenesFiltradas = useMemo(() => {
+        const texto = busqueda.trim().toLowerCase();
+
+        return ordenesAgregadas.filter((ot) => {
+            const clienteNombre =
+                ot.clienteSnapshot?.nombre ||
+                ot.clienteSnapshot?.razonSocial ||
+                "";
+
+            const facturasTexto = obtenerTextoFacturas(ot).toLowerCase();
+
+            const asesor =
+                ot.asesorSnapshot?.username ||
+                ot.asesorSnapshot?.nombre ||
+                "";
+
+            return (
+                !texto ||
+                ot.firebaseKey.toLowerCase().includes(texto) ||
+                (ot.otLabel || "").toLowerCase().includes(texto) ||
+                String(ot.ot || "").toLowerCase().includes(texto) ||
+                (ot.fecha || "").toLowerCase().includes(texto) ||
+                facturasTexto.includes(texto) ||
+                clienteNombre.toLowerCase().includes(texto) ||
+                asesor.toLowerCase().includes(texto)
+            );
+        });
+    }, [busqueda, ordenesAgregadas]);
 
     //Esto recorre todas las OTs y saca las partidas que coincidan
-    const partidasFiltradasGlobales = ordenesAgregadas.flatMap((ot) => {
+    const partidasFiltradasGlobales = ordenesFiltradas.flatMap((ot) => {
         const trabajos = Object.entries(ot.trabajos || {}).map(([key, trabajo]) => ({
             key,
             ...trabajo,
@@ -912,11 +948,23 @@ const GestionProduccion: React.FC = () => {
     };
     //Función para saber cuántas piezas tiene la partida*
     const obtenerCantidadParaGrabado = (trabajo: TrabajoItem) => {
-        const cantidad = Number(trabajo.datos?.cantidad);
+        const tipo = (trabajo.tipo || "").toLowerCase();
 
-        if (!cantidad || cantidad <= 0) return 1;
+        if (tipo === "tubular") {
+            const cantidadTubular = Number(trabajo.datos?.cantidadResistencias);
 
-        return cantidad;
+            if (cantidadTubular && cantidadTubular > 0) {
+                return cantidadTubular;
+            }
+        }
+
+        const cantidadGeneral = Number(trabajo.datos?.cantidad);
+
+        if (cantidadGeneral && cantidadGeneral > 0) {
+            return cantidadGeneral;
+        }
+
+        return 1;
     };
 
     //Función para generar series
@@ -1112,6 +1160,7 @@ const GestionProduccion: React.FC = () => {
         return TIPOS_MAP[key] || tipo || "--";
     };
 
+
     // =========================
     // HTML
     // =========================
@@ -1147,6 +1196,38 @@ const GestionProduccion: React.FC = () => {
                         <button onClick={agregarOT} disabled={cargando}>
                             {cargando ? "Buscando..." : "Agregar OT"}
                         </button>
+                    </div>
+                    {/*=========================
+                    // BUSCADOR
+                    // =========================*/}
+                    <div
+                        style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 12,
+                            marginBottom: 20,
+                            alignItems: "center",
+                        }}
+                    >
+                        <input
+                            type="text"
+                            placeholder='Buscar por OT, fecha, factura, cliente o asesor'
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            style={{
+                                flex: 1,
+                                minWidth: 260,
+                                padding: 8,
+                                border: "1px solid #ccc",
+                                borderRadius: 6,
+                            }}
+                        />
+
+                        {busqueda && (
+                            <button onClick={() => setBusqueda("")}>
+                                Limpiar
+                            </button>
+                        )}
                     </div>
                     {/* =========================
             FILTROS  POR ESTADOS DE OTS 
@@ -1208,14 +1289,14 @@ const GestionProduccion: React.FC = () => {
                                 </thead>
 
                                 <tbody>
-                                    {ordenesAgregadas.length === 0 ? (
+                                    {ordenesFiltradas.length === 0 ? (
                                         <tr>
                                             <td style={tdStyle} colSpan={5}>
                                                 No hay OTs agregadas
                                             </td>
                                         </tr>
                                     ) : (
-                                        ordenesAgregadas.map((ot) => {
+                                            ordenesFiltradas.map((ot) => {
                                             const otCompleta = Object.values(ot.trabajos || {}).every(
                                                 (t: any) => t.estadoProduccion === "lista_para_entrega"
                                             );
