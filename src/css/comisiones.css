@@ -1,0 +1,179 @@
+.comisiones-page {
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.comisiones-title {
+    margin-bottom: 20px;
+}
+
+.comisiones-filtros-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.comisiones-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.comisiones-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.comisiones-card-title {
+    margin: 0;
+}
+
+.comisiones-inline-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.comisiones-btn-secundario {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background: #f8f8f8;
+}
+
+.comisiones-check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.comisiones-check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.comisiones-fecha-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.comisiones-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.comisiones-label {
+    font-weight: 600;
+}
+
+.comisiones-input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.comisiones-resumen-superior {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.comisiones-table-wrap {
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+.comisiones-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .comisiones-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f3f4f6;
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        white-space: nowrap;
+        z-index: 3;
+    }
+
+    .comisiones-table td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        vertical-align: top;
+    }
+
+    .comisiones-table .td-number {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .comisiones-table .td-center {
+        text-align: center;
+        padding: 16px;
+    }
+
+.comisiones-total-row {
+    position: sticky;
+    bottom: 0;
+    background: #fafafa;
+    z-index: 2;
+    border-top: 2px solid #000;
+}
+
+.comisiones-loading {
+    padding: 20px;
+}
+/* =========================
+   RESUMEN POR TRABAJADOR
+========================= */
+.comisiones-resumen-wrap {
+    overflow: visible;
+}
+
+.comisiones-resumen-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+    .comisiones-resumen-table .comisiones-total-row {
+        position: static;
+        bottom: auto;
+    }
+
+    .comisiones-resumen-table th:nth-child(1),
+    .comisiones-resumen-table td:nth-child(1) {
+        width: 35%;
+        text-align: left;
+    }
+
+    .comisiones-resumen-table th:nth-child(2),
+    .comisiones-resumen-table td:nth-child(2),
+    .comisiones-resumen-table th:nth-child(3),
+    .comisiones-resumen-table td:nth-child(3),
+    .comisiones-resumen-table th:nth-child(4),
+    .comisiones-resumen-table td:nth-child(4),
+    .comisiones-resumen-table th:nth-child(5),
+    .comisiones-resumen-table td:nth-child(5) {
+        text-align: right;
+    }

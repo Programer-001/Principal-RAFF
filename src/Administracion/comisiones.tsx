@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { get, ref } from "firebase/database";
 import { db } from "../firebase/config";
+import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
+import "../css/comisiones.css";
 
 type Empleado = {
     id?: string;
@@ -48,16 +50,15 @@ type FilaComision = {
 };
 
 const COMISION_PORCENTAJE = 0.002; // 0.2%
-
+/* Aquí puedes ajustar los tipos y descripciones según lo que manejen en tu sistema, 
+en firebase el tipo: tubular, banda, cartuchoB, cartuchoA, resorte, termopar, etc. */
 const TIPOS_DISPONIBLES = [
-    "tubular",
-    "banda",
-    "cartucho baja concentración",
-    "cartucho alta concentración",
-    "resorte",
-    "termopar",
-    "ceramica",
-    "infrarrojo",
+    { value: "tubular", label: "Tubular" },
+    { value: "banda", label: "Banda" },
+    { value: "CartuchoB", label: "Cartucho baja concentración" },
+    { value: "CartuchoA", label: "Cartucho alta concentración" },
+    { value: "resorte", label: "Resorte" },
+    { value: "termopar", label: "Termopar" },
 ];
 
 const Comisiones = () => {
@@ -116,7 +117,7 @@ const Comisiones = () => {
     };
 
     const seleccionarTodosTipos = () => {
-        setTiposSeleccionados([...TIPOS_DISPONIBLES]);
+        setTiposSeleccionados(TIPOS_DISPONIBLES.map((t) => normalizarTexto(t.value)));
     };
 
     const limpiarTipos = () => {
@@ -310,53 +311,57 @@ const Comisiones = () => {
     }
 
     return (
-        <div style={styles.page}>
-            <h1 style={styles.title}>Comisiones</h1>
+        <div className="comisiones-page">
+            <h1 className="comisiones-title">Comisiones</h1>
 
-            <div style={styles.filtrosContainer}>
+            <div className="comisiones-filtros-container">
                 {/* TIPOS */}
-                <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                        <h3 style={styles.cardTitle}>Tipos</h3>
-                        <div style={styles.inlineButtons}>
-                            <button style={styles.btnSecundario} onClick={seleccionarTodosTipos}>
+                <div className="comisiones-card">
+                    <div className="comisiones-card-header">
+                        <h3 className="comisiones-card-title">Tipos</h3>
+                        <div className="comisiones-inline-buttons">
+                            <button className="comisiones-btn-secundario" onClick={seleccionarTodosTipos}>
                                 Todos
                             </button>
-                            <button style={styles.btnSecundario} onClick={limpiarTipos}>
+                            <button className="comisiones-btn-secundario" onClick={limpiarTipos}>
                                 Limpiar
                             </button>
                         </div>
                     </div>
 
-                    <div style={styles.checkGrid}>
-                        {TIPOS_DISPONIBLES.map((tipo) => (
-                            <label key={tipo} style={styles.checkItem}>
-                                <input
-                                    type="checkbox"
-                                    checked={tiposSeleccionados.includes(tipo)}
-                                    onChange={() => toggleTipo(tipo)}
-                                />
-                                <span style={{ textTransform: "capitalize" }}>{tipo}</span>
-                            </label>
-                        ))}
+                    <div className="comisiones-check-grid">
+                        {TIPOS_DISPONIBLES.map((tipo) => {
+                            const valueNormalizado = normalizarTexto(tipo.value);
+
+                            return (
+                                <label key={tipo.value} className="comisiones-check-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={tiposSeleccionados.includes(valueNormalizado)}
+                                        onChange={() => toggleTipo(valueNormalizado)}
+                                    />
+                                    <span>{tipo.label}</span>
+                                </label>
+                            );
+                        })}
                     </div>
                 </div>
 
                 {/* TRABAJADORES */}
-                <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                        <h3 style={styles.cardTitle}>Trabajadores activos</h3>
-                        <div style={styles.inlineButtons}>
-                            <button style={styles.btnSecundario} onClick={seleccionarTodosTrabajadores}>
+                <div className="comisiones-card">
+                    <div className="comisiones-card-header">
+                        <h3 className="comisiones-card-title">Trabajadores activos</h3>
+                        <div className="comisiones-inline-buttons">
+                            <button className="comisiones-btn-secundario" onClick={seleccionarTodosTrabajadores}>
                                 Todos
                             </button>
-                            <button style={styles.btnSecundario} onClick={limpiarTrabajadores}>
+                            <button className="comisiones-btn-secundario" onClick={limpiarTrabajadores}>
                                 Limpiar
                             </button>
                         </div>
                     </div>
 
-                    <div style={styles.checkGrid}>
+                    <div className="comisiones-check-grid">
                         {trabajadoresActivos.length === 0 ? (
                             <div>No hay trabajadores activos.</div>
                         ) : (
@@ -365,7 +370,7 @@ const Comisiones = () => {
                                 const nombre = String(trabajador.nombre || "").trim();
 
                                 return (
-                                    <label key={trabajador.id || username} style={styles.checkItem}>
+                                    <label key={trabajador.id || username} className="comisiones-check-item">
                                         <input
                                             type="checkbox"
                                             checked={trabajadoresSeleccionados.includes(username)}
@@ -380,27 +385,27 @@ const Comisiones = () => {
                 </div>
 
                 {/* FECHAS */}
-                <div style={styles.card}>
-                    <h3 style={styles.cardTitle}>Rango de fechas</h3>
+                <div className="comisiones-card">
+                    <h3 className="comisiones-card-title">Rango de fechas</h3>
 
-                    <div style={styles.fechaGrid}>
-                        <div style={styles.field}>
-                            <label style={styles.label}>Fecha inicio</label>
+                    <div className="comisiones-fecha-grid">
+                        <div className="comisiones-field">
+                            <label className="comisiones-label">Fecha inicio</label>
                             <input
                                 type="date"
                                 value={fechaInicio}
                                 onChange={(e) => setFechaInicio(e.target.value)}
-                                style={styles.input}
+                                className="comisiones-input"
                             />
                         </div>
 
-                        <div style={styles.field}>
-                            <label style={styles.label}>Fecha fin</label>
+                        <div className="comisiones-field">
+                            <label className="comisiones-label">Fecha fin</label>
                             <input
                                 type="date"
                                 value={fechaFin}
                                 onChange={(e) => setFechaFin(e.target.value)}
-                                style={styles.input}
+                                className="comisiones-input"
                             />
                         </div>
                     </div>
@@ -408,30 +413,30 @@ const Comisiones = () => {
             </div>
 
             {/* TABLA PRINCIPAL */}
-            <div style={styles.card}>
-                <div style={styles.resumenSuperior}>
+            <div className="comisiones-card">
+                <div className="comisiones-resumen-superior">
                     <div><strong>Partidas:</strong> {filasFiltradas.length}</div>
                     <div><strong>Cantidad total:</strong> {totalCantidad}</div>
                     <div><strong>Total:</strong> {dinero(totalGeneral)}</div>
                 </div>
 
-                <div style={styles.tableWrap}>
-                    <table style={styles.table}>
+                <div className="comisiones-table-wrap">
+                    <table className="comisiones-table">
                         <thead>
                             <tr>
-                                <th style={styles.th}>OT</th>
-                                <th style={styles.th}>Descripcion</th>
-                                <th style={styles.th}>Operador</th>
-                                <th style={styles.th}>Tipo</th>
-                                <th style={styles.th}>Cantidad</th>
-                                <th style={styles.th}>Subtotal</th>
-                                <th style={styles.th}>Fecha fin</th>
+                                <th>OT</th>
+                                <th>Descripcion</th>
+                                <th>Operador</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal</th>
+                                <th>Fecha fin</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filasFiltradas.length === 0 ? (
                                 <tr>
-                                    <td style={styles.tdCenter} colSpan={7}>
+                                    <td className="td-center" colSpan={7}>
                                         No hay partidas en ese rango.
                                     </td>
                                 </tr>
@@ -439,29 +444,21 @@ const Comisiones = () => {
                                 <>
                                     {filasFiltradas.map((fila) => (
                                         <tr key={fila.partidaKey}>
-                                            <td style={styles.td}>{fila.partidaKey}</td>
-                                            <td style={styles.td}>{fila.descripcion || "--"}</td>
-                                            <td style={styles.td}>{fila.operador || "--"}</td>
-                                            <td style={styles.td}>{fila.tipo || "--"}</td>
-                                            <td style={styles.tdNumber}>{fila.cantidad}</td>
-                                            <td style={styles.tdNumber}>{dinero(fila.total)}</td>
-                                            <td style={styles.td}>{fila.fechaFin || "--"}</td>
+                                            <td>{fila.partidaKey}</td>
+                                            <td>{fila.descripcion || "--"}</td>
+                                            <td>{fila.operador || "--"}</td>
+                                            <td>{fila.tipo || "--"}</td>
+                                            <td className="td-number">{fila.cantidad}</td>
+                                            <td className="td-number">{dinero(fila.total)}</td>
+                                            <td>{fila.fechaFin || "--"}</td>
                                         </tr>
                                     ))}
 
-                                    <tr style={styles.totalRow}>
-                                        <td style={styles.td} colSpan={4}>
-                                            <strong>Totales</strong>
-                                        </td>
-                                        <td style={styles.tdNumber}>
-                                            <strong>{totalCantidad}</strong>
-                                        </td>
-                                        <td style={styles.tdNumber}>
-                                            <strong>{dinero(totalGeneral)}</strong>
-                                        </td>
-                                        <td style={styles.td}>
-                                            <strong>{filasFiltradas.length} partidas</strong>
-                                        </td>
+                                    <tr className="comisiones-total-row">
+                                        <td colSpan={4}><strong>Totales</strong></td>
+                                        <td className="td-number"><strong>{totalCantidad}</strong></td>
+                                        <td className="td-number"><strong>{dinero(totalGeneral)}</strong></td>
+                                        <td><strong>{filasFiltradas.length} partidas</strong></td>
                                     </tr>
                                 </>
                             )}
@@ -471,24 +468,24 @@ const Comisiones = () => {
             </div>
 
             {/* RESUMEN POR TRABAJADOR */}
-            <div style={styles.card}>
-                <h3 style={styles.cardTitle}>Resumen por trabajador</h3>
+            <div className="comisiones-card">
+                <h3 className="comisiones-card-title">Resumen por trabajador</h3>
 
-                <div style={styles.tableWrap}>
-                    <table style={styles.table}>
+                <div className="comisiones-table-wrap">
+                    <table className="comisiones-table comisiones-resumen-table">
                         <thead>
                             <tr>
-                                <th style={styles.th}>Trabajador</th>
-                                <th style={styles.th}>Cantidad</th>
-                                <th style={styles.th}>Partidas</th>
-                                <th style={styles.th}>Total trabajado</th>
-                                <th style={styles.th}>Comisión 0.2%</th>
+                                <th>Trabajador</th>
+                                <th>Cantidad</th>
+                                <th>Partidas</th>
+                                <th>Total trabajado</th>
+                                <th>Comisión 0.2%</th>
                             </tr>
                         </thead>
                         <tbody>
                             {resumenPorTrabajador.length === 0 ? (
                                 <tr>
-                                    <td style={styles.tdCenter} colSpan={5}>
+                                    <td className="td-center" colSpan={5}>
                                         No hay resumen para mostrar.
                                     </td>
                                 </tr>
@@ -496,37 +493,27 @@ const Comisiones = () => {
                                 <>
                                     {resumenPorTrabajador.map((item) => (
                                         <tr key={item.operador}>
-                                            <td style={styles.td}>{item.operador}</td>
-                                            <td style={styles.tdNumber}>{item.cantidad}</td>
-                                            <td style={styles.tdNumber}>{item.partidas}</td>
-                                            <td style={styles.tdNumber}>{dinero(item.total)}</td>
-                                            <td style={styles.tdNumber}>{dinero(item.comision)}</td>
+                                            <td>{item.operador}</td>
+                                            <td className="td-number">{item.cantidad}</td>
+                                            <td className="td-number">{item.partidas}</td>
+                                            <td className="td-number">{dinero(item.total)}</td>
+                                            <td className="td-number">{dinero(item.comision)}</td>
                                         </tr>
                                     ))}
 
-                                    <tr style={styles.totalRow}>
-                                        <td style={styles.td}>
-                                            <strong>Total general</strong>
+                                    <tr className="comisiones-total-row">
+                                        <td><strong>Total general</strong></td>
+                                        <td className="td-number">
+                                            <strong>{resumenPorTrabajador.reduce((acc, x) => acc + x.cantidad, 0)}</strong>
                                         </td>
-                                        <td style={styles.tdNumber}>
-                                            <strong>
-                                                {resumenPorTrabajador.reduce((acc, x) => acc + x.cantidad, 0)}
-                                            </strong>
+                                        <td className="td-number">
+                                            <strong>{resumenPorTrabajador.reduce((acc, x) => acc + x.partidas, 0)}</strong>
                                         </td>
-                                        <td style={styles.tdNumber}>
-                                            <strong>
-                                                {resumenPorTrabajador.reduce((acc, x) => acc + x.partidas, 0)}
-                                            </strong>
+                                        <td className="td-number">
+                                            <strong>{dinero(resumenPorTrabajador.reduce((acc, x) => acc + x.total, 0))}</strong>
                                         </td>
-                                        <td style={styles.tdNumber}>
-                                            <strong>
-                                                {dinero(resumenPorTrabajador.reduce((acc, x) => acc + x.total, 0))}
-                                            </strong>
-                                        </td>
-                                        <td style={styles.tdNumber}>
-                                            <strong>
-                                                {dinero(resumenPorTrabajador.reduce((acc, x) => acc + x.comision, 0))}
-                                            </strong>
+                                        <td className="td-number">
+                                            <strong>{dinero(resumenPorTrabajador.reduce((acc, x) => acc + x.comision, 0))}</strong>
                                         </td>
                                     </tr>
                                 </>
@@ -539,121 +526,6 @@ const Comisiones = () => {
     );
 };
 
-const styles: Record<string, React.CSSProperties> = {
-    page: {
-        padding: 20,
-        width: "100%",
-        boxSizing: "border-box",
-    },
-    title: {
-        marginBottom: 20,
-    },
-    filtrosContainer: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-        gap: 20,
-        marginBottom: 20,
-    },
-    card: {
-        background: "#fff",
-        border: "1px solid #ddd",
-        borderRadius: 12,
-        padding: 16,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        overflow: "hidden",
-    },
-    cardHeader: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 10,
-        flexWrap: "wrap",
-        marginBottom: 12,
-    },
-    cardTitle: {
-        margin: 0,
-    },
-    inlineButtons: {
-        display: "flex",
-        gap: 8,
-        flexWrap: "wrap",
-    },
-    btnSecundario: {
-        padding: "6px 10px",
-        borderRadius: 8,
-        border: "1px solid #ccc",
-        cursor: "pointer",
-        background: "#f8f8f8",
-    },
-    checkGrid: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-        gap: 10,
-    },
-    checkItem: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        fontSize: 14,
-    },
-    fechaGrid: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 12,
-    },
-    field: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-    },
-    label: {
-        fontWeight: 600,
-    },
-    input: {
-        padding: 10,
-        borderRadius: 8,
-        border: "1px solid #ccc",
-    },
-    resumenSuperior: {
-        display: "flex",
-        gap: 20,
-        flexWrap: "wrap",
-        marginBottom: 14,
-    },
-    tableWrap: {
-        overflowX: "auto",
-    },
-    table: {
-        width: "100%",
-        borderCollapse: "collapse",
-    },
-    th: {
-        background: "#f3f4f6",
-        padding: 10,
-        textAlign: "left",
-        borderBottom: "1px solid #ddd",
-        whiteSpace: "nowrap",
-    },
-    td: {
-        padding: 10,
-        borderBottom: "1px solid #eee",
-        verticalAlign: "top",
-    },
-    tdNumber: {
-        padding: 10,
-        borderBottom: "1px solid #eee",
-        textAlign: "right",
-        verticalAlign: "top",
-        whiteSpace: "nowrap",
-    },
-    tdCenter: {
-        padding: 16,
-        textAlign: "center",
-        borderBottom: "1px solid #eee",
-    },
-    totalRow: {
-        background: "#fafafa",
-    },
-};
+
 
 export default Comisiones;
