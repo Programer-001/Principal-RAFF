@@ -1,4 +1,4 @@
-export const diametros = [
+﻿export const diametros = [
   { label: "1/4", value: 0.25 },
   { label: "3/8", value: 0.375 },
   { label: "1/2", value: 0.5 },
@@ -35,38 +35,76 @@ export const precios = [
     [996.64, 864.4, 1109.72, 1228.56, 1544.81],
     [1059.89, 887.39, 1140.39, 1261.14, 1600.39],
 ];
-
+/*
+====================================
+Calcula en pulgadas
+====================================
+*/
 export const obtenerPrecioCartuchoAlta = (
     diametro: string,
-    longitud: number
+    longitud: number,
+    terminal90: boolean = false
 ): number => {
     const diametroLimpio = diametro.replace(/"/g, "").trim();
 
     const col = diametros.findIndex((d) => d.label === diametroLimpio);
-
     if (col === -1 || !longitud) return 0;
 
-    // La tabla llega hasta 22 pulgadas
     const longitudMaxTabla = 22;
-
-    // Si se pasa de 22", usamos el precio de 22"
     const longitudBase = longitud > longitudMaxTabla ? longitudMaxTabla : longitud;
 
     const fila = anchos.findIndex((a) => a === longitudBase);
-
     if (fila === -1) return 0;
 
-    let precioBase = precios[fila][col] ?? 0;
+    let precioProveedor = precios[fila][col] ?? 0;
 
-    // Excedente en CM
+    // Excedente después de 22 pulgadas
     if (longitud > longitudMaxTabla) {
         const excedentePulgadas = longitud - longitudMaxTabla;
         const excedenteCm = excedentePulgadas * 2.54;
 
-        precioBase += excedenteCm * 1.5;
+        precioProveedor += excedenteCm * 1.5;
     }
 
-    return precioBase * 1.16 * 1.70;
+    // Extra terminal 90°
+    if (terminal90) {
+        precioProveedor += 150;
+    }
+
+    return precioProveedor * 1.16 * 1.70;
+};
+/*
+====================================
+Calcula en milimetros
+====================================
+*/
+export const obtenerPrecioCartuchoAltaMilimetrica = (
+    diametroMm: number,
+    longitudPulgadas: number,
+    terminal90: boolean = false
+): number => {
+
+    // 🔹 Convertir mm → pulgadas aproximadas
+    const pulgadas = diametroMm / 25.4;
+
+    // 🔹 Buscar diámetro más cercano
+    const diametroCercano = diametros.reduce((prev, curr) => {
+        return Math.abs(curr.value - pulgadas) < Math.abs(prev.value - pulgadas)
+            ? curr
+            : prev;
+    });
+
+    // 🔹 Calcular precio base normal
+    let precio = obtenerPrecioCartuchoAlta(
+        diametroCercano.label,
+        longitudPulgadas,
+        terminal90
+    );
+
+    // 🔥 Incremento milimétrica
+    precio *= 1.10;
+
+    return precio;
 };
 /*
 export const precios = [

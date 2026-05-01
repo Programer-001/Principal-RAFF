@@ -1,7 +1,7 @@
-﻿//src/cotizadores/cartuchobaja.tsx
+﻿//src/cotizadores/cartuchoalta.tsx
 
 import React, { useState, useEffect } from "react";
-import { obtenerPrecioCartuchoAlta } from "../datos/Resistencia_alta_C";
+import { obtenerPrecioCartuchoAlta, obtenerPrecioCartuchoAltaMilimetrica, anchos } from "../datos/Resistencia_alta_C";
 import { formatearMoneda } from "../funciones/formato_moneda";
 import { ItemCotizado } from "../cotizador";
 import { ref, get } from "firebase/database";
@@ -22,7 +22,8 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const [watts, setWatts] = useState("");
   const [diametro, setDiametro] = useState("");
   const [longitudCm, setLongitudCm] = useState("");
-  const [milimetrica, setmilimetrica] = useState(false);
+const [milimetrica, setmilimetrica] = useState(false);
+const [diametroMm, setDiametroMm] = useState("");
   const [terminal90, setterminal90] = useState(false);
   const [tubozapa, settubozapa] = useState(false);
   const [cableAltaTemperatura, setCableAltaTemperatura] = useState("");
@@ -74,23 +75,51 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const totalCable =
     calcularPrecioCable(precioSoldarCable, Number(medidaCableCm)) *
     (Number(cantidadCables) || 0);
+//convierto longitud de cm -> pulgadas
+    const pulgadasReal = longitudCm ? Number(longitudCm) / 2.54 : 0;
 
-  const pulgadas = longitudCm ? Math.round(Number(longitudCm) / 2.54) : 0;
-
-  const precioUnitario =
-    diametro && pulgadas ? obtenerPrecioCartuchoAlta(diametro, pulgadas) : 0;
+    const pulgadas = anchos.reduce((prev, curr) => {
+        return Math.abs(curr - pulgadasReal) < Math.abs(prev - pulgadasReal)
+            ? curr
+            : prev;
+    });
+    //sacamos el precio de la tabla
+    const precioUnitario =
+        milimetrica && diametroMm
+            ? obtenerPrecioCartuchoAltaMilimetrica(
+                Number(diametroMm),
+                pulgadas,
+                terminal90
+            )
+            : diametro && pulgadas
+                ? obtenerPrecioCartuchoAlta(diametro, pulgadas, terminal90)
+                : 0;
 
     const extraMilimetrica = milimetrica ? precioUnitario * 0.1 : 0;
 
-  const totalTerminal90 = terminal90 ? 150 : 0;
-  const totalTuboZapa = tubozapa ? 130 : 0;
+  const totalTerminal90 = terminal90 ? 150 : 0;//preguntar si se queda o se omite porque ya cobra con el precio del proveedor
+    const totalTuboZapa = tubozapa ? 130 : 0;
+//prueba para que salgan los valores 
+    const precioNormal =
+        diametro && pulgadas
+            ? obtenerPrecioCartuchoAlta(diametro, pulgadas, terminal90)
+            : 0;
+
+    const precioMilimetrico =
+        milimetrica && diametroMm
+            ? obtenerPrecioCartuchoAltaMilimetrica(
+                Number(diametroMm),
+                pulgadas,
+                terminal90
+            )
+            : 0;
 
   // total por UNA resistencia
   const totalPorResistencia =
     precioUnitario +
-    extraMilimetrica +
+    //extraMilimetrica +
     totalCable +
-    totalTerminal90 +
+    //totalTerminal90 +
     totalTuboZapa;
 
   // total general
@@ -103,6 +132,7 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
     setDiametro("");
     setLongitudCm("");
     setmilimetrica(false);
+    setDiametroMm("");
     setterminal90(false);
     settubozapa(false);
     setCableAltaTemperatura("");
@@ -120,9 +150,11 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
 
     `/ ${voltaje || 0}V - ${watts || 0}W`,
 
-    `/ DIAMETRO DE: ${diametro || ""}" X LONGITUD DE: ${longitudCm || 0} CM`,
+      milimetrica
+          ? `/ DIAMETRO DE: ${diametroMm || 0} mm X LONGITUD DE: ${longitudCm || 0} CM`
+          : `/ DIAMETRO DE: ${diametro || ""}" X LONGITUD DE: ${longitudCm || 0} CM`,
 
-    milimetrica ? `/ MILIMETRICA` : null,
+
 
     cableAltaTemperatura === "SI"
       ? `/ ${cantidadCables || 0} CABLE${
@@ -149,7 +181,8 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
       setDiametro(d.diametro || "");
       setLongitudCm(d.longitudCm || "");
 
-      setmilimetrica(!!d.milimetrica);
+    setmilimetrica(!!d.milimetrica);
+    setDiametroMm(d.diametroMm || "");
       setterminal90(!!d.terminal90);
       settubozapa(!!d.tubozapa);
 
@@ -199,6 +232,7 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
           <select
             value={diametro}
             onChange={(e) => setDiametro(e.target.value)}
+            disabled={milimetrica}
           >
             <option value="">Selecciona</option>
             <option value="1/4">1/4</option>
@@ -220,12 +254,32 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
 
         <div className="form-row checkbox-row">
           <label>Milimetrica:</label>
-          <input
-            type="checkbox"
-            checked={milimetrica}
-            onChange={(e) => setmilimetrica(e.target.checked)}
-          />
-        </div>
+                  <input
+                      type="checkbox"
+                      checked={milimetrica}
+                      onChange={(e) => {
+                          const checked = e.target.checked;
+                          setmilimetrica(checked);
+
+                          if (checked) {
+                              setDiametro("");
+                          } else {
+                              setDiametroMm("");
+                          }
+                      }}
+                  />
+              </div>
+              {milimetrica && (
+                  <div className="form-row">
+                      <label>Diámetro en mm:</label>
+                      <input
+                          type="number"
+                          value={diametroMm}
+                          onChange={(e) => setDiametroMm(e.target.value)}
+                          placeholder="Ej. 20"
+                      />
+                  </div>
+              )}
 
               <div className="form-row">
                   <label>Cable de alta temperatura:</label>
@@ -341,16 +395,28 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
           <p style={{ fontSize: "14px" }}>{descripcion}</p>
               </div>
 
-              <h2><strong>Subtotal</strong>${formatearMoneda(total)}</h2>
-              <h1><strong>Total</strong>${formatearMoneda(total*1.16)}</h1>
+              <h2><strong>Subtotal: </strong>${formatearMoneda(total)}</h2>
+              <h1><strong>Total: </strong>${formatearMoneda(total*1.16)}</h1>
               {/* TOTAL */}
               {esAdministracion && (
-        <div>
-                  <p>Precio del cable: ${formatearMoneda(precioSoldarCable)}</p>
-                  <p>Precio cable: ${formatearMoneda(totalCable)}</p>
-                  <p>Precio de resistencia: ${formatearMoneda(totalPorResistencia)}</p>
-          <p>Subtotal: ${formatearMoneda(total)}</p>
-        </div>
+                  <div>
+                      <p>Precio normal: ${formatearMoneda(precioNormal)}</p>
+                      <p>Precio milimétrica: ${formatearMoneda(precioMilimetrico)}</p>
+
+                      <hr />
+
+                      <p>Precio del cable: ${formatearMoneda(precioSoldarCable)}</p>
+                      <p>Total cable: ${formatearMoneda(totalCable)}</p>
+
+                      <p>Extra milimétrica: ${formatearMoneda(extraMilimetrica)}</p>
+                      <p>Terminal 90: ${formatearMoneda(totalTerminal90)}</p>
+                      <p>Tubo zapa: ${formatearMoneda(totalTuboZapa)}</p>
+
+                      <hr />
+
+                      <p>Precio por resistencia: ${formatearMoneda(totalPorResistencia)}</p>
+                      <p>Subtotal: ${formatearMoneda(total)}</p>
+                  </div>
               )}
 
         <button
@@ -370,6 +436,7 @@ const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
                 longitudCm,
 
                 milimetrica,
+                diametroMm,
                 terminal90,
                 tubozapa,
 
