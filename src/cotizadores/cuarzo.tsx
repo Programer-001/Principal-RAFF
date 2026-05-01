@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { ItemCotizado } from "../cotizador";
+import {
+    calcularPrecioCuarzo,
+    diametrosCuarzo,
+    largosCuarzo,
+    DiametroCuarzo,
+    obtenerPrecioCuarzoProveedor,
+} from "../datos/cuarzo";
 import { formatearMoneda } from "../funciones/formato_moneda";
 
 interface Props {
@@ -12,7 +19,7 @@ const Cuarzo = ({ data, onGuardar, setDirty }: Props) => {
     const [cantidad, setCantidad] = useState<number>(0);
     const [voltaje, setVoltaje] = useState<number>(0);
     const [potencia, setPotencia] = useState<number>(0);
-    const [diametro, setDiametro] = useState<number>(0);
+    const [diametro, setDiametro] = useState<DiametroCuarzo | "">("");
     const [largo, setLargo] = useState<number>(0);
 
     const [cable, setCable] = useState<boolean>(false);
@@ -38,20 +45,17 @@ const Cuarzo = ({ data, onGuardar, setDirty }: Props) => {
     }, [data]);
 
     const calcularTotalCuarzo = () => {
-        let resultado = 0;
-
-        // AQUÍ LUEGO PONES TU FÓRMULA REAL
-        // por ahorita solo queda en 0 como estructura base
-        return resultado;
+        return calcularPrecioCuarzo(diametro, largo, cantidad);
     };
 
+    const precioProveedor = obtenerPrecioCuarzoProveedor(diametro, largo);
     const precioCalculado = calcularTotalCuarzo();
 
     const resetForm = () => {
         setCantidad(0);
         setVoltaje(0);
         setPotencia(0);
-        setDiametro(0);
+        setDiametro("");
         setLargo(0);
 
         setCable(false);
@@ -69,7 +73,7 @@ const Cuarzo = ({ data, onGuardar, setDirty }: Props) => {
 ${cantidad || 0} RESISTENCIA(S) DE CUARZO
 ${agregar(`VOLTAJE: ${voltaje}V`, voltaje > 0)}
 ${agregar(`POTENCIA: ${potencia}W`, potencia > 0)}
-${agregar(`DIÁMETRO: ${diametro}`, diametro > 0)}
+${agregar(`DIÁMETRO: ${diametro}`, !!diametro)}
 ${agregar(`LARGO: ${largo}`, largo > 0)}
 ${agregar(`CABLE`, cable)}
 ${agregar(`TERMINAL TORNILLO`, terminalTornillo)}
@@ -133,28 +137,42 @@ ${agregar(
                 <label>
                     <strong>Diámetro:</strong>
                 </label>
-                <input
-                    type="number"
-                    value={diametro === 0 ? "" : diametro}
+
+                <select
+                    value={diametro}
                     onChange={(e) => {
-                        setDiametro(parseFloat(e.target.value) || 0);
+                        setDiametro(e.target.value as DiametroCuarzo);
                         setDirty(true);
                     }}
-                />
+                >
+                    <option value="">Seleccione...</option>
+                    {diametrosCuarzo.map((d) => (
+                        <option key={d} value={d}>
+                            {d}"
+                        </option>
+                    ))}
+                </select>
             </div>
 
             <div className="form-row">
                 <label>
                     <strong>Largo:</strong>
                 </label>
-                <input
-                    type="number"
-                    value={largo === 0 ? "" : largo}
+
+                <select
+                    value={largo || ""}
                     onChange={(e) => {
-                        setLargo(parseFloat(e.target.value) || 0);
+                        setLargo(Number(e.target.value));
                         setDirty(true);
                     }}
-                />
+                >
+                    <option value="">Seleccione...</option>
+                    {largosCuarzo.map((l) => (
+                        <option key={l} value={l}>
+                            {l} cm
+                        </option>
+                    ))}
+                </select>
             </div>
 
             <h3>Opciones adicionales</h3>
