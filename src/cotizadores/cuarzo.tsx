@@ -33,7 +33,7 @@ const Cuarzo = ({ data, onGuardar, setDirty }: Props) => {
             setCantidad(data.datos.cantidad || 0);
             setVoltaje(data.datos.voltaje || 0);
             setPotencia(data.datos.potencia || 0);
-            setDiametro(data.datos.diametro || 0);
+            setDiametro(data.datos.diametro || "");
             setLargo(data.datos.largo || 0);
 
             setCable(data.datos.cable || false);
@@ -100,7 +100,7 @@ ${agregar(
                     value={cantidad === 0 ? "" : cantidad}
                     onChange={(e) => {
                         setCantidad(parseFloat(e.target.value) || 0);
-                        setDirty(true);
+                        
                     }}
                 />
             </div>
@@ -114,7 +114,7 @@ ${agregar(
                     value={voltaje === 0 ? "" : voltaje}
                     onChange={(e) => {
                         setVoltaje(parseFloat(e.target.value) || 0);
-                        setDirty(true);
+                        
                     }}
                 />
             </div>
@@ -128,7 +128,7 @@ ${agregar(
                     value={potencia === 0 ? "" : potencia}
                     onChange={(e) => {
                         setPotencia(parseFloat(e.target.value) || 0);
-                        setDirty(true);
+                       
                     }}
                 />
             </div>
@@ -142,7 +142,7 @@ ${agregar(
                     value={diametro}
                     onChange={(e) => {
                         setDiametro(e.target.value as DiametroCuarzo);
-                        setDirty(true);
+                     
                     }}
                 >
                     <option value="">Seleccione...</option>
@@ -163,7 +163,7 @@ ${agregar(
                     value={largo || ""}
                     onChange={(e) => {
                         setLargo(Number(e.target.value));
-                        setDirty(true);
+                        
                     }}
                 >
                     <option value="">Seleccione...</option>
@@ -184,7 +184,7 @@ ${agregar(
                     checked={cable}
                     onChange={(e) => {
                         setCable(e.target.checked);
-                        setDirty(true);
+                        
                     }}
                 />
             </div>
@@ -196,7 +196,7 @@ ${agregar(
                     checked={terminalTornillo}
                     onChange={(e) => {
                         setTerminalTornillo(e.target.checked);
-                        setDirty(true);
+                        
                     }}
                 />
             </div>
@@ -207,7 +207,7 @@ ${agregar(
                     value={muestra}
                     onChange={(e) => {
                         setMuestra(e.target.value);
-                        setDirty(true);
+                        
                     }}
                 >
                     <option value="">Seleccione...</option>
@@ -222,7 +222,7 @@ ${agregar(
                     value={datosAdicionales}
                     onChange={(e) => {
                         setDatosAdicionales(e.target.value);
-                        setDirty(true);
+                        
                     }}
                     placeholder="Ej. terminal especial, salida lateral, etc."
                 />
