@@ -44,6 +44,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const [cantidadTapon, setCantidadTapon] = useState(0);
   const [cantidadResistencias, setCantidadResistencias] = useState(0);
   const [cantidadDesoldarBase, setCantidadDesoldarBase] = useState(0);
+  const [cantidadSellos, setCantidadSellos] = useState(0);
   const [voltaje, setVoltaje] = useState<number>(0);
     const [potencia, setPotencia] = useState<number>(0);
     const [maxWatts, setMaxWatts] = useState(!!data?.datos?.maxWatts);
@@ -206,7 +207,14 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const precioSoldadura =
     Number(seleccionados["soldadura_resistencia"]?.precio) || 0;
     
-  const precioSello = Number(seleccionados["sellos"]?.precio) || 0;
+    const precioSello = Number(seleccionados["sellos"]?.precio) || 0;
+
+    const totalSellos =
+        seleccionados["sellos"]?.tipo &&
+            seleccionados["sellos"]?.tipo !== "NO"
+            ? (Number(cantidadSellos) || 0) * precioSello
+            : 0;
+
   const precioServicios = Number(seleccionados["servicios"]?.precio) || 0;
     const descuento = obtenerDescuento(cantidadResistencias, descuentosTubular);
     const tipoDesoldarBase = seleccionados["desoldar_base"]?.tipo || "";
@@ -227,7 +235,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
     totalTermoposo +
     totalPlaca +
     totalPuentes +
-      precioSello +
+    totalSellos +
     precioServicios;
   // aplicar descuento
     let totalConDescuento = totalResistencia * (1 - descuento);
@@ -248,7 +256,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
 
     setLongitudCable(0);
     setCantidadCable(0);
-
+    setCantidadSellos(0);
     setCantidadDesoldar(0);
     setCantidadBarrenos(0);
     setCantidadPuentes(0);
@@ -393,6 +401,12 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
             setCantidadDesoldarBase(0);
         }
     }, [tipoDesoldarBase]);
+
+    useEffect(() => {
+        if (!seleccionados["sellos"] || seleccionados["sellos"]?.tipo === "NO") {
+            setCantidadSellos(0);
+        }
+    }, [seleccionados["sellos"]]);
   //RESET
   useEffect(() => {
     if (data) {
@@ -419,7 +433,8 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
         setCantidadDesoldarBase(d.cantidadDesoldarBase || 0);
       setPuentes(!!d.totalPuentes);
       setTermoposoBase(!!d.totalTermoposo);
-      setServicioExpress(!!d.totalExpress);
+        setServicioExpress(!!d.totalExpress);
+        setCantidadSellos(d.cantidadSellos || 0);
 
       // 🔹 placa
       setTipoPlaca(d.tipoPlaca || "");
@@ -766,11 +781,24 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
             </div>
           )}
 
-          {/* Sellos */}
-          <div className="form-row">
+        {/* Sellos */}
+        <div className="form-row">
             <label>Sellos</label>
             {renderSelect("sellos")}
-                  </div>
+        </div>
+
+        {seleccionados["sellos"]?.tipo &&
+            seleccionados["sellos"]?.tipo !== "NO" && (
+                <div className="form-row">
+                    <label>Cantidad de sellos</label>
+                    <input
+                        type="number"
+                        min={0}
+                        value={cantidadSellos === 0 ? "" : cantidadSellos}
+                        onChange={(e) => setCantidadSellos(Number(e.target.value))}
+                    />
+                </div>
+            )}
         {/* Aleta */}
         <div className="form-row checkbox-row">
             <label>Aleta (según longitud)</label>
@@ -873,7 +901,10 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
                               totalPlaca,
                               tipoPlaca,
                               totalPuentes,
-
+                              //sellos
+                              cantidadSellos,
+                              totalSellos,
+                              //aleta
                               aleta,
                               totalAleta,
 
