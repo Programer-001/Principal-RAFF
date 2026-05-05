@@ -338,7 +338,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
   
   ${puentes ? ` / PUENTES (${cantidadPuentes})` : ""}
   
-  ${agregar("SELLOS", seleccionados["sellos"]?.tipo)}
+ ${agregarCantidad("SELLOS", seleccionados["sellos"]?.tipo, cantidadSellos)}
   ${agregar("SERVICIOS", seleccionados["servicios"]?.tipo)}
   
   ${servicioExpress ? " / SERVICIO EXPRESS" : ""}
