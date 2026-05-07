@@ -49,7 +49,7 @@ type FilaComision = {
     fechaFin: string;
 };
 
-const COMISION_PORCENTAJE = 0.002; // 0.2%
+const COMISION_PORCENTAJE = 0.01; // 1%
 /* Aquí puedes ajustar los tipos y descripciones según lo que manejen en tu sistema, 
 en firebase el tipo: tubular, banda, cartuchoB, cartuchoA, resorte, termopar, etc. */
 const TIPOS_DISPONIBLES = [
@@ -160,7 +160,14 @@ const Comisiones = () => {
                     const area = normalizarTexto(emp.area);
                     const puesto = normalizarTexto(emp.puesto);
 
-                    return activo && (area === "produccion" || puesto === "operador");
+                    return (
+                        activo &&
+                        (
+                            area === "almacen" ||
+                            (area === "produccion" && puesto === "operador") ||
+                            (area === "produccion" && puesto === "supervisor")
+                        )
+                    );
                 });
 
                 activosProduccion.sort((a, b) =>
@@ -299,6 +306,23 @@ const Comisiones = () => {
         );
     }, [filasFiltradas]);
 
+    const supervisoresProduccion = useMemo(() => {
+        return trabajadores.filter((emp) => {
+            const area = normalizarTexto(emp.area);
+            const puesto = normalizarTexto(emp.puesto);
+
+            return area === "produccion" && puesto === "supervisor";
+        });
+    }, [trabajadores]);
+
+    const empleadosAlmacen = useMemo(() => {
+        return trabajadores.filter((emp) => {
+            const area = normalizarTexto(emp.area);
+
+            return area === "almacen";
+        });
+    }, [trabajadores]);
+
     const dinero = (valor: number) =>
         valor.toLocaleString("es-MX", {
             style: "currency",
@@ -418,6 +442,14 @@ const Comisiones = () => {
                     <div><strong>Partidas:</strong> {filasFiltradas.length}</div>
                     <div><strong>Cantidad total:</strong> {totalCantidad}</div>
                     <div><strong>Total:</strong> {dinero(totalGeneral)}</div>
+                    {supervisoresProduccion.map((emp) => (
+                        <div key={emp.id}>
+                            <strong>
+                                Comisión del Supervisor ({emp.username || emp.nombre}):
+                            </strong>{" "}
+                            {dinero(totalGeneral * 0.01)}
+                        </div>
+                    ))}
                 </div>
 
                 <div className="comisiones-table-wrap">
@@ -479,7 +511,7 @@ const Comisiones = () => {
                                 <th>Cantidad</th>
                                 <th>Partidas</th>
                                 <th>Total trabajado</th>
-                                <th>Comisión 0.2%</th>
+                                <th>Comisión</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -522,6 +554,37 @@ const Comisiones = () => {
                     </table>
                 </div>
             </div>
+            {/* COMISIONES ALMACEN */}
+            <div className="comisiones-card">
+                <h3 className="comisiones-card-title">
+                    Comisión almacén
+                </h3>
+
+                <div className="comisiones-table-wrap">
+                    <table className="comisiones-table">
+                        <thead>
+                            <tr>
+                                <th>Empleado</th>
+                                <th>Área</th>
+                                <th>Comisión</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {empleadosAlmacen.map((emp) => (
+                                <tr key={emp.id}>
+                                    <td>{emp.username || emp.nombre}</td>
+                                    <td>{emp.area}</td>
+                                    <td className="td-number">
+                                        {dinero(totalGeneral * 0.0015)}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     );
 };
