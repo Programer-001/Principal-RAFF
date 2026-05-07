@@ -450,6 +450,7 @@ const Comisiones = () => {
                             {dinero(totalGeneral * 0.01)}
                         </div>
                     ))}
+                    <div><strong>Total para jose:</strong> {dinero(totalGeneral*0.002)}</div>
                 </div>
 
                 <div className="comisiones-table-wrap">
