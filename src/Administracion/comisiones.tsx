@@ -502,7 +502,7 @@ const Comisiones = () => {
 
             {/* RESUMEN POR TRABAJADOR */}
             <div className="comisiones-card">
-                <h3 className="comisiones-card-title">Resumen por trabajador</h3>
+                <h3 className="comisiones-card-title">Resumen por trabajador del taller</h3>
 
                 <div className="comisiones-table-wrap">
                     <table className="comisiones-table comisiones-resumen-table">
