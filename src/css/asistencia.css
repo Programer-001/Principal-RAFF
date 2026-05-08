@@ -1,0 +1,35 @@
+/* src/css/asistencia.css */
+
+.asistencia-page {
+    padding: 20px;
+}
+
+.asistencia-table-wrap {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    overflow: auto;
+}
+
+.asistencia-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .asistencia-table th {
+        background: #1f2937;
+        color: white;
+        padding: 10px;
+        text-align: left;
+        position: sticky;
+        top: 0;
+    }
+
+    .asistencia-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .asistencia-table tr:hover {
+        background: #f9fafb;
+    }

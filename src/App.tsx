@@ -40,6 +40,7 @@ import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiale
 import Tienda from "./Tienda/Tienda"
 import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
+import AsistenciaHoy from"./checador/AsistenciaHoy"
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -77,6 +78,7 @@ function AppLayout() {
         if (pathname.startsWith("/tienda_productos")) return "tienda_productos";
         if (pathname.startsWith("/tienda")) return "tienda";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
+        if (pathname.startsWith("/asistencia")) return "asistencia";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
         return "home";
@@ -113,7 +115,8 @@ function AppLayout() {
             visor_pedidos_especiales: "/visor_pedidos_especiales",
             tienda_productos: "/tienda_productos",
             tienda: "/tienda",
-            gestion_tienda:"/gestion_tienda",
+            gestion_tienda: "/gestion_tienda",
+            asistencia: "/asistencia",
             perfil: "/perfil",
             home: "/home",
             
@@ -155,6 +158,7 @@ function AppLayout() {
                 <Route path="/pago_banda" element={<PagosBanda />} />
                 <Route path="/visor_pedidos_especiales" element={<VisorPedidosEspeciales />} />
                 <Route path="/tienda_productos" element={<TiendaProductos />} />
+                <Route path="/asistencia" element={<AsistenciaHoy />} />
                 <Route path="/tienda" element={<Tienda />} />
                 <Route path="/gestion_tienda" element={<GestionTienda />} />
                 <Route path="/perfil" element={<Perfil />} />
