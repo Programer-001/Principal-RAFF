@@ -40,7 +40,7 @@ import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiale
 import Tienda from "./Tienda/Tienda"
 import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
-import AsistenciaHoy from"./checador/AsistenciaHoy"
+import Checador from "./checador/Checador";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -158,7 +158,7 @@ function AppLayout() {
                 <Route path="/pago_banda" element={<PagosBanda />} />
                 <Route path="/visor_pedidos_especiales" element={<VisorPedidosEspeciales />} />
                 <Route path="/tienda_productos" element={<TiendaProductos />} />
-                <Route path="/asistencia" element={<AsistenciaHoy />} />
+                <Route path="/asistencia" element={<Checador />} />
                 <Route path="/tienda" element={<Tienda />} />
                 <Route path="/gestion_tienda" element={<GestionTienda />} />
                 <Route path="/perfil" element={<Perfil />} />

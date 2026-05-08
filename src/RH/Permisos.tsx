@@ -5,6 +5,7 @@ import { generarFormatoPermiso } from "../plantillas/plantillaPermiso";
 
 interface Permiso {
     id: string;
+    empleadoId?: string;
     empleado: string;
     tipo: string;
     inicio: string;
@@ -159,6 +160,7 @@ const Permisos: React.FC = () => {
 
                             setEditando({
                                 ...editando,
+                                empleadoId: emp?.id || "",
                                 empleado: emp?.nombre || "",
                             });
 

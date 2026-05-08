@@ -1,0 +1,360 @@
+﻿/* =========================
+   PAGE
+========================= */
+
+.bono-page {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #f3f4f6;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+    .bono-page h2 {
+        margin: 0;
+        color: #1e3a8a;
+        font-size: 28px;
+    }
+
+/* =========================
+   CARDS
+========================= */
+
+.bono-card {
+    background: white;
+    border-radius: 18px;
+    border: 1px solid #dbe2ea;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+    .bono-card h3 {
+        margin-top: 0;
+        color: #1e3a8a;
+    }
+
+/* =========================
+   FILTROS
+========================= */
+
+.filtros-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr 350px;
+    gap: 24px;
+    align-items: start;
+}
+
+.filtros-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+    .filtros-grid label,
+    .radio-line {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 14px;
+    }
+
+.radio-line {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.filtros-card input[type="date"],
+.filtros-card select {
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    background: white;
+}
+
+.checks-empleados {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    padding: 12px;
+    border-radius: 12px;
+    background: #fafafa;
+}
+
+    .checks-empleados label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    }
+
+/* =========================
+   REGLAS
+========================= */
+
+.reglas-box {
+    background: #fff8eb;
+    border: 1px solid #f3d9a4;
+    border-radius: 16px;
+    padding: 16px;
+}
+
+    .reglas-box p {
+        margin: 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .reglas-box span {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+/* =========================
+   LAYOUT
+========================= */
+
+.bono-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+}
+
+/* =========================
+   EMPLEADO
+========================= */
+
+.empleado-calendario {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 18px;
+    margin-top: 18px;
+}
+
+.empleado-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.bono-si {
+    color: #15803d;
+}
+
+.bono-no {
+    color: #dc2626;
+}
+
+/* =========================
+   DIAS GRID
+========================= */
+
+.dias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    gap: 14px;
+}
+
+.dia-card {
+    border: 1px solid #dbe2ea;
+    border-radius: 16px;
+    background: #fafafa;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 160px;
+}
+
+.dia-title {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+    .dia-title strong {
+        text-transform: uppercase;
+        font-size: 13px;
+        color: #111827;
+    }
+
+    .dia-title span {
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+/* =========================
+   ENTRADA
+========================= */
+
+.hora-entrada {
+    border-radius: 12px;
+    padding: 14px 10px;
+    color: white;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 72px;
+    justify-content: center;
+}
+
+    .hora-entrada strong {
+        font-size: 18px;
+    }
+
+    .hora-entrada small {
+        font-size: 12px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+/* =========================
+   SALIDA
+========================= */
+
+.hora-salida {
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    color: #374151;
+    font-size: 14px;
+    border: 1px solid #e5e7eb;
+}
+
+/* =========================
+   TABLA
+========================= */
+
+.tabla-scroll {
+    overflow: auto;
+}
+
+.bono-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+    .bono-table th {
+        background: #1e3a8a;
+        color: white;
+        padding: 12px;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .bono-table td {
+        border: 1px solid #e5e7eb;
+        padding: 10px;
+        vertical-align: top;
+        min-width: 120px;
+    }
+
+    .bono-table tbody tr:nth-child(even) {
+        background: #fafafa;
+    }
+
+/* =========================
+   CELDAS
+========================= */
+
+.celda-estado {
+    border-radius: 12px;
+    padding: 10px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+
+    .celda-estado strong {
+        font-size: 15px;
+    }
+
+    .celda-estado small {
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 700;
+    }
+
+.celda-salida {
+    margin-top: 8px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 8px;
+    text-align: center;
+    font-size: 13px;
+    color: #374151;
+}
+
+/* =========================
+   ACCIONES
+========================= */
+
+.acciones-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-pdf {
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 22px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+    .btn-pdf:hover {
+        transform: translateY(-1px);
+        background: #b91c1c;
+    }
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1200px) {
+    .bono-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .filtros-card {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .dias-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .empleado-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

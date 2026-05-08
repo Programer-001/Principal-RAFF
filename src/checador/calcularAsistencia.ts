@@ -1,10 +1,12 @@
-// src/checador/calcularAsistencia.ts
+﻿// src/checador/calcularAsistencia.ts
 
 export type EstadoAsistencia =
     | "puntual"
+    | "puntual_sin_bono"
     | "retardo_leve"
     | "retardo_moderado"
     | "retardo_grave"
+    | "permiso"
     | "falta";
 
 // ===============================
@@ -15,29 +17,22 @@ export function calcularEstadoEntrada(
 ): EstadoAsistencia {
     if (!horaEntrada) return "falta";
 
-    const [hh, mm] = horaEntrada.split(":").map(Number);
+    const [hh, mm, ss = 0] = horaEntrada.split(":").map(Number);
 
-    const minutos = hh * 60 + mm;
+    const segundos = hh * 3600 + mm * 60 + ss;
 
-    const entradaOficial = 9 * 60 + 30;
+    const conservaBonoHasta = 9 * 3600 + 30 * 60 + 59; // 09:30:59
+    const toleranciaHasta = 9 * 3600 + 35 * 60 + 59;   // 09:35:59
+    const leveHasta = 9 * 3600 + 45 * 60 + 59;         // 09:45:59
+    const moderadoHasta = 10 * 3600 + 59;              // 10:00:59
 
-    const leveInicio = 9 * 60 + 36;
-    const leveFin = 9 * 60 + 45;
+    if (segundos <= conservaBonoHasta) return "puntual";
 
-    const moderadoInicio = 9 * 60 + 46;
-    const moderadoFin = 10 * 60;
+    if (segundos <= toleranciaHasta) return "puntual_sin_bono";
 
-    if (minutos <= entradaOficial) {
-        return "puntual";
-    }
+    if (segundos <= leveHasta) return "retardo_leve";
 
-    if (minutos >= leveInicio && minutos <= leveFin) {
-        return "retardo_leve";
-    }
-
-    if (minutos >= moderadoInicio && minutos <= moderadoFin) {
-        return "retardo_moderado";
-    }
+    if (segundos <= moderadoHasta) return "retardo_moderado";
 
     return "retardo_grave";
 }
@@ -48,6 +43,12 @@ export function calcularEstadoEntrada(
 export function calcularResumenSemanal(
     registros: EstadoAsistencia[]
 ) {
+    const puntualSinBono = registros.filter(
+        (r) => r === "puntual_sin_bono"
+    ).length;
+    const permisos = registros.filter(
+        (r) => r === "permiso"
+    ).length;
     const leves = registros.filter(
         (r) => r === "retardo_leve"
     ).length;
@@ -79,12 +80,15 @@ export function calcularResumenSemanal(
         faltasPorGraves;
 
     const pierdeBono =
+        puntualSinBono > 0 ||
         leves > 0 ||
         moderados > 0 ||
         graves > 0 ||
         faltasDirectas > 0;
 
     return {
+        puntualSinBono,
+        permisos,
         leves,
         moderados,
         graves,
