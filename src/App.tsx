@@ -131,6 +131,7 @@ function AppLayout() {
 
             <Routes>
                 <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/login" element={<Login />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/cotizador" element={<Cotizador />} />
                 <Route path="/consultaot" element={<GestionOT />} />
@@ -185,7 +186,11 @@ export default function App() {
     }
 
     if (!user) {
-        return <Login />;
+        return (
+            <Routes>
+                <Route path="*" element={<Login />} />
+            </Routes>
+        );
     }
 
     return <AppLayout />;
