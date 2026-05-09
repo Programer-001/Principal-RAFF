@@ -151,6 +151,25 @@ const AsistenciaHoy: React.FC = () => {
         return !tieneChecada && !tienePermiso;
     });
 
+    const obtenerTextoFormaPago = (formaPago?: string) => {
+        switch (formaPago) {
+            case "vacaciones":
+                return "Día de vacaciones";
+
+            case "Tiempo":
+                return "Tiempo acumulado";
+
+            case "Sueldo":
+                return "Descuento salarial";
+
+            case "salario_60_receta":
+                return "Salario 60% (receta médica)";
+
+            default:
+                return formaPago || "-";
+        }
+    };
+
     return (
         <div className="asistencia-page">
             <h2>Asistencia de Hoy</h2>
@@ -221,7 +240,7 @@ const AsistenciaHoy: React.FC = () => {
                                         <td>{emp.area || "-"}</td>
                                         <td>{emp.puesto || "-"}</td>
                                         <td>{permiso?.tipo || "-"}</td>
-                                        <td>{permiso?.formaPago || "-"}</td>
+                                        <td>{obtenerTextoFormaPago(permiso?.formaPago)}</td>
                                     </tr>
                                 );
                             })}
