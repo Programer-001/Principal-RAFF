@@ -9,17 +9,37 @@ export type EstadoAsistencia =
     | "permiso"
     | "falta";
 
+export type PermisoAsistencia = {
+    tipo?: string;
+    horaPermiso?: string;
+};
+
 // ===============================
-// CALCULAR ESTADO POR HORA
+// CONVERTIR HORA A SEGUNDOS
+// ===============================
+function horaASegundos(hora?: string): number | null {
+    if (!hora) return null;
+
+    const [hh, mm, ss = 0] = hora.split(":").map(Number);
+
+    if (Number.isNaN(hh) || Number.isNaN(mm)) {
+        return null;
+    }
+
+    return hh * 3600 + mm * 60 + ss;
+}
+
+// ===============================
+// CALCULAR ESTADO POR HORA NORMAL
 // ===============================
 export function calcularEstadoEntrada(
     horaEntrada?: string
 ): EstadoAsistencia {
     if (!horaEntrada) return "falta";
 
-    const [hh, mm, ss = 0] = horaEntrada.split(":").map(Number);
+    const segundos = horaASegundos(horaEntrada);
 
-    const segundos = hh * 3600 + mm * 60 + ss;
+    if (segundos === null) return "falta";
 
     const conservaBonoHasta = 9 * 3600 + 30 * 60 + 59; // 09:30:59
     const toleranciaHasta = 9 * 3600 + 35 * 60 + 59;   // 09:35:59
@@ -38,17 +58,51 @@ export function calcularEstadoEntrada(
 }
 
 // ===============================
+// CALCULAR ESTADO POR HORA CON PERMISO
+// entrada_tarde usa horaPermiso como nueva base
+// IMPORTANTE: entrada_tarde NO gana bono
+// ===============================
+export function calcularEstadoEntradaConBase(
+    horaEntrada?: string,
+    horaBase?: string
+): EstadoAsistencia {
+    const entradaSeg = horaASegundos(horaEntrada);
+    const baseSeg = horaASegundos(horaBase);
+
+    if (entradaSeg === null || baseSeg === null) {
+        return "falta";
+    }
+
+    const toleranciaHasta = baseSeg + 5 * 60 + 59;
+    const leveHasta = baseSeg + 15 * 60 + 59;
+    const moderadoHasta = baseSeg + 30 * 60 + 59;
+
+    if (entradaSeg <= toleranciaHasta) return "puntual_sin_bono";
+
+    if (entradaSeg <= leveHasta) return "retardo_leve";
+
+    if (entradaSeg <= moderadoHasta) return "retardo_moderado";
+
+    return "retardo_grave";
+}
+
+// ===============================
 // RESUMEN SEMANAL
 // ===============================
 export function calcularResumenSemanal(
-    registros: EstadoAsistencia[]
+    registros: (EstadoAsistencia | "incompleto")[]
 ) {
+    const incompletos = registros.filter(
+    (r) => r === "incompleto"
+    ).length;
     const puntualSinBono = registros.filter(
         (r) => r === "puntual_sin_bono"
     ).length;
+
     const permisos = registros.filter(
         (r) => r === "permiso"
     ).length;
+
     const leves = registros.filter(
         (r) => r === "retardo_leve"
     ).length;
@@ -99,15 +153,77 @@ export function calcularResumenSemanal(
     };
 }
 
+// ===============================
+// CALCULAR ESTADO DEL DÍA
+// ===============================
 export function calcularEstadoDia(
     entrada?: string,
-    totalChecadas?: number
+    totalChecadas?: number,
+    ultimaChecada?: string,
+    permiso?: PermisoAsistencia
 ): EstadoAsistencia | "incompleto" {
-    if (!entrada) return "falta";
+    const entradaSeg = horaASegundos(entrada);
+    const salidaSeg = horaASegundos(ultimaChecada);
 
-    if ((totalChecadas || 0) < 4) {
+    const tienePermisoEntradaTarde =
+        permiso?.tipo === "entrada_tarde" && !!permiso.horaPermiso;
+
+    const tienePermisoSalidaTemprano =
+        permiso?.tipo === "salida_temprano" && !!permiso.horaPermiso;
+
+    // ===============================
+    // SIN ENTRADA
+    // ===============================
+    if (entradaSeg === null) {
+        return "falta";
+    }
+
+    // ===============================
+    // VALIDAR ENTRADA
+    // ===============================
+    let estadoEntrada: EstadoAsistencia;
+
+    if (tienePermisoEntradaTarde) {
+        estadoEntrada = calcularEstadoEntradaConBase(
+            entrada,
+            permiso?.horaPermiso
+        );
+    } else {
+        estadoEntrada = calcularEstadoEntrada(entrada);
+    }
+
+    // ===============================
+    // VALIDAR SALIDA
+    // ===============================
+    const tieneSalida =
+        salidaSeg !== null &&
+        salidaSeg !== entradaSeg;
+
+    if (!tieneSalida) {
         return "incompleto";
     }
 
-    return calcularEstadoEntrada(entrada);
+    // ===============================
+    // PERMISO SALIDA TEMPRANO
+    // ===============================
+    if (tienePermisoSalidaTemprano) {
+        const salidaAutorizada = horaASegundos(permiso?.horaPermiso);
+
+        if (salidaAutorizada !== null && salidaSeg >= salidaAutorizada) {
+            return estadoEntrada;
+        }
+
+        return "incompleto";
+    }
+
+    // ===============================
+    // SALIDA NORMAL
+    // ===============================
+    const salidaNormal = 18 * 3600; // 18:00:00
+
+    if (salidaSeg < salidaNormal) {
+        return "incompleto";
+    }
+
+    return estadoEntrada;
 }

@@ -11,6 +11,7 @@ interface Permiso {
     inicio: string;
     fin: string;
     formaPago: string;
+    horaPermiso?: string;
 }
 
 const permisoVacio: Permiso = {
@@ -20,6 +21,7 @@ const permisoVacio: Permiso = {
     inicio: "",
     fin: "",
     formaPago: "",
+    horaPermiso: "",
 };
 
 const Permisos: React.FC = () => {
@@ -83,63 +85,101 @@ const Permisos: React.FC = () => {
         return dias;
     };
 
-    // 🔄 Recalcular días
-    useEffect(() => {
-        if (editando.inicio && editando.fin) {
-            const dias = calcularDiasHabiles(editando.inicio, editando.fin);
+// 🔄 Recalcular días / descuentos
+useEffect(() => {
+    if (editando.inicio && editando.fin) {
+        const dias = calcularDiasHabiles(editando.inicio, editando.fin);
 
-            setDiasSolicitados(dias);
+        setDiasSolicitados(dias);
 
-            const empleado = empleados.find(
-                (emp) => emp.nombre === editando.empleado
-            );
+        const empleado = empleados.find(
+            (emp) => emp.nombre === editando.empleado
+        );
 
-            const salarioMensual = Number(empleado?.salario || 0);
+        const salarioMensual = Number(empleado?.salario || 0);
 
-            // 🔥 descuento por día
-            const descuentoPorDia = salarioMensual / 28;
+        // 🔥 salario por día
+        const descuentoPorDia = salarioMensual / 28;
 
-            // 🔥 total descuento
-            let totalDescuento = 0;
+        // 🔥 salario por hora
+        const descuentoPorHora = descuentoPorDia / 8;
 
-            setSalarioDiario(descuentoPorDia);
+        let totalDescuento = 0;
 
-            // 🔥 sueldo completo
-            if (editando.formaPago === "Sueldo") {
-                totalDescuento = descuentoPorDia * dias;
+        setSalarioDiario(descuentoPorDia);
+
+        // 🔥 ENTRADA TARDE / SALIDA TEMPRANO
+        if (
+            (editando.tipo === "entrada_tarde" ||
+                editando.tipo === "salida_temprano") &&
+            editando.horaPermiso
+        ) {
+            const [h, m] = editando.horaPermiso
+                .split(":")
+                .map(Number);
+
+            const minutosSeleccionados = h * 60 + m;
+
+            const horaEntrada = 9 * 60 + 30; // 9:30 AM
+            const horaSalida = 18 * 60; // 6:00 PM
+
+            let horasDescuento = 0;
+
+            if (editando.tipo === "entrada_tarde") {
+                horasDescuento = Math.ceil(
+                    Math.max(0, minutosSeleccionados - horaEntrada) / 60
+                );
             }
 
-            // 🔥 incapacidad 60%
-            else if (editando.formaPago === "salario_60_receta") {
-                totalDescuento = descuentoPorDia * 0.4 * dias;
+            if (editando.tipo === "salida_temprano") {
+                horasDescuento = Math.ceil(
+                    Math.max(0, horaSalida - minutosSeleccionados) / 60
+                );
             }
 
-            // 🔥 guardar resultado
-            setDescuentoSalario(totalDescuento);
+            horasDescuento = Math.min(horasDescuento, 8);
 
+            totalDescuento = descuentoPorHora * horasDescuento;
 
-            // SOLO RESTAR SI APLICA
-            if (
-                (
-                    editando.tipo === "vacaciones" ||
-                    editando.tipo === "Personal"
-                ) &&
-                editando.formaPago === "vacaciones"
-            ) {
-                setDiasRestantes(diasDisponibles - dias);
-            } else {
-                setDiasRestantes(diasDisponibles);
-            }
+            // Estos permisos no descuentan vacaciones
+            setDiasRestantes(diasDisponibles);
         }
-    }, [
-        editando.inicio,
-        editando.fin,
-        editando.tipo,
-        editando.formaPago,
-        editando.empleado,
-        diasDisponibles,
-        empleados
-    ]);
+
+        // 🔥 SUELDO COMPLETO POR DÍA
+        else if (editando.formaPago === "Sueldo") {
+            totalDescuento = descuentoPorDia * dias;
+        }
+
+        // 🔥 INCAPACIDAD 60%
+        else if (editando.formaPago === "salario_60_receta") {
+            totalDescuento = descuentoPorDia * 0.4 * dias;
+        }
+
+        setDescuentoSalario(totalDescuento);
+
+        // 🔥 VACACIONES / PERSONAL CON DÍA DE VACACIONES
+        if (
+            (
+                editando.tipo === "vacaciones" ||
+                editando.tipo === "Personal"
+            ) &&
+            editando.formaPago === "vacaciones"
+        ) {
+            setDiasRestantes(diasDisponibles - dias);
+        } else {
+            setDiasRestantes(diasDisponibles);
+        }
+    }
+}, [
+    editando.inicio,
+    editando.fin,
+    editando.tipo,
+    editando.formaPago,
+    editando.empleado,
+    editando.horaPermiso,
+    diasDisponibles,
+    empleados
+]);
 
     // 📌 ID
     const generarId = () => {
@@ -170,7 +210,13 @@ const Permisos: React.FC = () => {
         set(permisoRef, { ...editando, id });
 
         // 🔥 Descontar vacaciones
-        if (editando.tipo === "vacaciones" || editando.tipo === " Personal") {
+       if (
+    (
+        editando.tipo === "vacaciones" ||
+        editando.tipo === "Personal"
+    ) &&
+    editando.formaPago === "vacaciones"
+) {
             const empleado = empleados.find(
                 (emp) => emp.nombre === editando.empleado
             );
@@ -194,6 +240,48 @@ const Permisos: React.FC = () => {
     const eliminarPermiso = (id: string) => {
         remove(ref(db, `RH/permisos_empleados/${id}`));
     };
+
+    const obtenerTextoTipo = (tipo: string) => {
+    switch (tipo) {
+        case "vacaciones":
+            return "Vacaciones";
+
+        case "Enfermedad":
+            return "Enfermedad";
+
+        case "Personal":
+            return "Día personal";
+
+        case "entrada_tarde":
+            return "Entrada tarde";
+
+        case "salida_temprano":
+            return "Salida temprano";
+
+        default:
+            return tipo;
+    }
+};
+
+const obtenerTextoFormaPago = (formaPago: string) => {
+    switch (formaPago) {
+        case "vacaciones":
+            return "Día de vacaciones";
+
+        case "Tiempo":
+            return "Tiempo acumulado";
+
+        case "Sueldo":
+            return "Descuento salarial";
+
+        case "salario_60_receta":
+            return "Salario 60% (receta médica)";
+
+        default:
+            return formaPago;
+    }
+};
+
 
     return (
         <div className="form-container">
@@ -230,18 +318,27 @@ const Permisos: React.FC = () => {
                     <label>Tipo de Permiso:</label>
                     <select
                         value={editando.tipo}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                            const tipo = e.target.value;
+
                             setEditando({
                                 ...editando,
-                                tipo: e.target.value,
-                                formaPago: "",
-                            })
-                        }
+                                tipo,
+                                formaPago:
+                                    tipo === "entrada_tarde" || tipo === "salida_temprano"
+                                        ? "Sueldo"
+                                        : "",
+                                inicio: "",
+                                fin: "",
+                            });
+                        }}
                     >
                         <option value="">Seleccione</option>
                         <option value="vacaciones">Vacaciones</option>
                         <option value="Enfermedad">Enfermedad</option>
                         <option value="Personal">Día Personal</option>
+                        <option value="entrada_tarde">Entrada tarde</option>
+                        <option value="salida_temprano">Salida temprano</option>
                     </select>
                 </div>
 
@@ -255,7 +352,11 @@ const Permisos: React.FC = () => {
                     >
                         <option value="">Seleccione</option>
 
-                        {editando.tipo === "Enfermedad" ? (
+                       { editando.tipo === "entrada_tarde" ||
+                        editando.tipo === "salida_temprano" ? (
+                            <option value="Sueldo">Descuento salarial</option>
+                            ) : 
+                            editando.tipo === "Enfermedad" ? (
                             <>
                                 <option value="salario_60_receta">
                                     Salario 60% (receta médica)
@@ -279,28 +380,68 @@ const Permisos: React.FC = () => {
                         )}
                     </select>
                 </div>
+                {/*calendarios*/}
+                {editando.tipo === "entrada_tarde" || editando.tipo === "salida_temprano" ? (
+                    <>
+                        <div className="form-row">
+                            <label>Fecha:</label>
+                            <input
+                                type="date"
+                                value={editando.inicio}
+                                onChange={(e) =>
+                                    setEditando({
+                                        ...editando,
+                                        inicio: e.target.value,
+                                        fin: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
 
-                <div className="form-row">
-                    <label>Fecha Inicio:</label>
-                    <input
-                        type="date"
-                        value={editando.inicio}
-                        onChange={(e) =>
-                            setEditando({ ...editando, inicio: e.target.value })
-                        }
-                    />
-                </div>
+                        <div className="form-row">
+                            <label>
+                                {editando.tipo === "entrada_tarde"
+                                    ? "Hora de entrada:"
+                                    : "Hora de salida:"}
+                            </label>
 
-                <div className="form-row">
-                    <label>Fecha Fin:</label>
-                    <input
-                        type="date"
-                        value={editando.fin}
-                        onChange={(e) =>
-                            setEditando({ ...editando, fin: e.target.value })
-                        }
-                    />
-                </div>
+                            <input
+                                type="time"
+                                value={editando.horaPermiso || ""}
+                                onChange={(e) =>
+                                setEditando({
+                                    ...editando,
+                                    horaPermiso: e.target.value,
+                                })
+                                }
+                            />
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="form-row">
+                            <label>Fecha Inicio:</label>
+                            <input
+                                type="date"
+                                value={editando.inicio}
+                                onChange={(e) =>
+                                    setEditando({ ...editando, inicio: e.target.value })
+                                }
+                            />
+                        </div>
+
+                        <div className="form-row">
+                            <label>Fecha Fin:</label>
+                            <input
+                                type="date"
+                                value={editando.fin}
+                                onChange={(e) =>
+                                    setEditando({ ...editando, fin: e.target.value })
+                                }
+                            />
+                        </div>
+                    </>
+                )}
 
                 {/* 🔥 BOTÓN ABAJO */}
                 <div className="form-row full-width" style={{ justifyContent: "center" }}>
@@ -313,14 +454,43 @@ const Permisos: React.FC = () => {
             {/* 🔥 informacion */}
 
             <div className="info-permiso">
-                {editando.formaPago === "Sueldo" ||
-                    editando.formaPago === "salario_60_receta" ? (
+                {editando.tipo === "entrada_tarde" ||
+                editando.tipo === "salida_temprano" ? (
+                    <>
+                        <p>
+                            Salario por hora:{" "}
+                            <strong>
+                                ${(salarioDiario / 8).toFixed(2)}
+                            </strong>
+                        </p>
+
+                        <p>
+                            Hora registrada:{" "}
+                            <strong>{editando.horaPermiso || "--:--"}</strong>
+                        </p>
+
+                        <p>
+                            Tipo:{" "}
+                            <strong>
+                                {editando.tipo === "entrada_tarde"
+                                    ? "Entrada tarde"
+                                    : "Salida temprano"}
+                            </strong>
+                        </p>
+
+                        <p>
+                            Descuento salarial total:{" "}
+                            <strong className="negativo">
+                                ${descuentoSalario.toFixed(2)}
+                            </strong>
+                        </p>
+                    </>
+                ) : editando.formaPago === "Sueldo" ||
+                  editando.formaPago === "salario_60_receta" ? (
                     <>
                         <p>
                             Salario diario:{" "}
-                            <strong>
-                                ${salarioDiario.toFixed(2)}
-                            </strong>
+                            <strong>${salarioDiario.toFixed(2)}</strong>
                         </p>
 
                         <p>Días tomados: {diasSolicitados}</p>
@@ -376,20 +546,8 @@ const Permisos: React.FC = () => {
                         <tr key={permiso.id}>
                             <td>{permiso.id}</td>
                             <td>{permiso.empleado}</td>
-                            <td>{permiso.tipo}</td>
-                            <td>
-                                {
-                                    permiso.formaPago === "vacaciones"
-                                        ? "Día de vacaciones"
-                                        : permiso.formaPago === "Tiempo"
-                                            ? "Tiempo acumulado"
-                                            : permiso.formaPago === "Sueldo"
-                                                ? "Descuento salarial"
-                                                : permiso.formaPago === "salario_60_receta"
-                                                    ? "Salario 60% (receta médica)"
-                                                    : permiso.formaPago
-                                }
-                            </td>
+                            <td>{obtenerTextoTipo(permiso.tipo)}</td>
+                            <td>{obtenerTextoFormaPago(permiso.formaPago)}</td>
                             <td>{permiso.inicio}</td>
                             <td>{permiso.fin}</td>
 
@@ -397,7 +555,8 @@ const Permisos: React.FC = () => {
                                 <button className="btn btn-green"onClick={() => setEditando(permiso)}>✏ Editar</button>
 
                                 <button className="btn btn-red"  onClick={() => eliminarPermiso(permiso.id)}>❌</button>
-                                <button onClick={() => generarFormatoPermiso(permiso)}>
+                                <button type="button"
+                                onClick={() => generarFormatoPermiso(permiso)}>
                                     🖨 Imprimir
                                 </button>
                             </td>

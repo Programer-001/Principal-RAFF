@@ -2,9 +2,10 @@
 import { onValue, ref } from "firebase/database";
 import { db } from "../firebase/config";
 import {
-    calcularEstadoEntrada,
+    calcularEstadoDia,
     calcularResumenSemanal,
     EstadoAsistencia,
+    PermisoAsistencia,
 } from "./calcularAsistencia";
 import "../css/reporteBonoPuntualidad.css";
 
@@ -16,7 +17,7 @@ type EmpleadoRH = {
     puesto?: string;
     activo?: boolean;
 };
-type PermisoEmpleado = {
+type PermisoEmpleado = PermisoAsistencia & {
     id: string;
     empleadoId?: string;
     empleado?: string;
@@ -24,6 +25,7 @@ type PermisoEmpleado = {
     formaPago?: string;
     inicio: string;
     fin: string;
+    horaPermiso?: string;
 };
 
 type RegistroDia = {
@@ -248,23 +250,31 @@ const ReporteBonoPuntualidad: React.FC = () => {
         return registrosPorFecha[fecha]?.[empleadoId];
     };
 
-    const obtenerEstado = (
-        fecha: string,
-        empleadoId: string,
-        registro?: RegistroDia
-    ): EstadoAsistencia => {
-        if (registro?.entrada) {
-            return calcularEstadoEntrada(registro.entrada);
-        }
+const obtenerEstado = (
+    fecha: string,
+    empleadoId: string,
+    registro?: RegistroDia
+): EstadoAsistencia | "incompleto" => {
 
-        const permiso = obtenerPermisoEmpleado(fecha, empleadoId);
+    const permiso = obtenerPermisoEmpleado(
+        fecha,
+        empleadoId
+    );
 
-        if (permiso) {
-            return "permiso";
-        }
+    // Si no hay entrada pero sí permiso
+    if (!registro?.entrada && permiso) {
+        return "permiso";
+    }
 
-        return "falta";
-    };
+    return calcularEstadoDia(
+        registro?.entrada,
+        registro?.totalChecadas ??
+            registro?.checadas?.length ??
+            0,
+        registro?.ultimaChecada,
+        permiso
+    );
+};
 
     const toggleEmpleado = (id: string) => {
         setEmpleadosSeleccionados((prev) =>
@@ -421,7 +431,11 @@ const ReporteBonoPuntualidad: React.FC = () => {
                                             dia.fecha,
                                             emp.id,
                                             obtenerRegistro(dia.fecha, emp.id)
-                                        )
+                                        );
+                                        const permiso = obtenerPermisoEmpleado(
+                                            dia.fecha,
+                                            emp.id
+                                        );
                                         const salida = obtenerSalida(registro);
 
                                         return (
@@ -437,7 +451,11 @@ const ReporteBonoPuntualidad: React.FC = () => {
                                                         background: COLORES_ASISTENCIA[estado],
                                                     }}
                                                 >
-                                                    <strong>{formatoHora(registro?.entrada)}</strong>
+                                                <strong>
+                                                    {estado === "permiso"
+                                                        ? permiso?.horaPermiso || "Permiso"
+                                                        : formatoHora(registro?.entrada)}
+                                                </strong>
                                                     <small>{LABEL_ESTADO[estado]}</small>
                                                 </div>
 
@@ -474,16 +492,26 @@ const ReporteBonoPuntualidad: React.FC = () => {
                                     <tr key={emp.id}>
                                         <td>{emp.nombre || emp.username || emp.id}</td>
 
-                                        {diasRango.map((dia) => {
-                                            const registro = obtenerRegistro(dia.fecha, emp.id);
-                                            const estado = obtenerEstado(
-                                                dia.fecha,
-                                                emp.id,
-                                                obtenerRegistro(dia.fecha, emp.id)
-                                            )
-                                            const salida = obtenerSalida(registro);
+                                            {diasRango.map((dia) => {
+                                                const registro = obtenerRegistro(
+                                                    dia.fecha,
+                                                    emp.id
+                                                );
 
-                                            return (
+                                                const estado = obtenerEstado(
+                                                    dia.fecha,
+                                                    emp.id,
+                                                    registro
+                                                );
+
+                                                const permiso = obtenerPermisoEmpleado(
+                                                    dia.fecha,
+                                                    emp.id
+                                                );
+
+                                                const salida = obtenerSalida(registro);
+
+                                                return (
                                                 <td key={dia.fecha}>
                                                     <div
                                                         className="celda-estado"
@@ -491,7 +519,11 @@ const ReporteBonoPuntualidad: React.FC = () => {
                                                             background: COLORES_ASISTENCIA[estado],
                                                         }}
                                                     >
-                                                        <strong>{formatoHora(registro?.entrada)}</strong>
+                                                        <strong>
+                                                            {estado === "permiso"
+                                                                ? permiso?.horaPermiso || "Permiso"
+                                                                : formatoHora(registro?.entrada)}
+                                                        </strong>
                                                         <small>{LABEL_ESTADO[estado]}</small>
                                                     </div>
 

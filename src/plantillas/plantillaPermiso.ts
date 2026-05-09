@@ -1,5 +1,46 @@
-﻿export const generarFormatoPermiso = async (permiso: any) => {
+﻿//src/plantillas/plantillaPermiso.ts
+export const generarFormatoPermiso = async (permiso: any) => {
     const nuevaVentana = window.open("", "_blank");
+    const obtenerTextoTipo = (tipo: string) => {
+    switch (tipo) {
+        case "vacaciones":
+            return "Vacaciones";
+        case "Enfermedad":
+            return "Enfermedad";
+        case "Personal":
+            return "Día personal";
+        case "entrada_tarde":
+            return "Entrada tarde";
+        case "salida_temprano":
+            return "Salida temprano";
+        default:
+            return tipo || "-";
+    }
+};
+
+const obtenerTextoFormaPago = (formaPago: string) => {
+    switch (formaPago) {
+        case "vacaciones":
+            return "Día de vacaciones";
+        case "Tiempo":
+            return "Tiempo acumulado";
+        case "Sueldo":
+            return "Descuento salarial";
+        case "salario_60_receta":
+            return "Salario 60% (receta médica)";
+        default:
+            return formaPago || "-";
+    }
+};
+
+const esPermisoPorHora =
+    permiso.tipo === "entrada_tarde" ||
+    permiso.tipo === "salida_temprano";
+
+const textoHora =
+    permiso.tipo === "entrada_tarde"
+        ? "Hora autorizada de entrada"
+        : "Hora autorizada de salida";
 
     if (nuevaVentana) {
         // 🔥 Cargar logo SVG igual que en tu otra plantilla
@@ -94,12 +135,22 @@
               </h2>
 
               <div class="info">
-                <p><strong>Código:</strong> ${permiso.id}</p>
-                <p><strong>Empleado:</strong> ${permiso.empleado}</p>
-                <p><strong>Tipo:</strong> ${permiso.tipo}</p>
-                <p><strong>Forma de Pago:</strong> ${permiso.formaPago}</p>
-                <p><strong>Inicio:</strong> ${permiso.inicio}</p>
-                <p><strong>Fin:</strong> ${permiso.fin}</p>
+                     <p><strong>Código:</strong> ${permiso.id}</p>
+                    <p><strong>Empleado:</strong> ${permiso.empleado}</p>
+                    <p><strong>Tipo:</strong> ${obtenerTextoTipo(permiso.tipo)}</p>
+                    <p><strong>Forma de Pago:</strong> ${obtenerTextoFormaPago(permiso.formaPago)}</p>
+
+                    ${
+                        esPermisoPorHora
+                            ? `
+                                <p><strong>Fecha:</strong> ${permiso.inicio}</p>
+                                <p><strong>${textoHora}:</strong> ${permiso.horaPermiso || "-"}</p>
+                              `
+                            : `
+                                <p><strong>Inicio:</strong> ${permiso.inicio}</p>
+                                <p><strong>Fin:</strong> ${permiso.fin}</p>
+                              `
+                    }
 
                 ${permiso.tipo === "vacaciones"
                             ? `<p>Hago constar que se me entregó el pago correspondiente a la prima vacacional por los días antes mencionados.</p>`
@@ -123,11 +174,19 @@
 
         </div>
 
-        <script>
-          window.onload = () => {
-            setTimeout(() => window.print(), 500);
-          };
-        </script>
+<script>
+  window.onload = () => {
+    setTimeout(() => {
+      window.focus();
+      window.print();
+    }, 500);
+  };
+
+  window.onafterprint = () => {
+    window.close();
+  };
+</script>
+
       </body>
       </html>
     `);

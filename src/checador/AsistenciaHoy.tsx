@@ -3,8 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
 import { db } from "../firebase/config";
-import { calcularEstadoDia } from "./calcularAsistencia";
+import {
+    calcularEstadoDia,
+    PermisoAsistencia,
+} from "./calcularAsistencia";
 import "../css/asistencia.css";
+
 type RegistroAsistencia = {
     empleadoId: string;
     nombre?: string;
@@ -25,11 +29,10 @@ type EmpleadoRH = {
     activo?: boolean;
 };
 
-type PermisoEmpleado = {
+type PermisoEmpleado = PermisoAsistencia & {
     id: string;
     empleadoId?: string;
     empleado?: string;
-    tipo?: string;
     formaPago?: string;
     inicio: string;
     fin: string;
@@ -151,6 +154,18 @@ const AsistenciaHoy: React.FC = () => {
         return !tieneChecada && !tienePermiso;
     });
 
+const obtenerEstadoAsistencia = (r: RegistroAsistencia) => {
+        const permiso = obtenerPermisoEmpleado(
+            r.empleadoId
+        );
+
+        return calcularEstadoDia(
+            r.entrada,
+            r.totalChecadas ?? r.checadas?.length ?? 0,
+            r.ultimaChecada,
+            permiso
+        );
+    };
     const obtenerTextoFormaPago = (formaPago?: string) => {
         switch (formaPago) {
             case "vacaciones":
@@ -200,12 +215,7 @@ const AsistenciaHoy: React.FC = () => {
                                     <td>{r.entrada || "-"}</td>
                                     <td>{r.ultimaChecada || "-"}</td>
                                     <td>{r.totalChecadas ?? r.checadas?.length ?? 0}</td>
-                                    <td>
-                                        {calcularEstadoDia(
-                                            r.entrada,
-                                            r.totalChecadas ?? r.checadas?.length ?? 0
-                                        )}
-                                    </td>
+                                    <td>{obtenerEstadoAsistencia(r)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -227,6 +237,7 @@ const AsistenciaHoy: React.FC = () => {
                                 <th>Puesto</th>
                                 <th>Tipo</th>
                                 <th>Forma de pago</th>
+                                <th>Hora autorizada</th>
                             </tr>
                         </thead>
 
@@ -241,6 +252,7 @@ const AsistenciaHoy: React.FC = () => {
                                         <td>{emp.puesto || "-"}</td>
                                         <td>{permiso?.tipo || "-"}</td>
                                         <td>{obtenerTextoFormaPago(permiso?.formaPago)}</td>
+                                        <td>{permiso?.horaPermiso || "-"}</td>
                                     </tr>
                                 );
                             })}
