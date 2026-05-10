@@ -40,7 +40,6 @@ import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiale
 import Tienda from "./Tienda/Tienda"
 import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
-import CalendarioProduccion from "./Produccion/CalendarioProduccion";
 import Checador from "./checador/Checador";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
@@ -79,7 +78,6 @@ function AppLayout() {
         if (pathname.startsWith("/tienda_productos")) return "tienda_productos";
         if (pathname.startsWith("/tienda")) return "tienda";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
-        if (pathname.startsWith("/calendario_produccion")) return "calendario_produccion";
         if (pathname.startsWith("/asistencia")) return "asistencia";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
@@ -118,7 +116,6 @@ function AppLayout() {
             tienda_productos: "/tienda_productos",
             tienda: "/tienda",
             gestion_tienda: "/gestion_tienda",
-            calendario_produccion: "/calendario_produccion",
             asistencia: "/asistencia",
             perfil: "/perfil",
             home: "/home",
@@ -165,7 +162,6 @@ function AppLayout() {
                 <Route path="/asistencia" element={<Checador />} />
                 <Route path="/tienda" element={<Tienda />} />
                 <Route path="/gestion_tienda" element={<GestionTienda />} />
-                <Route path="/calendario_produccion" element={<CalendarioProduccion />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>
