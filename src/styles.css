@@ -112,9 +112,9 @@
 .caja-table td select,
 .caja-table td input,
 .caja-table td button {
-  width: 100px !important;
+  width: 200px !important;
   min-width: 100px !important;
-  max-width: 120px !important;
+  max-width: 300px !important;
   font-size: 0.85rem !important;
   padding: 4px !important;
   box-sizing: border-box !important;
@@ -144,11 +144,30 @@
         max-width: none !important;
     }
     /* OPCIONAL: botón imprimir estilo suave -> esta seccion es solo para permisos el boton de imprimir */
-    .caja-table td:last-child button:not(.btn) {
-            background: #f3f4f6;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
+.caja-table td:last-child .btn {
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+}
+
+.caja-table td:last-child .btn-yellow {
+    background-color: #f1c40f !important;
+}
+
+.caja-table td:last-child .btn-yellow:hover {
+    background-color: #d4ac0d !important;
+}
+
+.caja-table td:last-child .btn-red {
+    background-color: #e74c3c !important;
+}
+
+.caja-table td:last-child .btn-red:hover {
+    background-color: #c0392b !important;
+}
 /*Esta seccion es para los input o select que tengan <div><label>input o seelect*/
 .form-container {
   max-width: 700px;

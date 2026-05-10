@@ -6,6 +6,7 @@ import { NotificacionSistema } from "../Notificaciones/tiposNotificaciones";
 import { crearNotificacionSistema } from "../Notificaciones/centralNotificaciones";
 import { marcarNotificacionVista } from "../Notificaciones/marcarNotificacionVista";
 import { ReactComponent as Campana } from "../Imagenes/svg/notificaciones/campana.svg";
+import { ReactComponent as Calendario } from "../Imagenes/svg/calendario/calendario.svg";
 import { obtenerMenuPorPerfil } from "./menuConfig";
 import "../css/menu.css";
 
@@ -27,6 +28,7 @@ const Menu = ({ vista, setVista }: Props) => {
     const [user, setUser] = useState<User | null>(null);
     const [perfil, setPerfil] = useState<EmpleadoPerfil | null>(null);
     const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
+    const [calendarioAbierto, setCalendarioAbierto] = useState(false);
     const [notificaciones, setNotificaciones] = useState<NotificacionSistema[]>([]);
     const notiRef = useRef<HTMLDivElement>(null);
 
@@ -226,6 +228,12 @@ const Menu = ({ vista, setVista }: Props) => {
 
             <div className="menu-user-area">
                 <div className="menu-notificaciones-wrap" ref={notiRef}>
+                <button
+                    className={`menu-calendario-btn ${calendarioAbierto ? "activa" : ""}`}
+                    onClick={() => setCalendarioAbierto((prev) => !prev)}
+                >
+                    <Calendario className="menu-calendario-icono" />
+                </button>
                     <button
                         className={`menu-campana-btn ${notificacionesAbiertas ? "activa" : ""}`}
                         onClick={() => setNotificacionesAbiertas((prev) => !prev)}

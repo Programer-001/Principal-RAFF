@@ -7,9 +7,9 @@ interface Empleado {
     id: string;
     nombre: string;
     celular: string;
-    email: string;
+    email?: string;
     password?: string;
-    username: string;
+    username?: string;
     activo: boolean;
     area: string;
     puesto: string;
@@ -121,112 +121,142 @@ const Empleados: React.FC = () => {
         }
     };
 
-    const agregarEmpleado = async () => {
-        if (
-            !nuevoEmpleado.id ||
-            !nuevoEmpleado.nombre ||
-            !nuevoEmpleado.puesto ||
-            !nuevoEmpleado.email ||
-            !nuevoEmpleado.username
-        ) {
-            alert("Completa todos los campos obligatorios");
+const agregarEmpleado = async () => {
+    const requiereLogin =
+        nuevoEmpleado.email.trim() !== "" ||
+        nuevoEmpleado.password.trim() !== "";
+
+    if (
+        !nuevoEmpleado.id ||
+        !nuevoEmpleado.nombre ||
+        !nuevoEmpleado.puesto ||
+        !nuevoEmpleado.area
+    ) {
+        alert("Completa ID, nombre, área y puesto");
+        return;
+    }
+
+    if (requiereLogin) {
+        if (!nuevoEmpleado.email) {
+            alert("Para crear login necesitas correo");
             return;
         }
 
-        setLoading(true);
+        if (!nuevoEmpleado.password || nuevoEmpleado.password.length < 6) {
+            alert("Para crear login necesitas contraseña de al menos 6 caracteres");
+            return;
+        }
+    }
 
-        try {
-            const empleadoRef = ref(db, `RH/Empleados/${nuevoEmpleado.id}`);
-            const snapshot = await get(empleadoRef);
+    setLoading(true);
 
-            if (snapshot.exists()) {
-                alert("❌ El ID ya está en uso.");
-                setLoading(false);
-                return;
-            }
+    try {
+        const empleadoRef = ref(db, `RH/Empleados/${nuevoEmpleado.id}`);
+        const snapshot = await get(empleadoRef);
 
-            const uid = await crearLoginSiFalta();
-
-            const empleadoAGuardar = {
-                id: nuevoEmpleado.id,
-                nombre: nuevoEmpleado.nombre,
-                celular: nuevoEmpleado.celular,
-                email: nuevoEmpleado.email,
-                username: nuevoEmpleado.username,
-                activo: nuevoEmpleado.activo,
-                area: nuevoEmpleado.area,
-                puesto: nuevoEmpleado.puesto,
-                salario: Number(nuevoEmpleado.salario || 0),
-                diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
-                uid,
-            };
-
-            await set(empleadoRef, empleadoAGuardar);
-
-            alert("✅ Empleado creado correctamente");
-            limpiarFormulario();
-        } catch (error: any) {
-            console.error("Error completo:", error);
-            alert(
-                error?.message ||
-                error?.details ||
-                error?.customData?.message ||
-                "Error al crear empleado"
-            );
-        } finally {
+        if (snapshot.exists()) {
+            alert("❌ El ID ya está en uso.");
             setLoading(false);
-        }
-    };
-
-    const guardarEdicion = async () => {
-        if (!idEditando) {
-            alert("No hay empleado seleccionado para editar");
             return;
         }
 
-        if (
-            !nuevoEmpleado.nombre ||
-            !nuevoEmpleado.puesto ||
-            !nuevoEmpleado.email ||
-            !nuevoEmpleado.username
-        ) {
-            alert("Completa todos los campos obligatorios");
+        const uid = requiereLogin ? await crearLoginSiFalta() : "";
+
+        const empleadoAGuardar = {
+            id: nuevoEmpleado.id,
+            nombre: nuevoEmpleado.nombre,
+            celular: nuevoEmpleado.celular || "",
+            email: nuevoEmpleado.email || "",
+            username: nuevoEmpleado.username || "",
+            activo: nuevoEmpleado.activo,
+            area: nuevoEmpleado.area,
+            puesto: nuevoEmpleado.puesto,
+            salario: Number(nuevoEmpleado.salario || 0),
+            diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
+            uid,
+        };
+
+        await set(empleadoRef, empleadoAGuardar);
+
+        alert("✅ Empleado creado correctamente");
+        limpiarFormulario();
+    } catch (error: any) {
+        console.error("Error completo:", error);
+        alert(
+            error?.message ||
+            error?.details ||
+            error?.customData?.message ||
+            "Error al crear empleado"
+        );
+    } finally {
+        setLoading(false);
+    }
+};
+
+const guardarEdicion = async () => {
+    if (!idEditando) {
+        alert("No hay empleado seleccionado para editar");
+        return;
+    }
+
+    const requiereLogin =
+        nuevoEmpleado.email.trim() !== "" ||
+        nuevoEmpleado.password.trim() !== "";
+
+    if (
+        !nuevoEmpleado.nombre ||
+        !nuevoEmpleado.puesto ||
+        !nuevoEmpleado.area
+    ) {
+        alert("Completa nombre, área y puesto");
+        return;
+    }
+
+    if (requiereLogin && !nuevoEmpleado.uid) {
+        if (!nuevoEmpleado.email) {
+            alert("Para crear login necesitas correo");
             return;
         }
 
-        setLoading(true);
-
-        try {
-            let uidFinal = nuevoEmpleado.uid || "";
-
-            if (!uidFinal) {
-                uidFinal = await crearLoginSiFalta();
-            }
-
-            const datosActualizar = {
-                nombre: nuevoEmpleado.nombre,
-                celular: nuevoEmpleado.celular,
-                email: nuevoEmpleado.email,
-                username: nuevoEmpleado.username,
-                activo: nuevoEmpleado.activo,
-                area: nuevoEmpleado.area,
-                puesto: nuevoEmpleado.puesto,
-                salario: Number(nuevoEmpleado.salario || 0),
-                diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
-                uid: uidFinal,
-            };
-
-            await update(ref(db, `RH/Empleados/${idEditando}`), datosActualizar);
-
-            alert("✅ Empleado actualizado correctamente");
-            limpiarFormulario();
-        } catch (error: any) {
-            console.error("Error al editar empleado:", error);
-            alert(error?.message || "Error al actualizar empleado");
-        } finally {
-            setLoading(false);
+        if (!nuevoEmpleado.password || nuevoEmpleado.password.length < 6) {
+            alert("Para crear login necesitas contraseña de al menos 6 caracteres");
+            return;
         }
-    };
+    }
+
+    setLoading(true);
+
+    try {
+        let uidFinal = nuevoEmpleado.uid || "";
+
+        if (!uidFinal && requiereLogin) {
+            uidFinal = await crearLoginSiFalta();
+        }
+
+        const datosActualizar = {
+            nombre: nuevoEmpleado.nombre,
+            celular: nuevoEmpleado.celular || "",
+            email: nuevoEmpleado.email || "",
+            username: nuevoEmpleado.username || "",
+            activo: nuevoEmpleado.activo,
+            area: nuevoEmpleado.area,
+            puesto: nuevoEmpleado.puesto,
+            salario: Number(nuevoEmpleado.salario || 0),
+            diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
+            uid: uidFinal,
+        };
+
+        await update(ref(db, `RH/Empleados/${idEditando}`), datosActualizar);
+
+        alert("✅ Empleado actualizado correctamente");
+        limpiarFormulario();
+    } catch (error: any) {
+        console.error("Error al editar empleado:", error);
+        alert(error?.message || "Error al actualizar empleado");
+    } finally {
+        setLoading(false);
+    }
+};
 
     const editarEmpleadoEnTabla = (id: string, campo: string, valor: any) => {
         setEmpleados((prev) =>
@@ -406,7 +436,7 @@ const Empleados: React.FC = () => {
                         Área:
                         <select
                             className="selectEmpleado"
-                            value={nuevoEmpleado.area}
+                            value={nuevoEmpleado.area|| ""}
                             onChange={(e) =>
                                 setNuevoEmpleado({ ...nuevoEmpleado, area: e.target.value })
                             }
@@ -482,8 +512,8 @@ const Empleados: React.FC = () => {
             </div>
 
             {/* TABLA */}
-            <div className="tablaScroll">
-                <table className="tabla">
+            <div className="table-scroll">
+                <table className="caja-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -505,7 +535,7 @@ const Empleados: React.FC = () => {
                         {empleados.map((empleado) => (
                             <tr key={empleado.id}>
                                 <td>
-                                    <input value={empleado.id} disabled />
+                                     <p><strong>{empleado.id}</strong></p>
                                 </td>
 
                                 <td>
@@ -524,7 +554,7 @@ const Empleados: React.FC = () => {
 
                                 <td>
                                     <input
-                                        value={empleado.celular}
+                                        value={empleado.celular || ""}
                                         onChange={(e) =>
                                             editarEmpleadoEnTabla(
                                                 empleado.id,
@@ -538,7 +568,7 @@ const Empleados: React.FC = () => {
 
                                 <td>
                                     <input
-                                        value={empleado.email}
+                                        value={empleado.email || ""}
                                         onChange={(e) =>
                                             editarEmpleadoEnTabla(
                                                 empleado.id,
@@ -552,7 +582,7 @@ const Empleados: React.FC = () => {
 
                                 <td>
                                     <input
-                                        value={empleado.username}
+                                        value={empleado.username || ""}
                                         onChange={(e) =>
                                             editarEmpleadoEnTabla(
                                                 empleado.id,
@@ -610,13 +640,19 @@ const Empleados: React.FC = () => {
                                 </td>
 
                                 <td>
-                                    <input
-                                        value={empleado.area}
+                                    <select
+                                        value={empleado.area || ""}
                                         onChange={(e) =>
                                             editarEmpleadoEnTabla(empleado.id, "area", e.target.value)
                                         }
                                         onBlur={() => guardarCambiosRapidos(empleado.id)}
-                                    />
+                                    >
+                                        <option value="">Seleccione</option>
+                                        <option value="Mostrador">Mostrador</option>
+                                        <option value="Administración">Administración</option>
+                                        <option value="Almacén">Almacén</option>
+                                        <option value="Producción">Producción</option>
+                                    </select>
                                 </td>
 
                                 <td>
@@ -650,15 +686,15 @@ const Empleados: React.FC = () => {
                                 </td>
 
                                 <td>
-                                    <input value={empleado.uid || ""} disabled />
+                                    <p>{empleado.uid || ""}</p>
                                 </td>
 
-                                <td style={{ display: "flex", gap: 6 }}>
-                                    <button onClick={() => editarDesdeTabla(empleado)}>
+                                <td >
+                                    <button className="btn btn-yellow" onClick={() => editarDesdeTabla(empleado)}>
                                         Editar
                                     </button>
 
-                                    <button onClick={() => eliminarEmpleado(empleado.id, empleado.uid)}>
+                                    <button className="btn btn-red" onClick={() => eliminarEmpleado(empleado.id, empleado.uid)}>
                                         Eliminar
                                     </button>
                                 </td>
