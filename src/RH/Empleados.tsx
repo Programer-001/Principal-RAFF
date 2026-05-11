@@ -21,6 +21,7 @@ interface Empleado {
 
     fechaIngreso?: string;
     fechaBaja?: string;
+    fechaNacimiento?: string;
 
     direccion?: string;
     numeroExterior?: string;
@@ -45,6 +46,7 @@ const estadoInicial = {
     uid: "",
     fechaIngreso: "",
     fechaBaja: "",
+    fechaNacimiento: "",
     direccion: "",
     numeroExterior: "",
     colonia: "",
@@ -153,6 +155,7 @@ const Empleados: React.FC = () => {
             municipio: empleado.municipio || "",
             estado: empleado.estado || "",
             cp: empleado.cp || "",
+            fechaNacimiento: empleado.fechaNacimiento || "",
         });
 
         setModoEdicion(false);
@@ -222,6 +225,7 @@ const crearLoginSiFalta = async () => {
 
         fechaIngreso: nuevoEmpleado.fechaIngreso || "",
         fechaBaja: nuevoEmpleado.fechaBaja || "",
+        fechaNacimiento: nuevoEmpleado.fechaNacimiento || "",
 
         direccion: nuevoEmpleado.direccion || "",
         numeroExterior: nuevoEmpleado.numeroExterior || "",
@@ -574,7 +578,18 @@ const crearLoginSiFalta = async () => {
                                         })
                                     }
                                 />
-
+                                <Campo
+                                    label="Fecha nacimiento"
+                                    type="date"
+                                    value={nuevoEmpleado.fechaNacimiento}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({
+                                            ...nuevoEmpleado,
+                                            fechaNacimiento: v,
+                                        })
+                                    }
+                                />
                                 <Campo
                                     label="Dirección"
                                     value={nuevoEmpleado.direccion}
