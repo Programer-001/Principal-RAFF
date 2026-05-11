@@ -41,6 +41,7 @@ import Tienda from "./Tienda/Tienda"
 import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
 import Checador from "./checador/Checador";
+import Calendario from "./Calendario/Calendario";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 import "./styles.css";
@@ -79,6 +80,7 @@ function AppLayout() {
         if (pathname.startsWith("/tienda")) return "tienda";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
         if (pathname.startsWith("/asistencia")) return "asistencia";
+        if (pathname.startsWith("/calendario")) return "calendario";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
         return "home";
@@ -117,6 +119,7 @@ function AppLayout() {
             tienda: "/tienda",
             gestion_tienda: "/gestion_tienda",
             asistencia: "/asistencia",
+            calendario: "/calendario",
             perfil: "/perfil",
             home: "/home",
             
@@ -162,6 +165,7 @@ function AppLayout() {
                 <Route path="/asistencia" element={<Checador />} />
                 <Route path="/tienda" element={<Tienda />} />
                 <Route path="/gestion_tienda" element={<GestionTienda />} />
+                <Route path="/calendario" element={<Calendario />} />
                 <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </div>

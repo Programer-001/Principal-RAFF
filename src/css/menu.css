@@ -311,3 +311,89 @@
 .menu-calendario-btn:focus {
     outline: none;
 }
+
+/* =========================
+   PANEL CALENDARIO
+========================= */
+
+.menu-calendario-panel {
+    position: absolute;
+    top: 42px;
+    right: 48px;
+
+    width: 320px;
+
+    background: rgba(255,255,255,0.96);
+
+    backdrop-filter: blur(16px);
+
+    border: 1px solid rgba(229,231,235,0.9);
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 20px 45px rgba(15,23,42,0.16);
+
+    overflow: hidden;
+
+    z-index: 999;
+}
+
+.menu-calendario-header {
+    padding: 16px 18px;
+
+    font-size: 15px;
+    font-weight: 800;
+
+    color: #111827;
+
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.menu-calendario-lista {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.menu-calendario-item {
+    padding: 14px 18px;
+
+    border-bottom: 1px solid #f3f4f6;
+
+    font-size: 14px;
+
+    color: #111827;
+
+    border-left: 4px solid #2563eb;
+
+    background: #ffffff;
+}
+
+.menu-calendario-item.permiso {
+    border-left-color: #f59e0b;
+}
+
+.menu-calendario-item:hover {
+    background: #f9fafb;
+}
+
+.menu-calendario-footer {
+    padding: 14px;
+
+    text-align: center;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #2563eb;
+
+    cursor: pointer;
+
+    border-top: 1px solid #f3f4f6;
+
+    background: #ffffff;
+}
+
+.menu-calendario-footer:hover {
+    background: #f9fafb;
+}

@@ -228,12 +228,54 @@ const Menu = ({ vista, setVista }: Props) => {
 
             <div className="menu-user-area">
                 <div className="menu-notificaciones-wrap" ref={notiRef}>
+                    {/* Botón de calendario */}
                 <button
                     className={`menu-calendario-btn ${calendarioAbierto ? "activa" : ""}`}
                     onClick={() => setCalendarioAbierto((prev) => !prev)}
                 >
                     <Calendario className="menu-calendario-icono" />
                 </button>
+                {/* Aquí podrías agregar un panel similar al de notificaciones para mostrar el calendario si "calendarioAbierto" es true */}
+                {calendarioAbierto && (
+                    <div className="menu-calendario-panel">
+
+                        <div className="menu-calendario-header">
+                            Eventos de hoy
+                        </div>
+
+                        <div className="menu-calendario-lista">
+
+                            <div className="menu-calendario-item">
+                                Junta producción - 9:00 AM
+                            </div>
+
+                            <div className="menu-calendario-item">
+                                Entrega cliente - 1:00 PM
+                            </div>
+
+                            <div className="menu-calendario-item permiso">
+                                Luis no asiste
+                            </div>
+
+                        </div>
+
+                        <div
+                            className="menu-calendario-footer"
+                            onClick={() => {
+                                setCalendarioAbierto(false);
+                                setVista("calendario");
+                            }}
+                        >
+                            Ver calendario
+                        </div>
+
+                        <div className="menu-calendario-footer">
+                            Crear evento
+                        </div>
+
+                    </div>
+                )}
+                {/* Botón de notificaciones */}
                     <button
                         className={`menu-campana-btn ${notificacionesAbiertas ? "activa" : ""}`}
                         onClick={() => setNotificacionesAbiertas((prev) => !prev)}

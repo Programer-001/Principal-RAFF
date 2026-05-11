@@ -1,0 +1,483 @@
+/* =========================
+   CALENDARIO RAFF / iOS
+========================= */
+
+.cal-layout {
+    min-height: calc(100vh - 72px);
+    padding: 18px;
+    background: #f3f4f6;
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    gap: 18px;
+    box-sizing: border-box;
+}
+
+/* SIDEBAR */
+.cal-sidebar {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    height: calc(100vh - 110px);
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.cal-btn-crear {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 16px;
+    background: #111827;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 18px;
+}
+
+.cal-mini-card {
+    background: linear-gradient(135deg, #111827, #374151);
+    border-radius: 22px;
+    color: white;
+    padding: 18px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cal-mini-label {
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+.cal-mini-dia {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.cal-sidebar-section {
+    margin-bottom: 24px;
+}
+
+.cal-sidebar-section h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin: 0 0 10px;
+    letter-spacing: 0.04em;
+}
+
+.cal-evento-side {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #2563eb;
+    border-radius: 14px;
+    padding: 11px 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #111827;
+}
+
+.cal-evento-side.permiso {
+    border-left-color: #f59e0b;
+}
+
+/* MAIN */
+.cal-main {
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid #e5e7eb;
+    border-radius: 28px;
+    padding: 18px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    height: calc(100vh - 110px);
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* HEADER */
+.cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.cal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cal-titulo {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.cal-nav-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    color: #111827;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.cal-nav-btn:hover {
+    background: #111827;
+    color: white;
+}
+
+.cal-header-right {
+    display: flex;
+    gap: 8px;
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: 999px;
+}
+
+.cal-vista-btn {
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 700;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.cal-vista-btn.activa {
+    background: white;
+    color: #111827;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+/* VISTA MES */
+.cal-mes-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.cal-mes-dias-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 8px;
+}
+
+.cal-mes-dia-nombre {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #6b7280;
+    text-transform: uppercase;
+}
+
+.cal-mes-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: minmax(92px, 1fr);
+    gap: 8px;
+}
+
+.cal-mes-dia {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+}
+
+.cal-mes-dia:hover {
+    border-color: #f59e0b;
+    box-shadow: 0 10px 22px rgba(245, 158, 11, 0.16);
+}
+
+.cal-mes-dia.vacio {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.cal-mes-numero {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.cal-evento-demo {
+    margin-top: 8px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cal-sidebar-vacio {
+    color: #6b7280;
+    font-size: 13px;
+    padding: 10px 4px;
+}
+
+.cal-mes-dia.seleccionado {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 2px rgba(37,99,235,0.15),
+        0 12px 28px rgba(37,99,235,0.18);
+
+    background: #eff6ff;
+}
+/* RESPONSIVE */
+@media (max-width: 1000px) {
+    .cal-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .cal-sidebar {
+        height: auto;
+    }
+
+    .cal-main {
+        height: auto;
+        min-height: 650px;
+    }
+}
+
+/* =========================
+   MODAL EVENTOS
+========================= */
+
+.cal-modal-overlay {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(15, 23, 42, 0.45);
+
+    backdrop-filter: blur(4px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 5000;
+
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.cal-modal {
+    width: 100%;
+    max-width: 620px;
+
+    background: rgba(255,255,255,0.96);
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 28px;
+
+    box-shadow:
+        0 30px 70px rgba(15,23,42,0.22);
+
+    overflow: hidden;
+}
+
+.cal-modal-header {
+    padding: 22px 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.cal-modal-header h2 {
+    margin: 0;
+
+    font-size: 24px;
+    font-weight: 800;
+
+    color: #111827;
+}
+
+.cal-modal-cerrar {
+    width: 36px;
+    height: 36px;
+
+    border: none;
+
+    border-radius: 999px;
+
+    background: #f3f4f6;
+
+    color: #111827;
+
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+.cal-modal-cerrar:hover {
+    background: #111827;
+    color: white;
+}
+
+.cal-modal-body {
+    padding: 24px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 18px;
+}
+
+.cal-form-group {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.cal-form-group label {
+    font-size: 13px;
+    font-weight: 700;
+
+    color: #6b7280;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.04em;
+}
+
+.cal-form-group input,
+.cal-form-group textarea,
+.cal-form-group select {
+    width: 100%;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 16px;
+
+    padding: 12px 14px;
+
+    font-size: 14px;
+
+    background: white;
+
+    color: #111827;
+
+    box-sizing: border-box;
+
+    outline: none;
+
+    transition: all 0.2s ease;
+}
+
+.cal-form-group textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.cal-form-group input:focus,
+.cal-form-group textarea:focus,
+.cal-form-group select:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 4px rgba(37,99,235,0.12);
+}
+
+.cal-form-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 16px;
+}
+
+.cal-modal-footer {
+    padding: 22px 24px;
+
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    border-top: 1px solid #f3f4f6;
+}
+
+.cal-btn-secundario {
+    border: none;
+
+    background: #f3f4f6;
+
+    color: #111827;
+
+    border-radius: 999px;
+
+    padding: 12px 18px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.cal-btn-principal {
+    border: none;
+
+    background: #111827;
+
+    color: white;
+
+    border-radius: 999px;
+
+    padding: 12px 18px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.cal-btn-principal:hover {
+    background: #2563eb;
+}
+
+@media (max-width: 700px) {
+
+    .cal-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .cal-modal {
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+
+}
