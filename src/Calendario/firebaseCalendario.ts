@@ -14,7 +14,7 @@ calendario_eventos
     visiblePara
 
 */
-import { push, ref, set, onValue,remove } from "firebase/database";
+import { push, ref, set, onValue,remove,update  } from "firebase/database";
 import { db } from "../firebase/config";
 import { EventoCalendario } from "./tipos";
 // Función para crear un nuevo evento en Firebase
@@ -72,4 +72,19 @@ export const eliminarEventoCalendario = async (
 
     await remove(eventoRef);
 
+};
+// Función para actualizar un evento por su ID
+export const actualizarEventoCalendario = async (
+    eventoId: string,
+    cambios: Partial<EventoCalendario>
+) => {
+    const eventoRef = ref(
+        db,
+        `calendario_eventos/${eventoId}`
+    );
+
+    await update(eventoRef, {
+        ...cambios,
+        actualizadoEn: Date.now(),
+    });
 };

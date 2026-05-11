@@ -20,7 +20,7 @@ const Calendario = () => {
 
    const [eventos, setEventos] = useState<EventoCalendario[]>([]);
    const [eventoSeleccionado, setEventoSeleccionado] =useState<EventoCalendario | null>(null);
-
+    const [eventoEditar, setEventoEditar] = useState<EventoCalendario | null>(null);
     const [fechaActual, setFechaActual] = useState(
         new Date()
     );
@@ -140,11 +140,22 @@ const Calendario = () => {
             <DetalleEvento
                 evento={eventoSeleccionado}
                 onClose={() => setEventoSeleccionado(null)}
+                onEditar={(evento) => {
+                    setEventoEditar(evento);
+
+                    setEventoSeleccionado(null);
+
+                    setModalCrearAbierto(true);
+                }}
             />
             {/* MODAL CREAR EVENTO */}
             <CrearEventoModal
                 abierto={modalCrearAbierto}
-                onClose={() => setModalCrearAbierto(false)}
+                eventoEditar={eventoEditar}
+                onClose={() => {
+                    setModalCrearAbierto(false);
+                    setEventoEditar(null);
+                }}
             />
         </div>
     );

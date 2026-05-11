@@ -13,17 +13,20 @@ cancelar
 guardar
 
 */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { auth } from "../firebase/config";
-import { crearEventoCalendario } from "./firebaseCalendario";
+import { EventoCalendario } from "./tipos";
+import { crearEventoCalendario, actualizarEventoCalendario  } from "./firebaseCalendario";
 type Props = {
     abierto: boolean;
     onClose: () => void;
+    eventoEditar?: EventoCalendario | null;
 };
 
 const CrearEventoModal = ({
     abierto,
     onClose,
+    eventoEditar,
 }: Props) => {
 
 const [titulo, setTitulo] = useState("");
@@ -39,6 +42,7 @@ const [tipo, setTipo] = useState("personal");
 
 const [guardando, setGuardando] = useState(false);
 
+// Función para guardar el evento (crear o actualizar)
 const guardarEvento = async () => {
 
     if (!titulo.trim()) {
@@ -62,7 +66,11 @@ const guardarEvento = async () => {
             return;
         }
 
-        await crearEventoCalendario({
+if (eventoEditar?.id) {
+
+    await actualizarEventoCalendario(
+        eventoEditar.id,
+        {
             titulo,
             descripcion,
 
@@ -75,14 +83,34 @@ const guardarEvento = async () => {
             todoElDia: todoElDia === "Sí",
 
             tipo: tipo as any,
+        }
+    );
 
-            creadoPorUid: usuario.uid,
-            creadoPorNombre: usuario.email || "Usuario",
+} else {
 
-            visiblePara: {
-                [usuario.uid]: true,
-            },
-        });
+    await crearEventoCalendario({
+        titulo,
+        descripcion,
+
+        fechaInicio: fecha,
+        fechaFin: fecha,
+
+        horaInicio,
+        horaFin,
+
+        todoElDia: todoElDia === "Sí",
+
+        tipo: tipo as any,
+
+        creadoPorUid: usuario.uid,
+        creadoPorNombre: usuario.email || "Usuario",
+
+        visiblePara: {
+            [usuario.uid]: true,
+        },
+    });
+
+}
 
         // LIMPIAR
         setTitulo("");
@@ -112,7 +140,28 @@ const guardarEvento = async () => {
     }
 
 };
+// Cuando se abra el modal, si viene un eventoEditar, precargamos los datos
+useEffect(() => {
+    if (!abierto) return;
 
+    if (eventoEditar) {
+        setTitulo(eventoEditar.titulo || "");
+        setDescripcion(eventoEditar.descripcion || "");
+        setFecha(eventoEditar.fechaInicio || "");
+        setHoraInicio(eventoEditar.horaInicio || "");
+        setHoraFin(eventoEditar.horaFin || "");
+        setTodoElDia(eventoEditar.todoElDia ? "Sí" : "No");
+        setTipo(eventoEditar.tipo || "personal");
+    } else {
+        setTitulo("");
+        setDescripcion("");
+        setFecha("");
+        setHoraInicio("");
+        setHoraFin("");
+        setTodoElDia("No");
+        setTipo("personal");
+    }
+}, [abierto, eventoEditar]);
 
 
     if (!abierto) return null;
@@ -121,7 +170,7 @@ return (
     <div className="cal-modal-overlay">
         <div className="cal-modal">
             <div className="cal-modal-header">
-                <h2>Nuevo evento</h2>
+                <h2>{eventoEditar ? "Editar evento" : "Nuevo evento"}</h2>
 
                 <button className="cal-modal-cerrar" onClick={onClose}>
                     ✕
@@ -214,7 +263,9 @@ return (
                 >
                     {guardando
                         ? "Guardando..."
-                        : "Guardar evento"}
+                        : eventoEditar
+                            ? "Guardar cambios"
+                            : "Guardar evento"}
                 </button>
             </div>
         </div>

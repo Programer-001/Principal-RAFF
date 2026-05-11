@@ -7,11 +7,12 @@ import { eliminarEventoCalendario } from "./firebaseCalendario";
 type Props = {
     evento: EventoCalendario | null;
     onClose: () => void;
+    onEditar: (evento: EventoCalendario) => void;
 };
-
 const DetalleEvento = ({
     evento,
     onClose,
+    onEditar,
 }: Props) => {
 
 const eliminarEvento = async () => {
@@ -95,7 +96,10 @@ const eliminarEvento = async () => {
 
             <div className="cal-detalle-footer">
 
-                <button className="cal-btn-secundario">
+                <button
+                    className="cal-btn-secundario"
+                    onClick={() => evento && onEditar(evento)}
+                >
                     Editar
                 </button>
 
