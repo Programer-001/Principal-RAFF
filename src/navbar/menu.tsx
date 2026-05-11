@@ -9,6 +9,7 @@ import { ReactComponent as Campana } from "../Imagenes/svg/notificaciones/campan
 import { ReactComponent as Calendario } from "../Imagenes/svg/calendario/calendario.svg";
 import { EventoCalendario } from "../Calendario/tipos";
 import { escucharEventosUsuario } from "../Calendario/firebaseCalendario";
+import CrearEventoModal from "../Calendario/CrearEventoModal";
 import { obtenerMenuPorPerfil } from "./menuConfig";
 import "../css/menu.css";
 
@@ -32,6 +33,7 @@ const Menu = ({ vista, setVista }: Props) => {
     const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
     const [calendarioAbierto, setCalendarioAbierto] = useState(false);
     const [eventosCalendario, setEventosCalendario] = useState<EventoCalendario[]>([]);
+    const [modalCrearEventoAbierto, setModalCrearEventoAbierto] = useState(false);
     const [notificaciones, setNotificaciones] = useState<NotificacionSistema[]>([]);
     const notiRef = useRef<HTMLDivElement>(null);
 
@@ -296,7 +298,13 @@ const Menu = ({ vista, setVista }: Props) => {
                             Ver calendario
                         </div>
 
-                        <div className="menu-calendario-footer">
+                        <div
+                            className="menu-calendario-footer"
+                            onClick={() => {
+                                setCalendarioAbierto(false);
+                                setModalCrearEventoAbierto(true);
+                            }}
+                        >
                             Crear evento
                         </div>
 
@@ -386,6 +394,12 @@ const Menu = ({ vista, setVista }: Props) => {
                     </button>
                 </div>
             </div>
+            {/* Modal para crear evento del calendario */}
+            <CrearEventoModal
+                abierto={modalCrearEventoAbierto}
+                onClose={() => setModalCrearEventoAbierto(false)}
+            />
+
         </header>
     );
 };
