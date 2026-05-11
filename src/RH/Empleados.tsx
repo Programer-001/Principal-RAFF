@@ -169,32 +169,43 @@ const Empleados: React.FC = () => {
         cargarEmpleadoEnFormulario(empleado);
     };
 
-    const crearLoginSiFalta = async () => {
-        if (nuevoEmpleado.uid) return nuevoEmpleado.uid;
+const crearLoginSiFalta = async () => {
+    if (nuevoEmpleado.uid) return nuevoEmpleado.uid;
 
-        if (!nuevoEmpleado.email) {
-            throw new Error("El empleado no tiene correo");
-        }
+    if (!nuevoEmpleado.email) {
+        throw new Error("El empleado no tiene correo");
+    }
 
-        if (!nuevoEmpleado.password || nuevoEmpleado.password.length < 6) {
-            throw new Error(
-                "Para crear login, escribe una contraseña de al menos 6 caracteres"
-            );
-        }
-
-        const crearUsuarioEmpleado = httpsCallable(
-            functions,
-            "crearUsuarioEmpleadoV1"
+    if (!nuevoEmpleado.password || nuevoEmpleado.password.length < 6) {
+        throw new Error(
+            "Para crear login, escribe una contraseña de al menos 6 caracteres"
         );
+    }
 
+    const crearUsuarioEmpleado = httpsCallable(
+        functions,
+        "crearUsuarioEmpleadoV1"
+    );
+
+    try {
         const resultado: any = await crearUsuarioEmpleado({
-            email: nuevoEmpleado.email,
+            email: nuevoEmpleado.email.trim(),
             password: nuevoEmpleado.password,
             nombre: nuevoEmpleado.nombre,
         });
 
+        console.log("resultado crearUsuarioEmpleado:", resultado);
+
         return resultado?.data?.uid || "";
-    };
+    } catch (error: any) {
+        console.error("ERROR CALLABLE COMPLETO:", error);
+        console.error("error.code:", error?.code);
+        console.error("error.message:", error?.message);
+        console.error("error.details:", error?.details);
+
+        throw error;
+    }
+};
 
     const construirEmpleadoParaGuardar = (uidFinal: string) => ({
         id: nuevoEmpleado.id,
@@ -222,7 +233,7 @@ const Empleados: React.FC = () => {
 
     const agregarEmpleado = async () => {
         const requiereLogin =
-            nuevoEmpleado.email.trim() !== "" ||
+            //nuevoEmpleado.email.trim() !== "" ||
             nuevoEmpleado.password.trim() !== "";
 
         if (
@@ -267,10 +278,14 @@ const Empleados: React.FC = () => {
             limpiarFormulario();
         } catch (error: any) {
             console.error("Error completo:", error);
+            console.error("error.code:", error?.code);
+            console.error("error.message:", error?.message);
+            console.error("error.details:", error?.details);
+
             alert(
-                error?.message ||
                 error?.details ||
-                error?.customData?.message ||
+                error?.message ||
+                error?.code ||
                 "Error al crear empleado"
             );
         } finally {
@@ -285,7 +300,7 @@ const Empleados: React.FC = () => {
         }
 
         const requiereLogin =
-            nuevoEmpleado.email.trim() !== "" ||
+            //nuevoEmpleado.email.trim() !== "" ||
             nuevoEmpleado.password.trim() !== "";
 
         if (!nuevoEmpleado.nombre || !nuevoEmpleado.puesto || !nuevoEmpleado.area) {
