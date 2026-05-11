@@ -1,8 +1,10 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { db, functions } from "../firebase/config";
 import { ref, set, remove, update, get, onValue } from "firebase/database";
 import { httpsCallable } from "firebase/functions";
-import "../css/empleados.css"
+import { formatearFechaMX } from "../funciones/formato_fechas";
+import "../css/empleados.css";
+
 interface Empleado {
     id: string;
     nombre: string;
@@ -16,6 +18,16 @@ interface Empleado {
     salario: number;
     diasdevacaciones: number;
     uid?: string;
+
+    fechaIngreso?: string;
+    fechaBaja?: string;
+
+    direccion?: string;
+    numeroExterior?: string;
+    colonia?: string;
+    municipio?: string;
+    estado?: string;
+    cp?: string;
 }
 
 const estadoInicial = {
@@ -31,38 +43,95 @@ const estadoInicial = {
     salario: 0,
     diasdevacaciones: 0,
     uid: "",
+    fechaIngreso: "",
+    fechaBaja: "",
+    direccion: "",
+    numeroExterior: "",
+    colonia: "",
+    municipio: "",
+    estado: "",
+    cp: "",
 };
+
+const puestos = [
+    "Gerente Administrativo",
+    "Gerente Operativo",
+    "Cajera",
+    "Asesor de Ventas",
+    "Auxiliar de Ventas",
+    "Supervisor",
+    "Operador",
+    "Almacenista",
+    "Auxiliar de Almacén",
+];
+
+const areas = ["Mostrador", "Administración", "Almacén", "Producción"];
 
 const Empleados: React.FC = () => {
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
     const [nuevoEmpleado, setNuevoEmpleado] = useState(estadoInicial);
     const [modoEdicion, setModoEdicion] = useState(false);
+    const [modoNuevo, setModoNuevo] = useState(false);
     const [idEditando, setIdEditando] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [busqueda, setBusqueda] = useState("");
 
     useEffect(() => {
         const empleadosRef = ref(db, "RH/Empleados");
-        onValue(empleadosRef, (snapshot) => {
+
+        const unsubscribe = onValue(empleadosRef, (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.val();
-                const empleadosArray = Object.keys(data).map((key) => ({
+
+                const empleadosArray: Empleado[] = Object.keys(data).map((key) => ({
                     id: key,
                     ...data[key],
                 }));
+
                 setEmpleados(empleadosArray);
             } else {
                 setEmpleados([]);
             }
         });
+
+        return () => unsubscribe();
     }, []);
+
+    const empleadosFiltrados = useMemo(() => {
+        const texto = busqueda.toLowerCase().trim();
+
+        return empleados
+            .filter((emp) => {
+                if (!texto) return true;
+
+                return (
+                    emp.nombre?.toLowerCase().includes(texto) ||
+                    emp.username?.toLowerCase().includes(texto) ||
+                    emp.area?.toLowerCase().includes(texto) ||
+                    emp.puesto?.toLowerCase().includes(texto)
+                );
+            })
+            .sort((a, b) => {
+                if (a.activo !== b.activo) return a.activo ? -1 : 1;
+                return (a.nombre || "").localeCompare(b.nombre || "");
+            });
+    }, [empleados, busqueda]);
 
     const limpiarFormulario = () => {
         setNuevoEmpleado(estadoInicial);
         setModoEdicion(false);
+        setModoNuevo(false);
         setIdEditando(null);
     };
 
-    const editarDesdeTabla = (empleado: Empleado) => {
+    const iniciarNuevoEmpleado = () => {
+        setNuevoEmpleado(estadoInicial);
+        setModoNuevo(true);
+        setModoEdicion(false);
+        setIdEditando(null);
+    };
+
+    const cargarEmpleadoEnFormulario = (empleado: Empleado) => {
         setNuevoEmpleado({
             id: empleado.id || "",
             nombre: empleado.nombre || "",
@@ -76,17 +145,32 @@ const Empleados: React.FC = () => {
             salario: Number(empleado.salario || 0),
             diasdevacaciones: Number(empleado.diasdevacaciones || 0),
             uid: empleado.uid || "",
+            fechaIngreso: empleado.fechaIngreso || "",
+            fechaBaja: empleado.fechaBaja || "",
+            direccion: empleado.direccion || "",
+            numeroExterior: empleado.numeroExterior || "",
+            colonia: empleado.colonia || "",
+            municipio: empleado.municipio || "",
+            estado: empleado.estado || "",
+            cp: empleado.cp || "",
         });
 
-        setModoEdicion(true);
+        setModoEdicion(false);
+        setModoNuevo(false);
         setIdEditando(empleado.id);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const seleccionarEmpleado = (empleado: Empleado) => {
+        if (idEditando === empleado.id && !modoEdicion) {
+            limpiarFormulario();
+            return;
+        }
+
+        cargarEmpleadoEnFormulario(empleado);
     };
 
     const crearLoginSiFalta = async () => {
-        if (nuevoEmpleado.uid) {
-            return nuevoEmpleado.uid;
-        }
+        if (nuevoEmpleado.uid) return nuevoEmpleado.uid;
 
         if (!nuevoEmpleado.email) {
             throw new Error("El empleado no tiene correo");
@@ -103,606 +187,615 @@ const Empleados: React.FC = () => {
             "crearUsuarioEmpleadoV1"
         );
 
-        try {
-            const resultado: any = await crearUsuarioEmpleado({
-                email: nuevoEmpleado.email,
-                password: nuevoEmpleado.password,
-                nombre: nuevoEmpleado.nombre,
-            });
+        const resultado: any = await crearUsuarioEmpleado({
+            email: nuevoEmpleado.email,
+            password: nuevoEmpleado.password,
+            nombre: nuevoEmpleado.nombre,
+        });
 
-            console.log("resultado crearUsuarioEmpleado:", resultado);
-            return resultado?.data?.uid || "";
+        return resultado?.data?.uid || "";
+    };
+
+    const construirEmpleadoParaGuardar = (uidFinal: string) => ({
+        id: nuevoEmpleado.id,
+        nombre: nuevoEmpleado.nombre,
+        celular: nuevoEmpleado.celular || "",
+        email: nuevoEmpleado.email || "",
+        username: nuevoEmpleado.username || "",
+        activo: nuevoEmpleado.activo,
+        area: nuevoEmpleado.area,
+        puesto: nuevoEmpleado.puesto,
+        salario: Number(nuevoEmpleado.salario || 0),
+        diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
+        uid: uidFinal,
+
+        fechaIngreso: nuevoEmpleado.fechaIngreso || "",
+        fechaBaja: nuevoEmpleado.fechaBaja || "",
+
+        direccion: nuevoEmpleado.direccion || "",
+        numeroExterior: nuevoEmpleado.numeroExterior || "",
+        colonia: nuevoEmpleado.colonia || "",
+        municipio: nuevoEmpleado.municipio || "",
+        estado: nuevoEmpleado.estado || "",
+        cp: nuevoEmpleado.cp || "",
+    });
+
+    const agregarEmpleado = async () => {
+        const requiereLogin =
+            nuevoEmpleado.email.trim() !== "" ||
+            nuevoEmpleado.password.trim() !== "";
+
+        if (
+            !nuevoEmpleado.id ||
+            !nuevoEmpleado.nombre ||
+            !nuevoEmpleado.puesto ||
+            !nuevoEmpleado.area
+        ) {
+            alert("Completa ID, nombre, área y puesto");
+            return;
+        }
+
+        if (requiereLogin) {
+            if (!nuevoEmpleado.email) {
+                alert("Para crear login necesitas correo");
+                return;
+            }
+
+            if (!nuevoEmpleado.password || nuevoEmpleado.password.length < 6) {
+                alert("Para crear login necesitas contraseña de al menos 6 caracteres");
+                return;
+            }
+        }
+
+        setLoading(true);
+
+        try {
+            const empleadoRef = ref(db, `RH/Empleados/${nuevoEmpleado.id}`);
+            const snapshot = await get(empleadoRef);
+
+            if (snapshot.exists()) {
+                alert("❌ El ID ya está en uso.");
+                return;
+            }
+
+            const uid = requiereLogin ? await crearLoginSiFalta() : "";
+            const empleadoAGuardar = construirEmpleadoParaGuardar(uid);
+
+            await set(empleadoRef, empleadoAGuardar);
+
+            alert("✅ Empleado creado correctamente");
+            limpiarFormulario();
         } catch (error: any) {
-            console.error("ERROR CALLABLE COMPLETO:", error);
-            console.error("error.code:", error?.code);
-            console.error("error.message:", error?.message);
-            console.error("error.details:", error?.details);
-            throw error;
-        }
-    };
-
-const agregarEmpleado = async () => {
-    const requiereLogin =
-        nuevoEmpleado.email.trim() !== "" ||
-        nuevoEmpleado.password.trim() !== "";
-
-    if (
-        !nuevoEmpleado.id ||
-        !nuevoEmpleado.nombre ||
-        !nuevoEmpleado.puesto ||
-        !nuevoEmpleado.area
-    ) {
-        alert("Completa ID, nombre, área y puesto");
-        return;
-    }
-
-    if (requiereLogin) {
-        if (!nuevoEmpleado.email) {
-            alert("Para crear login necesitas correo");
-            return;
-        }
-
-        if (!nuevoEmpleado.password || nuevoEmpleado.password.length < 6) {
-            alert("Para crear login necesitas contraseña de al menos 6 caracteres");
-            return;
-        }
-    }
-
-    setLoading(true);
-
-    try {
-        const empleadoRef = ref(db, `RH/Empleados/${nuevoEmpleado.id}`);
-        const snapshot = await get(empleadoRef);
-
-        if (snapshot.exists()) {
-            alert("❌ El ID ya está en uso.");
+            console.error("Error completo:", error);
+            alert(
+                error?.message ||
+                error?.details ||
+                error?.customData?.message ||
+                "Error al crear empleado"
+            );
+        } finally {
             setLoading(false);
-            return;
         }
-
-        const uid = requiereLogin ? await crearLoginSiFalta() : "";
-
-        const empleadoAGuardar = {
-            id: nuevoEmpleado.id,
-            nombre: nuevoEmpleado.nombre,
-            celular: nuevoEmpleado.celular || "",
-            email: nuevoEmpleado.email || "",
-            username: nuevoEmpleado.username || "",
-            activo: nuevoEmpleado.activo,
-            area: nuevoEmpleado.area,
-            puesto: nuevoEmpleado.puesto,
-            salario: Number(nuevoEmpleado.salario || 0),
-            diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
-            uid,
-        };
-
-        await set(empleadoRef, empleadoAGuardar);
-
-        alert("✅ Empleado creado correctamente");
-        limpiarFormulario();
-    } catch (error: any) {
-        console.error("Error completo:", error);
-        alert(
-            error?.message ||
-            error?.details ||
-            error?.customData?.message ||
-            "Error al crear empleado"
-        );
-    } finally {
-        setLoading(false);
-    }
-};
-
-const guardarEdicion = async () => {
-    if (!idEditando) {
-        alert("No hay empleado seleccionado para editar");
-        return;
-    }
-
-    const requiereLogin =
-        nuevoEmpleado.email.trim() !== "" ||
-        nuevoEmpleado.password.trim() !== "";
-
-    if (
-        !nuevoEmpleado.nombre ||
-        !nuevoEmpleado.puesto ||
-        !nuevoEmpleado.area
-    ) {
-        alert("Completa nombre, área y puesto");
-        return;
-    }
-
-    if (requiereLogin && !nuevoEmpleado.uid) {
-        if (!nuevoEmpleado.email) {
-            alert("Para crear login necesitas correo");
-            return;
-        }
-
-        if (!nuevoEmpleado.password || nuevoEmpleado.password.length < 6) {
-            alert("Para crear login necesitas contraseña de al menos 6 caracteres");
-            return;
-        }
-    }
-
-    setLoading(true);
-
-    try {
-        let uidFinal = nuevoEmpleado.uid || "";
-
-        if (!uidFinal && requiereLogin) {
-            uidFinal = await crearLoginSiFalta();
-        }
-
-        const datosActualizar = {
-            nombre: nuevoEmpleado.nombre,
-            celular: nuevoEmpleado.celular || "",
-            email: nuevoEmpleado.email || "",
-            username: nuevoEmpleado.username || "",
-            activo: nuevoEmpleado.activo,
-            area: nuevoEmpleado.area,
-            puesto: nuevoEmpleado.puesto,
-            salario: Number(nuevoEmpleado.salario || 0),
-            diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
-            uid: uidFinal,
-        };
-
-        await update(ref(db, `RH/Empleados/${idEditando}`), datosActualizar);
-
-        alert("✅ Empleado actualizado correctamente");
-        limpiarFormulario();
-    } catch (error: any) {
-        console.error("Error al editar empleado:", error);
-        alert(error?.message || "Error al actualizar empleado");
-    } finally {
-        setLoading(false);
-    }
-};
-
-    const editarEmpleadoEnTabla = (id: string, campo: string, valor: any) => {
-        setEmpleados((prev) =>
-            prev.map((emp) => (emp.id === id ? { ...emp, [campo]: valor } : emp))
-        );
     };
 
-    const guardarCambiosRapidos = async (id: string) => {
-        const empleado = empleados.find((emp) => emp.id === id);
-        if (!empleado) return;
+    const guardarEdicion = async () => {
+        if (!idEditando) {
+            alert("No hay empleado seleccionado para editar");
+            return;
+        }
+
+        const requiereLogin =
+            nuevoEmpleado.email.trim() !== "" ||
+            nuevoEmpleado.password.trim() !== "";
+
+        if (!nuevoEmpleado.nombre || !nuevoEmpleado.puesto || !nuevoEmpleado.area) {
+            alert("Completa nombre, área y puesto");
+            return;
+        }
+
+        if (requiereLogin && !nuevoEmpleado.uid) {
+            if (!nuevoEmpleado.email) {
+                alert("Para crear login necesitas correo");
+                return;
+            }
+
+            if (!nuevoEmpleado.password || nuevoEmpleado.password.length < 6) {
+                alert("Para crear login necesitas contraseña de al menos 6 caracteres");
+                return;
+            }
+        }
+
+        setLoading(true);
 
         try {
-            const datosActualizar = {
-                nombre: empleado.nombre,
-                celular: empleado.celular,
-                email: empleado.email,
-                username: empleado.username,
-                activo: empleado.activo,
-                area: empleado.area,
-                puesto: empleado.puesto,
-                salario: Number(empleado.salario || 0),
-                diasdevacaciones: Number(empleado.diasdevacaciones || 0),
-            };
+            let uidFinal = nuevoEmpleado.uid || "";
 
-            await update(ref(db, `RH/Empleados/${id}`), datosActualizar);
-        } catch (error) {
-            console.error("Error guardando cambios rápidos:", error);
-            alert("Error al guardar cambios");
+            if (!uidFinal && requiereLogin) {
+                uidFinal = await crearLoginSiFalta();
+            }
+
+            const datosActualizar = construirEmpleadoParaGuardar(uidFinal);
+            const { id, ...datosSinId } = datosActualizar;
+
+            await update(ref(db, `RH/Empleados/${idEditando}`), datosSinId);
+
+            alert("✅ Empleado actualizado correctamente");
+            limpiarFormulario();
+        } catch (error: any) {
+            console.error("Error al editar empleado:", error);
+            alert(error?.message || "Error al actualizar empleado");
+        } finally {
+            setLoading(false);
         }
     };
+
     const eliminarUsuario = httpsCallable(functions, "eliminarUsuarioEmpleado");
+
     const eliminarEmpleado = async (id: string, uid?: string) => {
+        const confirmar = window.confirm("¿Seguro que deseas eliminar este empleado?");
+
+        if (!confirmar) return;
+
         try {
-            // 🔥 primero borra en Auth
             if (uid) {
                 await eliminarUsuario({ uid });
             }
 
-            // 🔥 luego borra en DB
             await remove(ref(db, `RH/Empleados/${id}`));
 
+            if (idEditando === id) {
+                limpiarFormulario();
+            }
+
+            alert("Empleado eliminado");
         } catch (error) {
             console.error("Error eliminando:", error);
             alert("Error al eliminar empleado");
         }
     };
 
+    const guardar = () => {
+        if (modoNuevo) {
+            agregarEmpleado();
+            return;
+        }
+
+        if (idEditando) {
+            guardarEdicion();
+            return;
+        }
+
+        agregarEmpleado();
+    };
+
+    const hayEmpleadoAbierto = modoNuevo || idEditando;
+
     return (
-        <div className="hojaEmpleado">
-            <h2>{modoEdicion ? "Editar Empleado" : "Gestión de Empleados"}</h2>
+        <div className="empleados-page">
+            <div className="empleados-header">
+                <div>
+                    <h2>Recursos Humanos</h2>
+                    <p>Alta, consulta y edición de empleados</p>
+                </div>
 
-            {/* FORMULARIO */}
-            <div className="formContainer">
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        modoEdicion ? guardarEdicion() : agregarEmpleado();
-                    }}
-                    className="empleadoForm"
-                >
-                    <label>
-                        ID:
-                        <input
-                            type="text"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.id}
-                            disabled={modoEdicion}
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, id: e.target.value })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        Nombre:
-                        <input
-                            type="text"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.nombre}
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, nombre: e.target.value })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        Celular:
-                        <input
-                            type="number"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.celular}
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, celular: e.target.value })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        Correo:
-                        <input
-                            type="email"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.email}
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, email: e.target.value })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        Contraseña:
-                        <input
-                            type="password"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.password}
-                            placeholder={
-                                modoEdicion
-                                    ? nuevoEmpleado.uid
-                                        ? "Ya tiene login"
-                                        : "Escribe contraseña para crear login"
-                                    : "Mínimo 6 caracteres"
-                            }
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, password: e.target.value })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        Username:
-                        <input
-                            type="text"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.username}
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, username: e.target.value })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        Puesto (Rol):
-                        <select
-                            className="selectEmpleado"
-                            value={nuevoEmpleado.puesto}
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, puesto: e.target.value })
-                            }
-                        >
-                            <option value="">Seleccione</option>
-                            <option value="Gerente Administrativo">
-                                Gerente Administrativo
-                            </option>
-                            <option value="Gerente Operativo">Gerente Operativo</option>
-                            <option value="Cajera">Cajera</option>
-                            <option value="Asesor de Ventas">Asesor de Ventas</option>
-                            <option value="Auxiliar de Ventas">Auxiliar de Ventas</option>
-                            <option value="Supervisor">Supervisor</option>
-                            <option value="Operador">Operador</option>
-                            <option value="Almacenista">Almacenista</option>
-                            <option value="Auxiliar de Almacén">Auxiliar de Almacén</option>
-                        </select>
-                    </label>
-
-                    <label className="checkboxLabel">
-                        Activo:
-                        <input
-                            type="checkbox"
-                            checked={nuevoEmpleado.activo}
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, activo: e.target.checked })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        Área:
-                        <select
-                            className="selectEmpleado"
-                            value={nuevoEmpleado.area|| ""}
-                            onChange={(e) =>
-                                setNuevoEmpleado({ ...nuevoEmpleado, area: e.target.value })
-                            }
-                        >
-                            <option value="">Seleccione un área</option>
-                            <option value="Mostrador">Mostrador</option>
-                            <option value="Administración">Administración</option>
-                            <option value="Almacén">Almacén</option>
-                            <option value="Producción">Producción</option>
-                        </select>
-                    </label>
-
-                    <label>
-                        Salario:
-                        <input
-                            type="number"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.salario}
-                            onChange={(e) =>
-                                setNuevoEmpleado({
-                                    ...nuevoEmpleado,
-                                    salario: Number(e.target.value),
-                                })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        Vacaciones:
-                        <input
-                            type="number"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.diasdevacaciones}
-                            onChange={(e) =>
-                                setNuevoEmpleado({
-                                    ...nuevoEmpleado,
-                                    diasdevacaciones: Number(e.target.value),
-                                })
-                            }
-                        />
-                    </label>
-
-                    <label>
-                        UID:
-                        <input
-                            type="text"
-                            className="inputEmpleado"
-                            value={nuevoEmpleado.uid || ""}
-                            disabled
-                        />
-                    </label>
-                </form>
-            </div>
-
-            <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-                <button
-                    className="botonEmpleado"
-                    onClick={modoEdicion ? guardarEdicion : agregarEmpleado}
-                    disabled={loading}
-                >
-                    {loading
-                        ? "Guardando..."
-                        : modoEdicion
-                            ? "Guardar Cambios"
-                            : "Agregar Empleado"}
+                <button className="btn btn-green" onClick={iniciarNuevoEmpleado}>
+                    + Nuevo empleado
                 </button>
-
-                {modoEdicion && (
-                    <button className="botonEmpleado" onClick={limpiarFormulario}>
-                        Cancelar Edición
-                    </button>
-                )}
             </div>
 
-            {/* TABLA */}
-            <div className="table-scroll">
-                <table className="caja-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Celular</th>
-                            <th>Email</th>
-                            <th>Username</th>
-                            <th>Puesto</th>
-                            <th>Activo</th>
-                            <th>Área</th>
-                            <th>Salario</th>
-                            <th>Vacaciones</th>
-                            <th>UID</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {empleados.map((empleado) => (
-                            <tr key={empleado.id}>
-                                <td>
-                                     <p><strong>{empleado.id}</strong></p>
-                                </td>
-
-                                <td>
-                                    <input
-                                        value={empleado.nombre}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(
-                                                empleado.id,
-                                                "nombre",
-                                                e.target.value
-                                            )
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
+            <div className="empleados-layout">
+                <section className="empleado-ficha">
+                    {!hayEmpleadoAbierto ? (
+                        <div className="empleado-empty">
+                            <h3>Selecciona un empleado</h3>
+                            <p>
+                                Da click en la lista de la derecha para abrir su ficha.
+                                Si das click otra vez, se cierra.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="empleado-ficha-header">
+                                <div className="empleado-nombre-status">
+                                    <span
+                                        className={`empleado-status-dot ${
+                                            nuevoEmpleado.activo ? "activo" : "inactivo"
+                                        }`}
                                     />
-                                </td>
 
-                                <td>
-                                    <input
-                                        value={empleado.celular || ""}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(
-                                                empleado.id,
-                                                "celular",
-                                                e.target.value
-                                            )
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
-                                    />
-                                </td>
+                                    <div>
+                                        <h3>
+                                            {modoNuevo
+                                                ? "Nuevo empleado"
+                                                : nuevoEmpleado.nombre || "Empleado"}
+                                        </h3>
+                                        <p>
+                                            {nuevoEmpleado.activo ? "Activo" : "Inactivo / Baja"}
+                                        </p>
+                                    </div>
+                                </div>
 
-                                <td>
-                                    <input
-                                        value={empleado.email || ""}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(
-                                                empleado.id,
-                                                "email",
-                                                e.target.value
-                                            )
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
-                                    />
-                                </td>
-
-                                <td>
-                                    <input
-                                        value={empleado.username || ""}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(
-                                                empleado.id,
-                                                "username",
-                                                e.target.value
-                                            )
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
-                                    />
-                                </td>
-
-                                <td>
-                                    <select
-                                        value={empleado.puesto}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(
-                                                empleado.id,
-                                                "puesto",
-                                                e.target.value
-                                            )
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
+                                {!modoNuevo && (
+                                    <button
+                                        className="btn btn-blue"
+                                        onClick={() => setModoEdicion((prev) => !prev)}
                                     >
-                                        <option value="Gerente Administrativo">
-                                            Gerente Administrativo
-                                        </option>
-                                        <option value="Gerente Operativo">Gerente Operativo</option>
-                                        <option value="Cajera">Cajera</option>
-                                        <option value="Asesor de Ventas">Asesor de Ventas</option>
-                                        <option value="Auxiliar de Ventas">
-                                            Auxiliar de Ventas
-                                        </option>
-                                        <option value="Supervisor">Supervisor</option>
-                                        <option value="Operador">Operador</option>
-                                        <option value="Almacenista">Almacenista</option>
-                                        <option value="Auxiliar de Almacén">
-                                            Auxiliar de Almacén
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <input
-                                        type="checkbox"
-                                        checked={empleado.activo}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(
-                                                empleado.id,
-                                                "activo",
-                                                e.target.checked
-                                            )
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
-                                    />
-                                </td>
-
-                                <td>
-                                    <select
-                                        value={empleado.area || ""}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(empleado.id, "area", e.target.value)
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
-                                    >
-                                        <option value="">Seleccione</option>
-                                        <option value="Mostrador">Mostrador</option>
-                                        <option value="Administración">Administración</option>
-                                        <option value="Almacén">Almacén</option>
-                                        <option value="Producción">Producción</option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <input
-                                        type="number"
-                                        value={empleado.salario}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(
-                                                empleado.id,
-                                                "salario",
-                                                Number(e.target.value)
-                                            )
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
-                                    />
-                                </td>
-
-                                <td>
-                                    <input
-                                        type="number"
-                                        value={empleado.diasdevacaciones}
-                                        onChange={(e) =>
-                                            editarEmpleadoEnTabla(
-                                                empleado.id,
-                                                "diasdevacaciones",
-                                                Number(e.target.value)
-                                            )
-                                        }
-                                        onBlur={() => guardarCambiosRapidos(empleado.id)}
-                                    />
-                                </td>
-
-                                <td>
-                                    <p>{empleado.uid || ""}</p>
-                                </td>
-
-                                <td >
-                                    <button className="btn btn-yellow" onClick={() => editarDesdeTabla(empleado)}>
-                                        Editar
+                                        {modoEdicion ? "Ver ficha" : "Editar"}
                                     </button>
+                                )}
+                            </div>
 
-                                    <button className="btn btn-red" onClick={() => eliminarEmpleado(empleado.id, empleado.uid)}>
+                            <div className="empleado-form-grid">
+                                <Campo
+                                    label="ID"
+                                    value={nuevoEmpleado.id}
+                                    editar={modoNuevo}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, id: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Nombre"
+                                    value={nuevoEmpleado.nombre}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, nombre: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Username"
+                                    value={nuevoEmpleado.username}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, username: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Celular"
+                                    value={nuevoEmpleado.celular}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, celular: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Correo"
+                                    type="email"
+                                    value={nuevoEmpleado.email}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, email: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Contraseña"
+                                    type="password"
+                                    value={nuevoEmpleado.password}
+                                    editar={modoNuevo || modoEdicion}
+                                    placeholder={
+                                        nuevoEmpleado.uid
+                                            ? "Ya tiene login"
+                                            : "Mínimo 6 caracteres para crear login"
+                                    }
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, password: v })
+                                    }
+                                />
+
+                                <CampoSelect
+                                    label="Área"
+                                    value={nuevoEmpleado.area}
+                                    editar={modoNuevo || modoEdicion}
+                                    options={areas}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, area: v })
+                                    }
+                                />
+
+                                <CampoSelect
+                                    label="Puesto"
+                                    value={nuevoEmpleado.puesto}
+                                    editar={modoNuevo || modoEdicion}
+                                    options={puestos}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, puesto: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Salario"
+                                    type="number"
+                                    value={nuevoEmpleado.salario}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({
+                                            ...nuevoEmpleado,
+                                            salario: Number(v),
+                                        })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Días de vacaciones"
+                                    type="number"
+                                    value={nuevoEmpleado.diasdevacaciones}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({
+                                            ...nuevoEmpleado,
+                                            diasdevacaciones: Number(v),
+                                        })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Fecha ingreso"
+                                    type="date"
+                                    value={nuevoEmpleado.fechaIngreso}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({
+                                            ...nuevoEmpleado,
+                                            fechaIngreso: v,
+                                        })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Fecha baja"
+                                    type="date"
+                                    value={nuevoEmpleado.fechaBaja}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({
+                                            ...nuevoEmpleado,
+                                            fechaBaja: v,
+                                            activo: v ? false : nuevoEmpleado.activo,
+                                        })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Dirección"
+                                    value={nuevoEmpleado.direccion}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, direccion: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Número exterior"
+                                    value={nuevoEmpleado.numeroExterior}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({
+                                            ...nuevoEmpleado,
+                                            numeroExterior: v,
+                                        })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Colonia"
+                                    value={nuevoEmpleado.colonia}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, colonia: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Municipio"
+                                    value={nuevoEmpleado.municipio}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, municipio: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="Estado"
+                                    value={nuevoEmpleado.estado}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, estado: v })
+                                    }
+                                />
+
+                                <Campo
+                                    label="CP"
+                                    value={nuevoEmpleado.cp}
+                                    editar={modoNuevo || modoEdicion}
+                                    onChange={(v: string) =>
+                                        setNuevoEmpleado({ ...nuevoEmpleado, cp: v })
+                                    }
+                                />
+
+                                <div className="campo">
+                                    <label className="campo-label">Activo</label>
+
+                                    {modoNuevo || modoEdicion ? (
+                                        <label className="empleado-check-activo">
+                                            <input
+                                                type="checkbox"
+                                                checked={nuevoEmpleado.activo}
+                                                onChange={(e) =>
+                                                    setNuevoEmpleado({
+                                                        ...nuevoEmpleado,
+                                                        activo: e.target.checked,
+                                                    })
+                                                }
+                                            />
+                                            {nuevoEmpleado.activo ? "Activo" : "Inactivo"}
+                                        </label>
+                                    ) : (
+                                        <p>{nuevoEmpleado.activo ? "Sí" : "No"}</p>
+                                    )}
+                                </div>
+
+                                <Campo
+                                    label="UID"
+                                    value={nuevoEmpleado.uid}
+                                    editar={false}
+                                    onChange={() => {}}
+                                />
+                            </div>
+
+                            <div className="empleado-actions">
+                                {(modoNuevo || modoEdicion) && (
+                                    <button
+                                        className="btn btn-green"
+                                        onClick={guardar}
+                                        disabled={loading}
+                                    >
+                                        {loading
+                                            ? "Guardando..."
+                                            : modoNuevo
+                                                ? "Agregar empleado"
+                                                : "Guardar cambios"}
+                                    </button>
+                                )}
+
+                                {!modoNuevo && idEditando && (
+                                    <button
+                                        className="btn btn-red"
+                                        onClick={() =>
+                                            eliminarEmpleado(idEditando, nuevoEmpleado.uid)
+                                        }
+                                    >
                                         Eliminar
                                     </button>
-                                </td>
-                            </tr>
+                                )}
+
+                                <button className="btn btn-purple" onClick={limpiarFormulario}>
+                                    Cerrar
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </section>
+
+                <aside className="empleados-sidebar">
+                    <div className="empleados-sidebar-header">
+                        <h3>Empleados</h3>
+                        <span>{empleados.length}</span>
+                    </div>
+
+                    <input
+                        className="empleados-search"
+                        placeholder="Buscar empleado..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                    />
+
+                    <div className="empleados-lista">
+                        {empleadosFiltrados.map((empleado) => (
+                            <button
+                                key={empleado.id}
+                                className={`empleado-list-item ${
+                                    idEditando === empleado.id ? "seleccionado" : ""
+                                }`}
+                                onClick={() => seleccionarEmpleado(empleado)}
+                            >
+                                <span
+                                    className={`empleado-status-dot ${
+                                        empleado.activo ? "activo" : "inactivo"
+                                    }`}
+                                />
+
+                                <div className="empleado-list-info">
+                                    <strong>{empleado.nombre || "Sin nombre"}</strong>
+                                    <small>@{empleado.username || empleado.id}</small>
+                                    <span>
+                                        {empleado.area || "Sin área"} /{" "}
+                                        {empleado.puesto || "Sin puesto"}
+                                    </span>
+                                </div>
+                            </button>
                         ))}
-                    </tbody>
-                </table>
+                    </div>
+                </aside>
             </div>
+        </div>
+    );
+};
+
+type CampoProps = {
+    label: string;
+    value: any;
+    editar: boolean;
+    onChange: (value: string) => void;
+    type?: string;
+    placeholder?: string;
+};
+
+const Campo = ({
+    label,
+    value,
+    editar,
+    onChange,
+    type = "text",
+    placeholder = "",
+}: CampoProps) => {
+    return (
+        <div className="campo">
+            <label className="campo-label">{label}</label>
+
+            {editar ? (
+                <input
+                    type={type}
+                    value={value ?? ""}
+                    placeholder={placeholder}
+                    onChange={(e) => onChange(e.target.value)}
+                />
+            ) : (
+                <p>
+                    {type === "date" && value
+                        ? formatearFechaMX(value)
+                        : value || "-"}
+                </p>
+            )}
+        </div>
+    );
+};
+
+type CampoSelectProps = {
+    label: string;
+    value: string;
+    editar: boolean;
+    options: string[];
+    onChange: (value: string) => void;
+};
+
+const CampoSelect = ({
+    label,
+    value,
+    editar,
+    options,
+    onChange,
+}: CampoSelectProps) => {
+    return (
+        <div className="campo">
+            <label className="campo-label">{label}</label>
+
+            {editar ? (
+                <select value={value || ""} onChange={(e) => onChange(e.target.value)}>
+                    <option value="">Seleccione</option>
+                    {options.map((option) => (
+                        <option key={option} value={option}>
+                            {option}
+                        </option>
+                    ))}
+                </select>
+            ) : (
+                <p>{value || "-"}</p>
+            )}
         </div>
     );
 };
