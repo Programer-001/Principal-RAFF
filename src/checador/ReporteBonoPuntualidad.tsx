@@ -2,6 +2,7 @@
 import { onValue, ref } from "firebase/database";
 import { db } from "../firebase/config";
 import {
+    calcularEstadoEntrada,
     calcularEstadoDia,
     calcularResumenSemanal,
     EstadoAsistencia,
@@ -250,31 +251,37 @@ const ReporteBonoPuntualidad: React.FC = () => {
         return registrosPorFecha[fecha]?.[empleadoId];
     };
 
-const obtenerEstado = (
-    fecha: string,
-    empleadoId: string,
-    registro?: RegistroDia
-): EstadoAsistencia | "incompleto" => {
+    const obtenerEstado = (
+        fecha: string,
+        empleadoId: string,
+        registro?: RegistroDia
+    ): EstadoAsistencia => {
 
-    const permiso = obtenerPermisoEmpleado(
-        fecha,
-        empleadoId
-    );
+        const permiso = obtenerPermisoEmpleado(
+            fecha,
+            empleadoId
+        );
 
-    // Si no hay entrada pero sí permiso
-    if (!registro?.entrada && permiso) {
-        return "permiso";
-    }
+        // Permiso sin checada
+        if (!registro?.entrada && permiso) {
+            return "permiso";
+        }
 
-    return calcularEstadoDia(
-        registro?.entrada,
-        registro?.totalChecadas ??
-            registro?.checadas?.length ??
-            0,
-        registro?.ultimaChecada,
-        permiso
-    );
-};
+        // Sin checada
+        if (!registro?.entrada) {
+            return "falta";
+        }
+
+        // Entrada tarde autorizada
+        if (permiso?.tipo === "entrada_tarde") {
+            return "puntual_sin_bono";
+        }
+
+        // Estado normal
+        return calcularEstadoEntrada(
+            registro.entrada
+        );
+    };
 
     const toggleEmpleado = (id: string) => {
         setEmpleadosSeleccionados((prev) =>
