@@ -109,6 +109,9 @@ const Calendario = () => {
                     </div>
 
                     <div className="cal-header-right">
+                        <button className="cal-vista-btn">
+                            Año
+                        </button>
 
                         <button className="cal-vista-btn activa">
                             Mes
