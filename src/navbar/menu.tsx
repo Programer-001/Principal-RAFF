@@ -7,6 +7,8 @@ import { crearNotificacionSistema } from "../Notificaciones/centralNotificacione
 import { marcarNotificacionVista } from "../Notificaciones/marcarNotificacionVista";
 import { ReactComponent as Campana } from "../Imagenes/svg/notificaciones/campana.svg";
 import { ReactComponent as Calendario } from "../Imagenes/svg/calendario/calendario.svg";
+import { EventoCalendario } from "../Calendario/tipos";
+import { escucharEventosUsuario } from "../Calendario/firebaseCalendario";
 import { obtenerMenuPorPerfil } from "./menuConfig";
 import "../css/menu.css";
 
@@ -29,6 +31,7 @@ const Menu = ({ vista, setVista }: Props) => {
     const [perfil, setPerfil] = useState<EmpleadoPerfil | null>(null);
     const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
     const [calendarioAbierto, setCalendarioAbierto] = useState(false);
+    const [eventosCalendario, setEventosCalendario] = useState<EventoCalendario[]>([]);
     const [notificaciones, setNotificaciones] = useState<NotificacionSistema[]>([]);
     const notiRef = useRef<HTMLDivElement>(null);
 
@@ -122,7 +125,30 @@ const Menu = ({ vista, setVista }: Props) => {
 
         return () => unsub();
     }, [user?.uid]);
+    // Escuchar eventos del calendario para el usuario
+    useEffect(() => {
+        if (!user?.uid) {
+            setEventosCalendario([]);
+            return;
+        }
 
+        const unsub = escucharEventosUsuario(user.uid, setEventosCalendario);
+
+        return () => unsub();
+    }, [user?.uid]);
+    const fechaHoy = new Date()
+    .toISOString()
+    .split("T")[0];
+    // Filtrar eventos del calendario para hoy
+    const eventosHoy = eventosCalendario
+        .filter((evento) => evento.fechaInicio === fechaHoy)
+        .sort((a, b) => {
+            const horaA = a.horaInicio || "00:00";
+            const horaB = b.horaInicio || "00:00";
+
+            return horaA.localeCompare(horaB);
+        });
+    // Función para cerrar sesión
     const cerrarSesion = async () => {
         try {
             localStorage.clear();
@@ -243,21 +269,22 @@ const Menu = ({ vista, setVista }: Props) => {
                             Eventos de hoy
                         </div>
 
-                        <div className="menu-calendario-lista">
-
+                        {eventosHoy.length === 0 ? (
                             <div className="menu-calendario-item">
-                                Junta producción - 9:00 AM
+                                Sin eventos hoy
                             </div>
-
-                            <div className="menu-calendario-item">
-                                Entrega cliente - 1:00 PM
-                            </div>
-
-                            <div className="menu-calendario-item permiso">
-                                Luis no asiste
-                            </div>
-
-                        </div>
+                        ) : (
+                            eventosHoy.slice(0, 5).map((evento) => (
+                                <div
+                                    key={evento.id}
+                                    className={`menu-calendario-item ${evento.tipo}`}
+                                >
+                                    {evento.todoElDia
+                                        ? evento.titulo
+                                        : `${evento.titulo} - ${evento.horaInicio}`}
+                                </div>
+                            ))
+                        )}
 
                         <div
                             className="menu-calendario-footer"
