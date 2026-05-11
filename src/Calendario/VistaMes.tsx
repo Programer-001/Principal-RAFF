@@ -4,7 +4,7 @@ import {
     nombresDias,
     obtenerDiasDelMes,
 } from "./helpers";
-
+import { fechaLocalDesdeDate } from "../funciones/formato_fechas";
 import { EventoCalendario } from "./tipos";
 
 type Props = {
@@ -13,9 +13,10 @@ type Props = {
     eventos: EventoCalendario[];
     fechaSeleccionada: string;
     onSeleccionarFecha: (fecha: string) => void;
+    onSeleccionarEvento: (evento: EventoCalendario) => void;
 };
 
-    const VistaMes = ({ year, month, eventos, fechaSeleccionada, onSeleccionarFecha }: Props) => {
+    const VistaMes = ({ year, month, eventos, fechaSeleccionada, onSeleccionarFecha, onSeleccionarEvento }: Props) => {
     const dias = obtenerDiasDelMes(year, month);
 
     return (
@@ -39,9 +40,7 @@ type Props = {
                         );
                     }
 
-                    const fechaDia = item.fecha
-                        .toISOString()
-                        .split("T")[0];
+                    const fechaDia = fechaLocalDesdeDate(item.fecha);
 
                     const eventosDelDia = eventos.filter(
                         (evento) => evento.fechaInicio === fechaDia
@@ -62,11 +61,15 @@ type Props = {
                             </div>
 
                             {eventosDelDia.slice(0, 3).map((evento) => (
-                                <div
-                                    key={evento.id}
-                                    className={`cal-evento-demo ${evento.tipo}`}
-                                    title={evento.titulo}
-                                >
+                            <div
+                                key={evento.id}
+                                className={`cal-evento-demo ${evento.tipo}`}
+                                title={evento.titulo}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSeleccionarEvento(evento);
+                                }}
+                            >
                                     {evento.todoElDia
                                         ? evento.titulo
                                         : `${evento.horaInicio || ""} ${evento.titulo}`}

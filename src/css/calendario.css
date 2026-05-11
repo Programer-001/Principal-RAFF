@@ -7,7 +7,7 @@
     padding: 18px;
     background: #f3f4f6;
     display: grid;
-    grid-template-columns: 290px 1fr;
+    grid-template-columns: 290px 1fr auto;
     gap: 18px;
     box-sizing: border-box;
 }
@@ -480,4 +480,92 @@
         overflow-y: auto;
     }
 
+}
+
+/* =========================
+   DETALLE EVENTO
+========================= */
+
+.cal-detalle {
+    width: 330px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #e5e7eb;
+    border-radius: 28px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    height: calc(100vh - 110px);
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.cal-detalle-header {
+    padding: 20px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cal-detalle-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.cal-detalle-cerrar {
+    border: none;
+    background: #f3f4f6;
+    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+}
+
+.cal-detalle-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.cal-detalle-item {
+    margin-bottom: 18px;
+}
+
+.cal-detalle-item strong {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.cal-detalle-item span,
+.cal-detalle-item p {
+    margin: 0;
+    font-size: 14px;
+    color: #111827;
+}
+
+.cal-detalle-footer {
+    padding: 16px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    gap: 10px;
+}
+
+.cal-btn-danger {
+    border: none;
+    background: #fee2e2;
+    color: #b91c1c;
+    border-radius: 999px;
+    padding: 12px 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cal-btn-danger:hover {
+    background: #ef4444;
+    color: white;
 }

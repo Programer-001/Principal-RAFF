@@ -5,6 +5,9 @@ import { auth } from "../firebase/config";
 import { EventoCalendario } from "./tipos";
 import { escucharEventosUsuario } from "./firebaseCalendario";
 import CrearEventoModal from "./CrearEventoModal";
+import PanelEventos from "./PanelEventos";
+import DetalleEvento from "./DetalleEvento";
+import {  obtenerFechaLocal, formatearFechaMX,} from "../funciones/formato_fechas";
 import "../css/calendario.css";
 
 import VistaMes from "./VistaMes";
@@ -15,45 +18,28 @@ import {
 
 const Calendario = () => {
 
-    const hoy = new Date();
    const [eventos, setEventos] = useState<EventoCalendario[]>([]);
-    
+   const [eventoSeleccionado, setEventoSeleccionado] =useState<EventoCalendario | null>(null);
 
     const [fechaActual, setFechaActual] = useState(
         new Date()
     );
     const [fechaSeleccionada, setFechaSeleccionada] = useState(
-    new Date().toISOString().split("T")[0]
+        obtenerFechaLocal()
     );
     const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
     const year = fechaActual.getFullYear();
     const month = fechaActual.getMonth();
-    const fechaHoy = hoy.toISOString().split("T")[0];
-    const fechaSeleccionadaDate = new Date(
-        `${fechaSeleccionada}T00:00:00`
-    );
 
-    const nombreDiaSeleccionado =
-        fechaSeleccionadaDate.toLocaleDateString("es-MX", {
-            weekday: "long",
-        });
 
-    const numeroDiaSeleccionado =
-        fechaSeleccionadaDate.getDate();
-    const eventosHoy = eventos
-        .filter((evento) => evento.fechaInicio === fechaHoy)
+
+    const eventosFechaSeleccionada = eventos
+        .filter((evento) => evento.fechaInicio === fechaSeleccionada)
         .sort((a, b) => {
             const horaA = a.horaInicio || "00:00";
             const horaB = b.horaInicio || "00:00";
             return horaA.localeCompare(horaB);
         });
-    const eventosFechaSeleccionada = eventos
-    .filter((evento) => evento.fechaInicio === fechaSeleccionada)
-    .sort((a, b) => {
-        const horaA = a.horaInicio || "00:00";
-        const horaB = b.horaInicio || "00:00";
-        return horaA.localeCompare(horaB);
-    });
     const siguienteMes = () => {
         setFechaActual(
             new Date(year, month + 1, 1)
@@ -65,63 +51,34 @@ const Calendario = () => {
             new Date(year, month - 1, 1)
         );
     };
-useEffect(() => {
-    const usuario = auth.currentUser;
+    // Escuchar eventos del usuario en tiempo real
+    useEffect(() => {
+        const usuario = auth.currentUser;
 
-    if (!usuario?.uid) return;
+        if (!usuario?.uid) return;
 
-    const unsub = escucharEventosUsuario(usuario.uid, setEventos);
+        const unsub = escucharEventosUsuario(usuario.uid, setEventos);
 
-    return () => unsub();
-}, []);
+        return () => unsub();
+    }, []);
+    // Función para manejar la selección de un evento desde la lista lateral
+    const manejarSeleccionEvento = (evento: EventoCalendario) => {
+        setEventoSeleccionado((actual) =>
+            actual?.id === evento.id ? null : evento
+        );
+    };
 
 //HTML
     return (
         <div className="cal-layout">
 
             {/* SIDEBAR */}
-            <aside className="cal-sidebar">
-
-                <button
-                    className="cal-btn-crear"
-                    onClick={() => setModalCrearAbierto(true)}
-                >
-                    + Nuevo evento
-                </button>
-                <div className="cal-mini-card">
-
-                    <span className="cal-mini-label">
-                        {nombreDiaSeleccionado}
-                    </span>
-
-                    <span className="cal-mini-dia">
-                        {numeroDiaSeleccionado}
-                    </span>
-
-                </div>
-
-                <div className="cal-sidebar-section">
-                <h3>Eventos</h3>
-
-                    {eventosFechaSeleccionada.length === 0 ? (
-                        <div className="cal-sidebar-vacio">
-                            Sin eventos para hoy
-                        </div>
-                    ) : (
-                        eventosFechaSeleccionada.map((evento) => (
-                            <div
-                                key={evento.id}
-                                className={`cal-evento-side ${evento.tipo}`}
-                            >
-                                {evento.todoElDia
-                                    ? evento.titulo
-                                    : `${evento.horaInicio || ""} ${evento.titulo}`}
-                            </div>
-                        ))
-                    )}
-                </div>
-
-            </aside>
+            <PanelEventos
+                fechaSeleccionada={fechaSeleccionada}
+                eventosFechaSeleccionada={eventosFechaSeleccionada}
+                onCrearEvento={() => setModalCrearAbierto(true)}
+                onSeleccionarEvento={manejarSeleccionEvento}
+            />
 
             {/* CONTENIDO */}
             <main className="cal-main">
@@ -176,12 +133,19 @@ useEffect(() => {
                     eventos={eventos}
                     fechaSeleccionada={fechaSeleccionada}
                     onSeleccionarFecha={setFechaSeleccionada}
+                    onSeleccionarEvento={manejarSeleccionEvento}
                 />
             </main>
+            {/* DETALLE EVENTO */}
+            <DetalleEvento
+                evento={eventoSeleccionado}
+                onClose={() => setEventoSeleccionado(null)}
+            />
+            {/* MODAL CREAR EVENTO */}
             <CrearEventoModal
-            abierto={modalCrearAbierto}
-            onClose={() => setModalCrearAbierto(false)}
-        />
+                abierto={modalCrearAbierto}
+                onClose={() => setModalCrearAbierto(false)}
+            />
         </div>
     );
 };

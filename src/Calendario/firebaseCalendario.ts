@@ -14,10 +14,10 @@ calendario_eventos
     visiblePara
 
 */
-import { push, ref, set, onValue } from "firebase/database";
+import { push, ref, set, onValue,remove } from "firebase/database";
 import { db } from "../firebase/config";
 import { EventoCalendario } from "./tipos";
-
+// Función para crear un nuevo evento en Firebase
 export const crearEventoCalendario = async (
     evento: Omit<EventoCalendario, "id">
 ) => {
@@ -33,6 +33,8 @@ export const crearEventoCalendario = async (
     return nuevaRef.key;
     
 };
+
+// Función para escuchar eventos del usuario en tiempo real
 export const escucharEventosUsuario = (
     uid: string,
     callback: (eventos: EventoCalendario[]) => void
@@ -55,5 +57,19 @@ export const escucharEventosUsuario = (
         callback(lista);
 
     });
+
+};
+
+// Función para eliminar un evento por su ID
+export const eliminarEventoCalendario = async (
+    eventoId: string
+) => {
+
+    const eventoRef = ref(
+        db,
+        `calendario_eventos/${eventoId}`
+    );
+
+    await remove(eventoRef);
 
 };
