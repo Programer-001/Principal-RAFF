@@ -7,9 +7,12 @@ import { escucharEventosUsuario } from "./firebaseCalendario";
 import CrearEventoModal from "./CrearEventoModal";
 import PanelEventos from "./PanelEventos";
 import DetalleEvento from "./DetalleEvento";
-import {  obtenerFechaLocal, formatearFechaMX,} from "../funciones/formato_fechas";
+import {  obtenerFechaLocal, formatearFechaMX,fechaLocalDesdeDate} from "../funciones/formato_fechas";
 import "../css/calendario.css";
 
+import VistaAnio from "./VistaAnio";
+import VistaSemana from "./VistaSemana";
+import VistaDia from "./VistaDia";
 import VistaMes from "./VistaMes";
 
 import {
@@ -21,6 +24,11 @@ const Calendario = () => {
    const [eventos, setEventos] = useState<EventoCalendario[]>([]);
    const [eventoSeleccionado, setEventoSeleccionado] =useState<EventoCalendario | null>(null);
     const [eventoEditar, setEventoEditar] = useState<EventoCalendario | null>(null);
+    const [busqueda, setBusqueda] = useState("");
+    
+const [vistaActiva, setVistaActiva] = useState<
+    "mes" | "dia" | "semana" | "anio"
+>("mes");
     const [fechaActual, setFechaActual] = useState(
         new Date()
     );
@@ -40,13 +48,85 @@ const Calendario = () => {
             const horaB = b.horaInicio || "00:00";
             return horaA.localeCompare(horaB);
         });
-    const siguienteMes = () => {
+
+    const manejarSeleccionFecha = (fecha: string) => {
+    setFechaSeleccionada(fecha);
+    setFechaActual(new Date(`${fecha}T00:00:00`));
+        };
+
+    const siguientePeriodo = () => {
+
+        if (vistaActiva === "dia") {
+            const nuevaFecha = new Date(
+                year,
+                month,
+                fechaActual.getDate() + 1
+            );
+
+            setFechaActual(nuevaFecha);
+            setFechaSeleccionada(fechaLocalDesdeDate(nuevaFecha));
+
+            return;
+        }
+
+        if (vistaActiva === "semana") {
+            setFechaActual(
+                new Date(
+                    year,
+                    month,
+                    fechaActual.getDate() + 7
+                )
+            );
+
+            return;
+        }
+            if (vistaActiva === "anio") {
+                setFechaActual(
+                    new Date(year + 1, 0, 1)
+                );
+
+                return;
+            }
+
         setFechaActual(
             new Date(year, month + 1, 1)
         );
     };
 
-    const anteriorMes = () => {
+    const anteriorPeriodo = () => {
+
+        if (vistaActiva === "dia") {
+            const nuevaFecha = new Date(
+                year,
+                month,
+                fechaActual.getDate() - 1
+            );
+
+            setFechaActual(nuevaFecha);
+            setFechaSeleccionada(fechaLocalDesdeDate(nuevaFecha));
+
+            return;
+        }
+
+        if (vistaActiva === "semana") {
+            setFechaActual(
+                new Date(
+                    year,
+                    month,
+                    fechaActual.getDate() - 7
+                )
+            );
+
+            return;
+        }
+        if (vistaActiva === "anio") {
+            setFechaActual(
+                new Date(year - 1, 0, 1)
+            );
+
+            return;
+        }
+
         setFechaActual(
             new Date(year, month - 1, 1)
         );
@@ -67,6 +147,25 @@ const Calendario = () => {
             actual?.id === evento.id ? null : evento
         );
     };
+// Filtrar eventos según la búsqueda
+    const eventosFiltradosBusqueda = eventos.filter(
+    (evento) => {
+
+        const texto = `
+            ${evento.titulo}
+            ${evento.descripcion || ""}
+        `.toLowerCase();
+
+        return texto.includes(
+            busqueda.toLowerCase()
+        );
+    }
+    );
+// Limitar resultados de búsqueda a 8 para no saturar la interfaz
+const resultadosBusqueda = busqueda.trim()
+    ? eventosFiltradosBusqueda.slice(0, 8)
+    : [];
+
 
 //HTML
     return (
@@ -90,14 +189,14 @@ const Calendario = () => {
 
                         <button
                             className="cal-nav-btn"
-                            onClick={anteriorMes}
+                           onClick={anteriorPeriodo}
                         >
                             ‹
                         </button>
 
                         <button
                             className="cal-nav-btn"
-                            onClick={siguienteMes}
+                            onClick={siguientePeriodo}
                         >
                             ›
                         </button>
@@ -109,19 +208,74 @@ const Calendario = () => {
                     </div>
 
                     <div className="cal-header-right">
-                        <button className="cal-vista-btn">
+                        <div className="cal-header-search">
+
+                            <input
+                                type="text"
+                                placeholder="Buscar evento..."
+                                value={busqueda}
+                                onChange={(e) => {
+                                    setBusqueda(e.target.value);
+                                }}
+                            />
+
+                            {resultadosBusqueda.length > 0 && (
+                        <div className="cal-busqueda-resultados">
+                            {resultadosBusqueda.map((evento) => (
+                                <button
+                                    key={evento.id}
+                                    className="cal-busqueda-item"
+                                    onClick={() => {
+                                        manejarSeleccionFecha(evento.fechaInicio);
+                                        manejarSeleccionEvento(evento);
+                                        setVistaActiva("mes");
+                                        setBusqueda("");
+                                    }}
+                                >
+                                    <strong>{evento.titulo}</strong>
+                                    <span>{evento.fechaInicio}</span>
+                                </button>
+                            ))}
+                        </div>
+                         )}
+
+                        </div>
+                        <button
+                            className={`cal-vista-btn ${
+                                vistaActiva === "anio" ? "activa" : ""
+                            }`}
+                            onClick={() => setVistaActiva("anio")}
+                        >
                             Año
                         </button>
 
-                        <button className="cal-vista-btn activa">
+                        <button
+                            className={`cal-vista-btn ${
+                                vistaActiva === "mes" ? "activa" : ""
+                            }`}
+                            onClick={() => setVistaActiva("mes")}
+                        >
                             Mes
                         </button>
 
-                        <button className="cal-vista-btn">
+
+                        <button
+                            className={`cal-vista-btn ${
+                                vistaActiva === "semana"
+                                    ? "activa"
+                                    : ""
+                            }`}
+                            onClick={() => setVistaActiva("semana")}
+                        >
                             Semana
                         </button>
 
-                        <button className="cal-vista-btn">
+                        <button
+                            className={`cal-vista-btn ${
+                                vistaActiva === "dia" ? "activa" : ""
+                            }`}
+                            onClick={() => setVistaActiva("dia")}
+                        >
                             Día
                         </button>
 
@@ -130,14 +284,38 @@ const Calendario = () => {
                 </div>
 
                 {/* CALENDARIO */}
+            {vistaActiva === "mes" ? (
                 <VistaMes
                     year={year}
                     month={month}
-                    eventos={eventos}
+                    eventos={busqueda.trim() ? eventosFiltradosBusqueda : eventos}
                     fechaSeleccionada={fechaSeleccionada}
-                    onSeleccionarFecha={setFechaSeleccionada}
+                    onSeleccionarFecha={manejarSeleccionFecha}
                     onSeleccionarEvento={manejarSeleccionEvento}
                 />
+            ) : vistaActiva === "dia" ? (
+                <VistaDia
+                    fechaSeleccionada={fechaSeleccionada}
+                    eventos={busqueda.trim() ? eventosFiltradosBusqueda : eventos}
+                    onSeleccionarEvento={manejarSeleccionEvento}
+                />
+            ) : vistaActiva === "semana" ? (
+                <VistaSemana
+                    fechaActual={fechaActual}
+                    eventos={busqueda.trim() ? eventosFiltradosBusqueda : eventos}
+                    fechaSeleccionada={fechaSeleccionada}
+                    onSeleccionarFecha={manejarSeleccionFecha}
+                    onSeleccionarEvento={manejarSeleccionEvento}
+                />
+            ) : (
+                <VistaAnio
+                    year={year}
+                    onSeleccionarFecha={manejarSeleccionFecha}
+                    onCambiarVistaMes={() =>
+                        setVistaActiva("mes")
+                    }
+                />
+            )}
             </main>
             {/* DETALLE EVENTO */}
             <DetalleEvento
