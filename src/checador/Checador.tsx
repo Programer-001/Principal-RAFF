@@ -1,9 +1,10 @@
 ﻿import React, { useState } from "react";
 import AsistenciaHoy from "./AsistenciaHoy";
 import ReporteBonoPuntualidad from "./ReporteBonoPuntualidad";
+import ChecadaManual from "./ChecadaManual";
 import "../css/checador.css";
 
-type VistaChecador = "asistencia" | "bono";
+type VistaChecador = "asistencia" | "bono" | "manual";
 
 const Checador: React.FC = () => {
     const [vista, setVista] = useState<VistaChecador>("asistencia");
@@ -24,11 +25,18 @@ const Checador: React.FC = () => {
                 >
                     Bono de Puntualidad
                 </button>
+                <button
+                className={vista === "manual" ? "tab-activa" : ""}
+                onClick={() => setVista("manual")}
+            >
+                Checada Manual
+            </button>
             </div>
 
             {vista === "asistencia" && <AsistenciaHoy />}
 
             {vista === "bono" && <ReporteBonoPuntualidad />}
+            {vista === "manual" && <ChecadaManual />}   
         </div>
     );
 };
