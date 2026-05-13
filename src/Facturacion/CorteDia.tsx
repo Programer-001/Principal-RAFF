@@ -119,23 +119,23 @@ const CorteDia: React.FC = () => {
                         <tbody>
                             <tr>
                                 <td>Efectivo</td>
-                                <td>${formatearMoneda(resumen.efectivo)}</td>
+                                <td>{formatearMoneda(resumen.efectivo)}</td>
                             </tr>
                             <tr>
                                 <td>Crédito (Tarjeta)</td>
-                                <td>${formatearMoneda(resumen.creditoTarjeta)}</td>
+                                <td>{formatearMoneda(resumen.creditoTarjeta)}</td>
                             </tr>
                             <tr>
                                 <td>Crédito Clientes</td>
-                                <td>${formatearMoneda(resumen.creditoClientes)}</td>
+                                <td>{formatearMoneda(resumen.creditoClientes)}</td>
                             </tr>
                             <tr>
                                 <td>Débito</td>
-                                <td>${formatearMoneda(resumen.debito)}</td>
+                                <td>{formatearMoneda(resumen.debito)}</td>
                             </tr>
                             <tr>
                                 <td>Transferencia</td>
-                                <td>${formatearMoneda(resumen.transferencia)}</td>
+                                <td>{formatearMoneda(resumen.transferencia)}</td>
                             </tr>
 
                             <tr className="total-row">
@@ -143,7 +143,7 @@ const CorteDia: React.FC = () => {
                                     <strong>Total</strong>
                                 </td>
                                 <td>
-                                    <strong>${formatearMoneda(total)}</strong>
+                                    <strong>{formatearMoneda(total)}</strong>
                                 </td>
                             </tr>
                         </tbody>

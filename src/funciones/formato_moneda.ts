@@ -1,14 +1,21 @@
 ﻿// src/funciones/formato_moneda.ts
 //para las etiquetas o que se impriman
-export const formatearMoneda = (valor: number | undefined | null): string => {
-    if (valor === undefined || valor === null || isNaN(valor)) return "$0.00";
+// src/funciones/formato_moneda.ts
+
+export const formatearMoneda = (
+    valor: number | undefined | null
+): string => {
+    if (valor === undefined || valor === null || isNaN(valor)) {
+        return "$0.00";
+    }
 
     return valor.toLocaleString("es-MX", {
+        style: "currency",
+        currency: "MXN",
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
 };
-
 //para los inputs nada mas
 export const procesarInputMoneda = (valor: string) => {
     // quitar $ y comas

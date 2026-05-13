@@ -395,27 +395,27 @@ const [diametroMm, setDiametroMm] = useState("");
           <p style={{ fontSize: "14px" }}>{descripcion}</p>
               </div>
 
-              <h2><strong>Subtotal: </strong>${formatearMoneda(total)}</h2>
-              <h1><strong>Total: </strong>${formatearMoneda(total*1.16)}</h1>
+              <h2><strong>Subtotal: </strong>{formatearMoneda(total)}</h2>
+              <h1><strong>Total: </strong>{formatearMoneda(total*1.16)}</h1>
               {/* TOTAL */}
               {esAdministracion && (
                   <div>
-                      <p>Precio normal: ${formatearMoneda(precioNormal)}</p>
-                      <p>Precio milimétrica: ${formatearMoneda(precioMilimetrico)}</p>
+                      <p>Precio normal: {formatearMoneda(precioNormal)}</p>
+                      <p>Precio milimétrica: {formatearMoneda(precioMilimetrico)}</p>
 
                       <hr />
 
-                      <p>Precio del cable: ${formatearMoneda(precioSoldarCable)}</p>
-                      <p>Total cable: ${formatearMoneda(totalCable)}</p>
+                      <p>Precio del cable: {formatearMoneda(precioSoldarCable)}</p>
+                      <p>Total cable: {formatearMoneda(totalCable)}</p>
 
-                      <p>Extra milimétrica: ${formatearMoneda(extraMilimetrica)}</p>
-                      <p>Terminal 90: ${formatearMoneda(totalTerminal90)}</p>
-                      <p>Tubo zapa: ${formatearMoneda(totalTuboZapa)}</p>
+                      <p>Extra milimétrica: {formatearMoneda(extraMilimetrica)}</p>
+                      <p>Terminal 90: {formatearMoneda(totalTerminal90)}</p>
+                      <p>Tubo zapa: {formatearMoneda(totalTuboZapa)}</p>
 
                       <hr />
 
-                      <p>Precio por resistencia: ${formatearMoneda(totalPorResistencia)}</p>
-                      <p>Subtotal: ${formatearMoneda(total)}</p>
+                      <p>Precio por resistencia: {formatearMoneda(totalPorResistencia)}</p>
+                      <p>Subtotal: {formatearMoneda(total)}</p>
                   </div>
               )}
 

@@ -338,10 +338,10 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
 
 
             <h2>
-                <strong>Subtotal:</strong> ${formatearMoneda(total)}
+                <strong>Subtotal:</strong> {formatearMoneda(total)}
             </h2>
             <h1>
-                <strong>Total:</strong> ${formatearMoneda(total*1.16)}
+                <strong>Total:</strong> {formatearMoneda(total*1.16)}
             </h1>
             <button
                 className="btn btn-blue"

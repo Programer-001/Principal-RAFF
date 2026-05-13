@@ -1204,7 +1204,7 @@ const Cotizador = () => {
               <b>{ot ? `${ot}.${index + 1}` : `TEMP.${index + 1}`}</b>
             </div>
             <div>{c.descripcion}</div>
-                <div>${formatearMoneda(c.total)}</div>
+                <div>{formatearMoneda(c.total)}</div>
 
             <button
               onClick={() => {
@@ -1233,7 +1233,7 @@ const Cotizador = () => {
         ))}
         <hr />
         <div>
-                    <b>Subtotal:</b> ${formatearMoneda(totalGeneral)}
+                    <b>Subtotal:</b> {formatearMoneda(totalGeneral)}
         </div>
         {cliente && descuentoCliente > 0 && (
           <div>
@@ -1249,7 +1249,7 @@ const Cotizador = () => {
           </div>
         )}
         <div>
-                    <b>Total con IVA (16%):</b> ${formatearMoneda(totalConIva)}
+                    <b>Total con IVA (16%):</b> {formatearMoneda(totalConIva)}
         </div>
         <br />
         {/* FINALIZAR */}

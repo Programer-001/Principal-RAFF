@@ -118,14 +118,14 @@ const MostrarCaja: React.FC = () => {
             <div className="resumen-caja">
                 <h3>Totales por Método</h3>
 
-                <p>Efectivo: ${formatearMoneda(totales.efectivo)}</p>
-                <p>Tarjeta de débito: ${formatearMoneda(totales.debito)}</p>
-                <p>Tarjeta de crédito: ${formatearMoneda(totales.credito_tarjeta)}</p>
-                <p>Crédito de Clientes: ${formatearMoneda(totales.credito_clientes)}</p>
-                <p>Transferencias: ${formatearMoneda(totales.transferencia)}</p>
-                <p>Cheque: ${formatearMoneda(totales.cheque)}</p>
+                <p>Efectivo: {formatearMoneda(totales.efectivo)}</p>
+                <p>Tarjeta de débito: {formatearMoneda(totales.debito)}</p>
+                <p>Tarjeta de crédito: {formatearMoneda(totales.credito_tarjeta)}</p>
+                <p>Crédito de Clientes: {formatearMoneda(totales.credito_clientes)}</p>
+                <p>Transferencias: {formatearMoneda(totales.transferencia)}</p>
+                <p>Cheque: {formatearMoneda(totales.cheque)}</p>
                 <hr />
-                <h4>Total General: ${formatearMoneda(totales.total)}</h4>
+                <h4>Total General: {formatearMoneda(totales.total)}</h4>
             </div>
 
             {/* ================= TABLA ================= */}
@@ -207,7 +207,7 @@ const MostrarCaja: React.FC = () => {
                                     <td>{p.fecha || "-"}</td>
                                     <td>{p.factura || "-"}</td>
                                     <td>{p.metodo.replace("_", " ")}</td>
-                                    <td>${formatearMoneda(p.cantidad)}</td>
+                                    <td>{formatearMoneda(p.cantidad)}</td>
                                     <td
                                         className={
                                             p.estatus ? "estatus-vigente" : "estatus-cancelada"

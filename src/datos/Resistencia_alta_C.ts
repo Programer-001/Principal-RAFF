@@ -71,7 +71,7 @@ export const obtenerPrecioCartuchoAlta = (
         precioProveedor += 150;
     }
 
-    return precioProveedor * 1.16 * 1.70;
+    return precioProveedor * 1.16*1.70;
 };
 /*
 ====================================

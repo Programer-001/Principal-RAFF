@@ -291,7 +291,7 @@ const CorteCaja: React.FC = () => {
                                 <tr key={i}>
                                     <td>{p.transaccion}</td>
                                     <td>{p.metodo.replace("_", " ")}</td>
-                                    <td>${formatearMoneda(p.cantidad)}</td>
+                                    <td>{formatearMoneda(p.cantidad)}</td>
                                     <td>{p.factura || "-"}</td>
                                 </tr>
                             ))}

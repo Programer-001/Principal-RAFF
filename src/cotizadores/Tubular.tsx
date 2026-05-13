@@ -860,8 +860,8 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
 
           {/* ---------------------------------------------Fin del DIV de cotizador-------------------------------------------------------------->> */}
               </div>
-              <h2>Subtotal Tubular: $ {formatearMoneda(totalConDescuento)}</h2>
-              <h1>Total: $ {formatearMoneda(totalconiva)}</h1>
+              <h2>Subtotal Tubular: {formatearMoneda(totalConDescuento)}</h2>
+              <h1>Total: {formatearMoneda(totalconiva)}</h1>
               {/*<h3>Descuento aplicado: {(descuento * 100).toFixed(0)}%</h3>*/}
               <button
                   className="btn btn-blue"

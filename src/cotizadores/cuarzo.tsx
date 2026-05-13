@@ -236,9 +236,9 @@ ${agregar(
             </div>
 
             <h3 style={{ marginTop: "20px" }}>
-                Subtotal: ${formatearMoneda(precioCalculado)}
+                Subtotal: {formatearMoneda(precioCalculado)}
                 <br />
-                total: ${formatearMoneda(precioCalculado * 1.16)}
+                total: {formatearMoneda(precioCalculado * 1.16)}
             </h3>
 
             <button

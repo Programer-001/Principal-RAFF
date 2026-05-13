@@ -359,8 +359,8 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
       >
         {data ? "ACTUALIZAR" : "AGREGAR"}
           </button>
-          <h2> <strong>Subtotal:</strong> ${formatearMoneda(totalGeneral)}</h2>
-          <h1> <strong>Total:</strong> ${formatearMoneda(totalGeneral * 1.16)}</h1>
+          <h2> <strong>Subtotal:</strong> {formatearMoneda(totalGeneral)}</h2>
+          <h1> <strong>Total:</strong> {formatearMoneda(totalGeneral * 1.16)}</h1>
           {/*Mostrar los resultados*/}
           {esAdministracion && (
               <div style={{ marginTop: "20px" }}>
@@ -379,31 +379,31 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
                   </div>
 
                   <div>
-                      <strong>Precio por metro:</strong> ${formatearMoneda(precioAlambrePorMetro)}
+                      <strong>Precio por metro:</strong> {formatearMoneda(precioAlambrePorMetro)}
                   </div>
 
                   <div>
                       <strong>Costo del alambre por resorte:</strong> $
-                      ${formatearMoneda(costoAlambre)}
+                      {formatearMoneda(costoAlambre)}
                   </div>
 
                   {mostrarCantidadTerminales && (
                       <div>
-                          <strong>Terminales por resorte:</strong> {cantidadTerminalesNum} x $
-                          {formatearMoneda(precioTerminal)} = ${formatearMoneda(costoTerminales)}
+                          <strong>Terminales por resorte:</strong> {cantidadTerminalesNum} x 
+                          {formatearMoneda(precioTerminal)} = {formatearMoneda(costoTerminales)}
                       </div>
                   )}
 
                   <div>
-                      <strong>50% fabricación:</strong> ${formatearMoneda(costoFabricacion)}
+                      <strong>50% fabricación:</strong> {formatearMoneda(costoFabricacion)}
                   </div>
 
                   <div>
-                      <strong>subtotal por resorte:</strong> ${formatearMoneda(totalPorResorte)}
+                      <strong>subtotal por resorte:</strong> {formatearMoneda(totalPorResorte)}
                   </div>
 
                   <div>
-                      <strong>subtotal general:</strong> ${formatearMoneda(totalGeneral)}
+                      <strong>subtotal general:</strong> {formatearMoneda(totalGeneral)}
                   </div>
               </div>
           )}
