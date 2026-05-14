@@ -302,26 +302,26 @@ const CorteCaja: React.FC = () => {
 
             <div className="caja-totales">
                 <p>
-                    <strong>Efectivo:</strong> ${formatearMoneda(totalEfectivo)}
+                    <strong>Efectivo:</strong> {formatearMoneda(totalEfectivo)}
                 </p>
                 <p>
-                    <strong>Cheque:</strong> ${formatearMoneda(totalCheque)}
+                    <strong>Cheque:</strong> {formatearMoneda(totalCheque)}
                 </p>
                 <p>
-                    <strong>Tarjeta Crédito:</strong> ${formatearMoneda(totalCredito)}
+                    <strong>Tarjeta Crédito:</strong> {formatearMoneda(totalCredito)}
                 </p>
                 <p>
-                    <strong>Tarjeta Débito:</strong> ${formatearMoneda(totalDebito)}
+                    <strong>Tarjeta Débito:</strong> {formatearMoneda(totalDebito)}
                 </p>
                 <p>
-                    <strong>Transferencia:</strong> ${formatearMoneda(totalTransferencia)}
+                    <strong>Transferencia:</strong> {formatearMoneda(totalTransferencia)}
                 </p>
                 <p>
-                    <strong>Crédito Clientes:</strong> ${formatearMoneda(totalCreditoClientes)}
+                    <strong>Crédito Clientes:</strong> {formatearMoneda(totalCreditoClientes)}
                 </p>
 
                 <p className="caja-total-final">
-                    Total: ${formatearMoneda(totalGeneral)}
+                    Total: {formatearMoneda(totalGeneral)}
                 </p>
             </div>
 

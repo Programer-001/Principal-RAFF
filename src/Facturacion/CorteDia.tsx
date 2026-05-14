@@ -1,7 +1,9 @@
 ﻿// src/components/CorteDia.tsx
+// Componente para mostrar el corte de caja por día, con un resumen de los métodos de pago y totales.
 import React, { useState } from "react";
 import { getDatabase, ref, onValue } from "firebase/database";
-import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
+import { formatearMoneda } from "../funciones/formato_moneda";
+import { formatearFechaMX, formatearFechaFirebase } from "../funciones/formato_fechas";
 import { app } from "../firebase/config";
 
 interface CorteData {
@@ -24,8 +26,7 @@ const CorteDia: React.FC = () => {
         }
 
         // Convertir fecha (YYYY-MM-DD) → (DDMMYYYY)
-        const [y, m, d] = fecha.split("-");
-        const fechaKey = `${d}${m}${y}`; // Ej: 14/11/2025 → 14112025
+        const fechaKey = formatearFechaFirebase(fecha);
 
         const rootRef = ref(db, "corte-caja");
 
@@ -86,7 +87,8 @@ const CorteDia: React.FC = () => {
         (resumen?.transferencia || 0);
 
     return (
-        <div className="caja-container">
+        <div className="form-container">
+            <div className="caja-header">
             <h1 className="caja-title">🧾 Corte por Día</h1>
 
             <label>
@@ -102,11 +104,12 @@ const CorteDia: React.FC = () => {
             <button onClick={handleBuscar} disabled={!fecha} className="btn btn-blue">
                 Buscar
             </button>
+            </div>
 
             {resumen && (
                 <div className="mt-6 bg-gray-100 p-4 rounded shadow">
                     <h2 className="text-lg font-semibold mb-3">
-                        Resultados del {fecha.split("-").reverse().join("/")}
+                        Resultados del {formatearFechaMX(fecha)}
                     </h2>
 
                     <table className="caja-table">

@@ -1,6 +1,10 @@
-﻿import React, { useState, useEffect } from "react";
+﻿//src/Facturacion/caja_fecha.tsx
+// Este componente permite agregar facturas a una fecha específica, incluso si esa fecha ya pasó.
+import React, { useState, useEffect } from "react";
 import { getDatabase, ref, set, onValue } from "firebase/database";
 import { app } from "../firebase/config";
+import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
+import { formatearFechaMX } from "../funciones/formato_fechas";
 //import "../css/caja.css";
 
 interface Pago {
@@ -35,16 +39,13 @@ const CorteCajaPorFecha: React.FC = () => {
 
     const [mostrarCaja, setMostrarCaja] = useState(false);
 
+    const [cantidadInput, setCantidadInput] = useState("");
+
     // -------- CONVERTIR FECHA YYYY-MM-DD → DDMMYYYY ----------
+    // Esto es para crear la carpeta en Firebase con el formato "DDMMYYYY"
     const formatearFolder = (f: string) => {
         const [yyyy, mm, dd] = f.split("-");
         return `${dd}${mm}${yyyy}`;
-    };
-
-    // -------- CONVERTIR FECHA YYYY-MM-DD → DD/MM/YYYY -------- 🔥 MODIFICADO
-    const formatearFechaCampo = (f: string) => {
-        const [yyyy, mm, dd] = f.split("-");
-        return `${dd}/${mm}/${yyyy}`;
     };
 
     // ---------------- CONSULTAR PAGOS DE ESA FECHA ----------------
@@ -105,7 +106,7 @@ const CorteCajaPorFecha: React.FC = () => {
         const id = `${fechaFormateada}-${transaccion.toString().padStart(2, "0")}`;
 
         // 🔥 MODIFICADO — Fecha formateada correctamente
-        const fechaCorrecta = formatearFechaCampo(fechaSeleccionada);
+        const fechaCorrecta = formatearFechaMX(fechaSeleccionada);
 
         const nuevoPago: Pago = {
             id,
@@ -140,7 +141,7 @@ const CorteCajaPorFecha: React.FC = () => {
         const id = `${fechaFormateada}-${transaccion.toString().padStart(2, "0")}`;
 
         // 🔥 MODIFICADO — Fecha en formato correcto
-        const fechaCorrecta = formatearFechaCampo(fechaSeleccionada);
+        const fechaCorrecta = formatearFechaMX(fechaSeleccionada);
 
         await set(ref(db, `corte-caja/${fechaFormateada}/${id}`), {
             id,
@@ -181,95 +182,129 @@ const CorteCajaPorFecha: React.FC = () => {
 
     const totalGeneral = totalEfectivo + totalTransferencia + totalTarjeta;
 
-    return (
-        <div className="caja-container">
-            <h1 className="caja-title">📅 Agregar Factura</h1>
-            <p>
-                Aquí puedes agregar facturas que no se capturaron en su día
-                correspondiente.
-            </p>
+return (
+    <div className="form-container">
 
-            {/* Fecha */}
-            <label>
-                <strong>Selecciona la Fecha:</strong>
-            </label>
-            <input
-                type="date"
-                value={fechaSeleccionada}
-                onChange={(e) => {
-                    setFechaSeleccionada(e.target.value);
-                    cargarPagos(e.target.value);
-                }}
-            />
+        <div className="caja-sticky-top">
+            <div className="caja-header">
 
-            {/* Info */}
-            {fechaSeleccionada && (
-                <>
-                    <div className="grid-info">
-                        <p>
-                            <strong>Fecha:</strong> {fechaSeleccionada}
-                        </p>
-                        <p>
-                            <strong>Siguiente Transacción:</strong> #{transaccion}
-                        </p>
-                    </div>
+                <h1 className="caja-title">📅 Agregar Factura</h1>
 
-                    {/* Inputs */}
-                    <div className="grid-inputs">
-                        <input
-                            type="number"
-                            placeholder="Cantidad"
-                            value={cantidad === 0 ? "" : cantidad}
-                            onChange={(e) => setCantidad(parseFloat(e.target.value) || 0)}
-                            className={`input-caja1 ${errorCantidad ? "input-caja1-error" : ""
-                                }`}
-                        />
+                <p>
+                    Aquí puedes agregar facturas que no se capturaron en su día
+                    correspondiente.
+                </p>
 
-                        <select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
-                            <option value="efectivo">Efectivo</option>
-                            <option value="transferencia">Transferencia</option>
-                            <option value="tarjeta_credito">Tarjeta Crédito</option>
-                            <option value="tarjeta_debito">Tarjeta Débito</option>
-                            <option value="cheque">Cheque</option>
-                            <option value="credito">Crédito Clientes</option>
-                        </select>
+                {/* Fecha */}
+                <label>
+                    <strong>Selecciona la Fecha:</strong>
+                </label>
 
-                        <input
-                            type="text"
-                            placeholder="Factura"
-                            value={factura}
-                            onChange={(e) => setFactura(e.target.value)}
-                            className={`input-caja1 ${errorFactura ? "input-caja1-error" : ""
-                                }`}
-                        />
-                    </div>
+                <input
+                    type="date"
+                    value={fechaSeleccionada}
+                    onChange={(e) => {
+                        setFechaSeleccionada(e.target.value);
+                        cargarPagos(e.target.value);
+                    }}
+                />
 
-                    {/* Botones */}
-                    <div className="btn-container">
-                        <button onClick={handleGuardar} className="btn btn-blue">
-                            Guardar
-                        </button>
+                {/* Info */}
+                {fechaSeleccionada && (
+                    <>
+                        <div className="grid-info">
+                            <p>
+                                <strong>Fecha:</strong> {formatearFechaMX(fechaSeleccionada)}
+                            </p>
 
-                        <button
-                            onClick={() => setMostrarCaja(!mostrarCaja)}
-                            className="btn btn-green"
-                        >
-                            {mostrarCaja ? "Ocultar Caja" : "Mostrar Caja"}
-                        </button>
+                            <p>
+                                <strong>Siguiente Transacción:</strong> #{transaccion}
+                            </p>
+                        </div>
 
-                        <button onClick={abrirModalCancelacion} className="btn btn-red">
-                            Cancelar Factura
-                        </button>
-                    </div>
-                </>
-            )}
+                        {/* Inputs */}
+                        <div className="grid-inputs">
 
-            {/* Tabla */}
-            {mostrarCaja && (
-                <>
-                    <h3>Movimientos del {formatearFecha(fechaSeleccionada)}</h3>
+                            <input
+                                type="text"
+                                placeholder="Cantidad"
+                                value={cantidadInput}
+                                onChange={(e) => {
+                                    const { texto, numero } =
+                                        procesarInputMoneda(e.target.value);
+
+                                    setCantidadInput(texto ? `$${texto}` : "");
+                                    setCantidad(texto ? numero : 0);
+                                }}
+                                className={`input-caja1 ${errorCantidad ? "input-caja1-error" : ""
+                                    }`}
+                            />
+
+                            <select
+                                value={metodo}
+                                onChange={(e) => setMetodo(e.target.value)}
+                            >
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="tarjeta_credito">Tarjeta Crédito</option>
+                                <option value="tarjeta_debito">Tarjeta Débito</option>
+                                <option value="cheque">Cheque</option>
+                                <option value="credito">Crédito Clientes</option>
+                            </select>
+
+                            <input
+                                type="text"
+                                placeholder="Factura"
+                                value={factura}
+                                onChange={(e) => setFactura(e.target.value)}
+                                className={`input-caja1 ${errorFactura ? "input-caja1-error" : ""
+                                    }`}
+                            />
+                        </div>
+
+                        {/* Botones */}
+                        <div className="btn-container">
+
+                            <button
+                                onClick={handleGuardar}
+                                className="btn btn-blue"
+                            >
+                                Guardar
+                            </button>
+
+                            <button
+                                onClick={() => setMostrarCaja(!mostrarCaja)}
+                                className="btn btn-green"
+                            >
+                                {mostrarCaja
+                                    ? "Ocultar Caja"
+                                    : "Mostrar Caja"}
+                            </button>
+
+                            <button
+                                onClick={abrirModalCancelacion}
+                                className="btn btn-red"
+                            >
+                                Cancelar Factura
+                            </button>
+
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+
+        {/* Tabla */}
+        {mostrarCaja && (
+            <>
+                <h3>
+                    Movimientos del {formatearFechaMX(fechaSeleccionada)}
+                </h3>
+
+                <div className="caja-table-container">
 
                     <table className="caja-table">
+
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -279,65 +314,95 @@ const CorteCajaPorFecha: React.FC = () => {
                                 <th>Estatus</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             {pagos.map((p, i) => (
                                 <tr key={i}>
                                     <td>{p.transaccion}</td>
                                     <td>{p.metodo}</td>
-                                    <td>${p.cantidad}</td>
+                                    <td>{formatearMoneda(p.cantidad)}</td>
                                     <td>{p.factura}</td>
-                                    <td style={{ color: p.estatus ? "green" : "red" }}>
-                                        {p.estatus ? "Vigente" : "Cancelada"}
+
+                                    <td
+                                        style={{
+                                            color: p.estatus
+                                                ? "green"
+                                                : "red",
+                                        }}
+                                    >
+                                        {p.estatus
+                                            ? "Vigente"
+                                            : "Cancelada"}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
+
                     </table>
+                </div>
+            </>
+        )}
 
-                    <div className="caja-totales">
-                        <p>
-                            <strong>Efectivo:</strong> ${totalEfectivo.toFixed(2)}
-                        </p>
-                        <p>
-                            <strong>Transferencia:</strong> ${totalTransferencia.toFixed(2)}
-                        </p>
-                        <p>
-                            <strong>Tarjetas:</strong> ${totalTarjeta.toFixed(2)}
-                        </p>
+        <div className="caja-totales">
 
-                        <p className="caja-total-final">
-                            Total: ${totalGeneral.toFixed(2)}
-                        </p>
-                    </div>
-                </>
-            )}
+            <p>
+                <strong>Efectivo:</strong>{" "}
+                {formatearMoneda(totalEfectivo)}
+            </p>
 
-            {/* Modal cancelación */}
-            {mostrarCancelar && (
-                <div className="modal">
-                    <div className="modal-content">
-                        <h3>Cancelar Pago</h3>
-                        <textarea
-                            value={motivoCancelacion}
-                            onChange={(e) => setMotivoCancelacion(e.target.value)}
-                        />
+            <p>
+                <strong>Transferencia:</strong>{" "}
+                {formatearMoneda(totalTransferencia)}
+            </p>
 
-                        <div className="modal-actions">
-                            <button className="btn btn-red" onClick={confirmarCancelacion}>
-                                Confirmar
-                            </button>
-                            <button
-                                className="btn btn-yellow"
-                                onClick={() => setMostrarCancelar(false)}
-                            >
-                                Cerrar
-                            </button>
-                        </div>
+            <p>
+                <strong>Tarjetas:</strong>{" "}
+                {formatearMoneda(totalTarjeta)}
+            </p>
+
+            <p className="caja-total-final">
+                Total: {formatearMoneda(totalGeneral)}
+            </p>
+
+        </div>
+
+        {/* Modal cancelación */}
+        {mostrarCancelar && (
+            <div className="modal">
+
+                <div className="modal-content">
+
+                    <h3>Cancelar Pago</h3>
+
+                    <textarea
+                        value={motivoCancelacion}
+                        onChange={(e) =>
+                            setMotivoCancelacion(e.target.value)
+                        }
+                    />
+
+                    <div className="modal-actions">
+
+                        <button
+                            className="btn btn-red"
+                            onClick={confirmarCancelacion}
+                        >
+                            Confirmar
+                        </button>
+
+                        <button
+                            className="btn btn-yellow"
+                            onClick={() => setMostrarCancelar(false)}
+                        >
+                            Cerrar
+                        </button>
+
                     </div>
                 </div>
-            )}
-        </div>
-    );
+            </div>
+        )}
+    </div>
+);
 };
 
 export default CorteCajaPorFecha;

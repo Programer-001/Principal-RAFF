@@ -33,3 +33,8 @@ export const fechaLocalDesdeDate = (fecha: Date) => {
 
     return `${year}-${month}-${day}`;
 };
+// Convierte una fecha ISO "YYYY-MM-DD" a formato "DDMMYYYY" para Firebase
+export const formatearFechaFirebase = (fechaISO: string) => {
+    const [year, month, day] = fechaISO.split("-");
+    return `${day}${month}${year}`;
+};
