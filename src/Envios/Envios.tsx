@@ -693,12 +693,14 @@ const Envios: React.FC = () => {
                   <option>Estafeta</option>
                   <option>FedEx</option>
                   <option>Castores</option>
+                  <option>Paex</option>
                   <option>Paquete Express</option>
                   <option>Servicio Express</option>
                   <option>Flecha Amarilla</option>
                   <option>Kora Express</option>
                   <option>Altos Pack</option>
                   <option>Fletes Oriente</option>
+                  
                 </select>
               </div>
 
