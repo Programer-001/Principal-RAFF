@@ -12,6 +12,7 @@ interface CorteData {
     creditoClientes: number;
     debito: number;
     transferencia: number;
+    otro: number;
 }
 
 const CorteDia: React.FC = () => {
@@ -47,6 +48,7 @@ const CorteDia: React.FC = () => {
                 let totalCreditoClientes = 0;
                 let totalDebito = 0;
                 let totalTransferencia = 0;
+                let totalOtro = 0;
 
                 // Recorrer cada nodo del día
                 nodos.forEach((nodo) => {
@@ -64,6 +66,7 @@ const CorteDia: React.FC = () => {
                         else if (metodo.includes("debito")) totalDebito += cantidad;
                         else if (metodo.includes("transferencia"))
                             totalTransferencia += cantidad;
+                        else if (metodo === "otro") totalOtro += cantidad;
                     });
                 });
 
@@ -73,6 +76,7 @@ const CorteDia: React.FC = () => {
                     creditoClientes: totalCreditoClientes,
                     debito: totalDebito,
                     transferencia: totalTransferencia,
+                    otro: totalOtro, // Si quieres agregar otro método, hazlo aquí
                 });
             },
             { onlyOnce: true }
@@ -84,7 +88,8 @@ const CorteDia: React.FC = () => {
         (resumen?.creditoTarjeta || 0) +
         (resumen?.creditoClientes || 0) +
         (resumen?.debito || 0) +
-        (resumen?.transferencia || 0);
+        (resumen?.transferencia || 0) +
+        (resumen?.otro || 0);
 
     return (
         <div className="form-container">
@@ -140,7 +145,10 @@ const CorteDia: React.FC = () => {
                                 <td>Transferencia</td>
                                 <td>{formatearMoneda(resumen.transferencia)}</td>
                             </tr>
-
+                            <tr>
+                                <td>Otro</td>
+                                <td>{formatearMoneda(resumen.otro)}</td>
+                            </tr>
                             <tr className="total-row">
                                 <td>
                                     <strong>Total</strong>

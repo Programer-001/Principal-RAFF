@@ -32,6 +32,7 @@ const MostrarCaja: React.FC = () => {
         credito_clientes: 0,
         debito: 0,
         transferencia: 0,
+        otro: 0,
         total: 0,
     });
 
@@ -79,6 +80,7 @@ const MostrarCaja: React.FC = () => {
             credito_clientes: 0,
             debito: 0,
             transferencia: 0,
+            otro: 0,
             total: 0,
         };
 
@@ -93,7 +95,7 @@ const MostrarCaja: React.FC = () => {
             if (metodo === "credito") t.credito_clientes += p.cantidad; // 🔹 Nuevo método
             if (metodo === "tarjeta_debito") t.debito += p.cantidad;
             if (metodo === "transferencia") t.transferencia += p.cantidad;
-
+            if (metodo === "otro") t.otro += p.cantidad;
             t.total += p.cantidad;
         });
 
@@ -124,6 +126,7 @@ const MostrarCaja: React.FC = () => {
                 <p>Crédito de Clientes: {formatearMoneda(totales.credito_clientes)}</p>
                 <p>Transferencias: {formatearMoneda(totales.transferencia)}</p>
                 <p>Cheque: {formatearMoneda(totales.cheque)}</p>
+                <p>Otro: {formatearMoneda(totales.otro)}</p>
                 <hr />
                 <h4>Total General: {formatearMoneda(totales.total)}</h4>
             </div>

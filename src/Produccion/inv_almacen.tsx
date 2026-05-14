@@ -720,7 +720,7 @@ const InvAlmacen: React.FC = () => {
 
                                 {mostrarChecksSolicitud && (
                                     <button
-                                        className="btn btn-dark"
+                                        className="btn btn-purple"
                                         onClick={agregarSeleccionadosASolicitud}
                                     >
                                         Agregar a solicitud
