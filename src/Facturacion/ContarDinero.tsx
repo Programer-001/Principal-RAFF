@@ -1,5 +1,7 @@
 ﻿import React, { useState } from "react";
 import { generarPDF } from "../plantillas/pdf_contador_dinero";
+import { FaCoins } from "react-icons/fa";
+import { formatearMoneda } from "../funciones/formato_moneda";
 //import "../css/caja.css";
 
 // 🔹 Billetes
@@ -90,7 +92,7 @@ const ContarDinero: React.FC = () => {
 
                 {/* ----------- MONEDAS ----------- */}
                 <div>
-                    <h2>🪙 Monedas</h2>
+                    <h2><FaCoins style={{color: "#d4af37",fontSize: "22px" }}/> Monedas</h2>
                     {monedas_deno.map((denom) => (
                         <div key={denom} className="caja-row">
                             <strong style={{ width: 70 }}>${denom}</strong>
@@ -118,6 +120,9 @@ const ContarDinero: React.FC = () => {
                     Descargar PDF
                 </button>
             </div>
+             <h2 className="total-general">
+                Total General: {formatearMoneda(total)}
+            </h2>
 
             {/* ======================== RESULTADOS ======================== */}
             <h3 style={{ marginTop: 20 }}>Resultados - Billetes</h3>
@@ -132,9 +137,9 @@ const ContarDinero: React.FC = () => {
                 <tbody>
                     {resultadoBilletes.map((fila) => (
                         <tr key={fila.denom}>
-                            <td>${fila.denom}</td>
+                            <td>{formatearMoneda(fila.denom)}</td>  
                             <td>{fila.cantidad}</td>
-                            <td>${fila.subtotal.toLocaleString()}</td>
+                            <td>{formatearMoneda(fila.subtotal)}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -152,15 +157,15 @@ const ContarDinero: React.FC = () => {
                 <tbody>
                     {resultadoMonedas.map((fila) => (
                         <tr key={fila.denom}>
-                            <td>${fila.denom}</td>
+                            <td>{formatearMoneda(fila.denom)}</td>
                             <td>{fila.cantidad}</td>
-                            <td>${fila.subtotal.toLocaleString()}</td>
+                            <td>{formatearMoneda(fila.subtotal)}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
 
-            <h2>Total General: ${total.toLocaleString()}</h2>
+           
         </div>
     );
 };

@@ -674,10 +674,11 @@
         margin-top: 0;
         margin-bottom: 10px;
     }
-.caja-header .btn {
-    width: fit-content;
-    margin: 12px;
-}
+    /* Botones del header */
+    .caja-header .btn {
+        width: fit-content;
+        margin: 12px;
+    }
 /* ===== CONTENEDOR SCROLL DE TABLA ===== */
 .caja-table-container {
     max-height: 480px; /* ajusta a tu gusto */
@@ -782,6 +783,47 @@
         padding: 5px 8px;
         border-radius: 6px;
     }
+
+    /*css para contarDinero.tsx*/
+
+.caja-billetes {
+  display: grid;
+  grid-template-columns: repeat(2, 260px); /* dos columnas fijas */
+  gap: 30px;
+  margin-bottom: 20px; /* espacio debajo del grid */
+  justify-content: center;
+}
+
+.caja-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.input-cantidad {
+  width: 60px; /* ancho más pequeño */
+  padding: 3px; /* menos padding */
+  font-size: 14px; /* tamaño de letra más pequeño */
+  text-align: right; /* alinea números a la derecha */
+  border: 2px solid #ccc; /* Borde suave */
+  border-radius: 7px; /* Esquinas redondeadas */
+}
+
+.caja-row input:focus {
+  border-color: rgb(255, 174, 0); /* cambia borde a rojo */
+  outline: none; /* opcional: quita el borde por defecto */
+}
+.botones-linea {
+  display: flex; /* pone los botones en fila */
+  gap: 10px; /* espacio entre botones */
+  margin-top: 20px; /* opcional: separa de elementos de arriba */
+  justify-content: center; /* centra los botones horizontalmente */
+}
+.total-general {
+    text-align: center;
+    margin-top: 20px;
+}
 
 /* =========================
    INVENTARIO ALMACEN
