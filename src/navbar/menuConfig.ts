@@ -21,6 +21,7 @@ const MENU_BASE: Record<string, MenuItem> = {
     //almacen
     gestion: { key: "gestionproduccion", label: "Gestion de produccion" },
     inventario_almacen: { key: "invalmacen", label: "Inventario de almacen" },
+    compras_solicitud: { key: "solicitud_compra", label: "Solicitud de compra" },
     //tienda
     tienda: { key: "tienda", label: "Tienda" },
     Gestion_tienda: { key: "gestion_tienda", label: "Consulta de ticket" },
@@ -58,6 +59,7 @@ const MENU_BASE: Record<string, MenuItem> = {
         children: [
             { key: "gestionproduccion", label: "Operacion" },
             { key: "invalmacen", label: "Almacen" },
+            { key: "solicitud_compra", label: "Solicitud de compra" },
         ],
     },
 
@@ -149,6 +151,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
         items: [
             MENU_BASE.gestion,
             MENU_BASE.inventario_almacen,
+            MENU_BASE.compras_solicitud,
 
         ],
     },

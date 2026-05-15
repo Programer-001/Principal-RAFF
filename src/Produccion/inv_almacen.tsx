@@ -543,16 +543,33 @@ const InvAlmacen: React.FC = () => {
             cantidad: item.cantidad,
             cantidadRecibida: item.noTienen ? 0 : Number(item.cantidadRecibida || 0),
             noTienen: item.noTienen,
-            colorEstado: item.noTienen ? "rojo" : "verde",
+            colorEstado: item.noTienen
+            ? "rojo"
+            : Number(item.cantidadRecibida || 0) < Number(item.cantidad || 0)
+                ? "amarillo"
+                : "verde",
             descripcion_proveedor: "",
             proveedor: "",
         }));
 
         const ordenRef = ref(db, `produccion/Orden_compra_produccion/${folioOrdenCompra.trim()}`);
 
+        const todosCompletos = itemsOrdenCompra.every(
+            (item) =>
+                !item.noTienen &&
+                Number(item.cantidadRecibida) >= Number(item.cantidad)
+        );
+
+        const algunoNoTienen = itemsOrdenCompra.some((item) => item.noTienen);
+
+        const nuevoEstatus = todosCompletos ? "completada" : "parcial";
+
         await update(ordenRef, {
             ingresado: true,
+            pedido_entregado: true,
             fechaIngreso: fechaHoy(),
+            estatus: nuevoEstatus,
+            tiene_faltantes: algunoNoTienen,
             items: itemsGuardados,
         });
 

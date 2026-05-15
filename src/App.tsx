@@ -32,6 +32,7 @@ import MostrarCaja from "./Facturacion/MostrarCaja";
 import Lefor from "./Contabilidad/lefor"
 import GestionProduccion from "./Produccion/GestionProduccion";
 import InvAlmacen from "./Produccion/inv_almacen";
+import Solicitud_compra from "./Produccion/Solicitud_compra";
 import Comisiones from "./Administracion/comisiones";
 import Proveedores from "./Administracion/Proveedores";
 import ComisionesMostrador from "./Administracion/comisiones_mostrador";
@@ -71,6 +72,7 @@ function AppLayout() {
         if (pathname.startsWith("/mostrarcaja")) return "mostrarcaja";
         if (pathname.startsWith("/gestionproduccion")) return "gestionproduccion";
         if (pathname.startsWith("/invalmacen")) return "invalmacen";
+        if (pathname.startsWith("/solicitud_compra")) return "solicitud_compra";
         if (pathname.startsWith("/lefor")) return "lefor";
         if (pathname.startsWith("/comisiones")) return "comisiones";
         if (pathname.startsWith("/comisionesmostrador")) return "comisionesmostrador";
@@ -85,6 +87,7 @@ function AppLayout() {
         if (pathname.startsWith("/mostrar_tablas")) return "mostrar_tablas";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
+        
         return "home";
     };
 
@@ -112,6 +115,7 @@ function AppLayout() {
             lefor: "/lefor",
             gestionproduccion: "/gestionproduccion",
             invalmacen: "/invalmacen",
+            solicitud_compra: "/solicitud_compra",
             comisiones: "/comisiones",
             comisionesmostrador: "/comisionesmostrador",
             proveedores: "/proveedores",
@@ -125,6 +129,7 @@ function AppLayout() {
             perfil: "/perfil",
             home: "/home",
             mostrar_tablas: "/mostrar_tablas",
+            
         };
 
         navigate(mapa[v] || "/home");
@@ -170,6 +175,7 @@ function AppLayout() {
                 <Route path="/calendario" element={<Calendario />} />
                 <Route path="/perfil" element={<Perfil />} />
                 <Route path="/mostrar_tablas" element={<MostrarTablas />} />
+                <Route path="/solicitud_compra" element={<Solicitud_compra />} />
             </Routes>
         </div>
     );

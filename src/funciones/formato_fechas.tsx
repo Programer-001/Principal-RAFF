@@ -38,3 +38,26 @@ export const formatearFechaFirebase = (fechaISO: string) => {
     const [year, month, day] = fechaISO.split("-");
     return `${day}${month}${year}`;
 };
+
+// Convierte cualquier fecha a formato MX legible
+export const formatearFechaHora = (fecha: any) => {
+    if (!fecha) return "";
+
+    try {
+        const fechaObj = new Date(fecha);
+
+        if (isNaN(fechaObj.getTime())) {
+            return String(fecha);
+        }
+
+        return fechaObj.toLocaleString("es-MX", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    } catch {
+        return String(fecha);
+    }
+};
