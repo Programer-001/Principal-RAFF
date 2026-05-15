@@ -3,6 +3,10 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// ===============================
+// INTERFACE
+// ===============================
+
 interface Cliente {
     id: string;
     nombre?: string;
@@ -30,8 +34,65 @@ interface Cliente {
     };
 }
 
+// ===============================
+// CAMPOS DISPONIBLES
+// ===============================
+
+export type CampoCatalogoCliente = {
+    key: string;
+    label: string;
+};
+
+export const CAMPOS_CATALOGO_CLIENTES: CampoCatalogoCliente[] = [
+    { key: "nombre", label: "Nombre" },
+    { key: "razonSocial", label: "Razón Social" },
+    { key: "rfc", label: "RFC" },
+    { key: "telefono", label: "Teléfono" },
+    { key: "email", label: "Correo" },
+    { key: "direccion", label: "Dirección" },
+    { key: "colonia", label: "Colonia" },
+    { key: "municipio", label: "Municipio" },
+    { key: "estado", label: "Estado" },
+    { key: "cp", label: "CP" },
+    { key: "empresa", label: "Empresa" },
+    { key: "giro", label: "Giro" },
+    { key: "regimenFiscal", label: "Régimen Fiscal" },
+    { key: "credito", label: "Crédito" },
+];
+
+// ===============================
+// OBTENER VALOR
+// ===============================
+
+const obtenerValorCampo = (
+    cliente: Cliente,
+    key: string
+) => {
+    switch (key) {
+        case "direccion":
+            return `${cliente.direccion || ""} ${cliente.numeroExterior || ""
+                } ${cliente.numeroInterior || ""}`;
+
+        case "credito":
+            return cliente.credito?.activo
+                ? `SI | ${cliente.credito.dias || 0
+                } dias | $${(
+                    cliente.credito.limite || 0
+                ).toLocaleString("es-MX")}`
+                : "NO";
+
+        default:
+            return (cliente as any)[key] || "";
+    }
+};
+
+// ===============================
+// PLANTILLA PDF
+// ===============================
+
 export const plantillaCatalogoClientes = (
-    clientes: Cliente[]
+    clientes: Cliente[],
+    camposSeleccionados: CampoCatalogoCliente[]
 ) => {
     const doc = new jsPDF({
         orientation: "landscape",
@@ -42,6 +103,7 @@ export const plantillaCatalogoClientes = (
     // ===============================
     // TITULO
     // ===============================
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
 
@@ -64,32 +126,21 @@ export const plantillaCatalogoClientes = (
     // ===============================
     // TABLA
     // ===============================
+
     autoTable(doc, {
         startY: 22,
 
-        head: [[
-            "Razón Social",
-            "RFC",
-            "Teléfono",
-            "Dirección",
-            "Colonia",
-            "Municipio",
-            "Estado",
-            "CP",
-        ]],
+        head: [
+            camposSeleccionados.map(
+                (campo) => campo.label
+            ),
+        ],
 
-        body: clientes.map((c) => [
-            c.razonSocial || "",
-            c.rfc || "",
-            c.telefono || "",
-
-            `${c.direccion || ""} ${c.numeroExterior || ""} ${c.numeroInterior || ""}`,
-
-            c.colonia || "",
-            c.municipio || "",
-            c.estado || "",
-            c.cp || "",
-        ]),
+        body: clientes.map((cliente) =>
+            camposSeleccionados.map((campo) =>
+                obtenerValorCampo(cliente, campo.key)
+            )
+        ),
 
         styles: {
             fontSize: 6,

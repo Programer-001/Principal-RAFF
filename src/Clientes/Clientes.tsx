@@ -2,7 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getDatabase, ref, get, update, remove,push, set } from "firebase/database";
-import { plantillaCatalogoClientes } from "../plantillas/plantillaCatalogoClientes";
+import {
+    plantillaCatalogoClientes,
+    CAMPOS_CATALOGO_CLIENTES,
+    CampoCatalogoCliente,
+} from "../plantillas/plantillaCatalogoClientes";
 import { app } from "../firebase/config";
 import "../css/formulario.css";
 
@@ -65,6 +69,34 @@ const BuscarClientes: React.FC = () => {
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [modoEditar, setModoEditar] = useState(false);
   const [enviosCliente, setEnviosCliente] = useState<Envio[]>([]);
+
+  // ===============================
+  // MODAL CATALOGO PDF
+  // ===============================
+
+  const [modalCatalogo, setModalCatalogo] = useState(false);
+
+  const [catalogoTodosClientes, setCatalogoTodosClientes] =
+      useState(true);
+
+  const [busquedaCatalogo, setBusquedaCatalogo] =
+      useState("");
+
+  const [clientesSeleccionadosCatalogo, setClientesSeleccionadosCatalogo] =
+      useState<Cliente[]>([]);
+
+  const [camposCatalogo, setCamposCatalogo] =
+      useState<string[]>([
+          "razonSocial",
+          "rfc",
+          "telefono",
+          "direccion",
+          "colonia",
+          "municipio",
+          "estado",
+          "cp",
+      ]);
+
   // 🔎 BUSCAR CLIENTES
   const buscarClientes = async (texto: string) => {
     const snap = await get(ref(db, "Clientes"));
@@ -89,6 +121,67 @@ const BuscarClientes: React.FC = () => {
       );
     });
   };
+
+const agregarClienteCatalogo = (
+    cliente: Cliente
+) => {
+    const yaExiste =
+        clientesSeleccionadosCatalogo.some(
+            (c) => c.id === cliente.id
+        );
+
+    if (yaExiste) return;
+
+    setClientesSeleccionadosCatalogo([
+        ...clientesSeleccionadosCatalogo,
+        cliente,
+    ]);
+};
+
+const generarCatalogoClientes = async () => {
+    const camposSeleccionados: CampoCatalogoCliente[] =
+        CAMPOS_CATALOGO_CLIENTES.filter((campo) =>
+            camposCatalogo.includes(campo.key)
+        );
+
+    if (camposSeleccionados.length === 0) {
+        alert("Selecciona al menos una columna");
+        return;
+    }
+
+    let lista: Cliente[] = [];
+
+    // TODOS
+    if (catalogoTodosClientes) {
+        const snap = await get(ref(db, "Clientes"));
+
+        const data = snap.val() || {};
+
+        lista = Object.keys(data).map((id) => ({
+            id,
+            ...data[id],
+        }));
+    }
+
+    // SOLO SELECCIONADOS
+    else {
+        lista = clientesSeleccionadosCatalogo;
+    }
+
+    if (lista.length === 0) {
+        alert("No hay clientes seleccionados");
+        return;
+    }
+
+    const doc = plantillaCatalogoClientes(
+        lista,
+        camposSeleccionados
+    );
+
+    doc.save("Catalogo_Clientes.pdf");
+
+    setModalCatalogo(false);
+};
 
   // 🔎 BUSCAR AL ESCRIBIR
   useEffect(() => {
@@ -244,25 +337,6 @@ const BuscarClientes: React.FC = () => {
       }, ${selectedCliente.estado || ""}`
     : "";
 
-    const generarCatalogoClientes = async () => {
-        const snap = await get(ref(db, "Clientes"));
-
-        const data = snap.val() || {};
-
-        const lista: Cliente[] = Object.keys(data).map((id) => ({
-            id,
-            ...data[id],
-        }));
-
-        if (lista.length === 0) {
-            alert("No hay clientes registrados");
-            return;
-        }
-
-        const doc = plantillaCatalogoClientes(lista);
-
-        doc.save("Catalogo_Clientes.pdf");
-    };
 
   return (
     <div className="caja-container">
@@ -308,11 +382,11 @@ const BuscarClientes: React.FC = () => {
                   + Nuevo Cliente
               </button>
               <button
-                className="btn btn-blue"
-                onClick={generarCatalogoClientes}
-            >
-                Catálogo PDF
-            </button>
+                  className="btn btn-blue"
+                  onClick={() => setModalCatalogo(true)}
+              >
+                  Catálogo PDF
+                </button>
           </div>
 
       {/* RESULTADOS */}
@@ -711,9 +785,170 @@ const BuscarClientes: React.FC = () => {
           </div>
         </div>
       )}
+{/* MODAL CATALOGO PDF */}
+      {modalCatalogo && (
+        <div className="modal-fondo">
+          <div className="modal-contenido" style={{ maxWidth: 850 }}>
+            <h2>Catálogo de Clientes</h2>
+
+            <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="checkbox"
+                checked={catalogoTodosClientes}
+                onChange={(e) => {
+                  setCatalogoTodosClientes(e.target.checked);
+                  setClientesSeleccionadosCatalogo([]);
+                  setBusquedaCatalogo("");
+                }}
+              />
+              Todos los clientes
+            </label>
+
+            {!catalogoTodosClientes && (
+              <>
+                <hr />
+
+                <input
+                  type="text"
+                  placeholder="Buscar cliente..."
+                  value={busquedaCatalogo}
+                  onChange={async (e) => {
+                    const valor = e.target.value;
+                    setBusquedaCatalogo(valor);
+
+                    if (valor.trim() === "") {
+                      setClientes([]);
+                      return;
+                    }
+
+                    const resultados = await buscarClientes(valor);
+                    setClientes(resultados);
+                  }}
+                  className="search-input"
+                />
+
+                <div style={{ maxHeight: 180, overflowY: "auto", marginTop: 10 }}>
+                  <table className="caja-table">
+                    <thead>
+                      <tr>
+                        <th>Cliente</th>
+                        <th>RFC</th>
+                        <th>Acción</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {clientes.map((c: Cliente) => (
+                        <tr key={c.id}>
+                          <td>{c.razonSocial || c.nombre}</td>
+                          <td>{c.rfc}</td>
+                          <td>
+                            <button
+                              className="btn btn-green"
+                              onClick={() => agregarClienteCatalogo(c)}
+                            >
+                              Seleccionar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <h4>Clientes seleccionados</h4>
+
+                {clientesSeleccionadosCatalogo.map((c: Cliente) => (
+                  <div
+                    key={c.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      borderBottom: "1px solid #ddd",
+                      padding: "6px 0",
+                    }}
+                  >
+                    <span>{c.razonSocial || c.nombre}</span>
+
+                    <button
+                      className="btn btn-red"
+                      onClick={() =>
+                        setClientesSeleccionadosCatalogo(
+                          clientesSeleccionadosCatalogo.filter(
+                            (x: Cliente) => x.id !== c.id
+                          )
+                        )
+                      }
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
+              </>
+            )}
+
+            <hr />
+
+            <h3>Columnas del documento</h3>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 10,
+              }}
+            >
+              {CAMPOS_CATALOGO_CLIENTES.map((campo) => (
+                <label
+                  key={campo.key}
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={camposCatalogo.includes(campo.key)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setCamposCatalogo([...camposCatalogo, campo.key]);
+                      } else {
+                        setCamposCatalogo(
+                          camposCatalogo.filter((c) => c !== campo.key)
+                        );
+                      }
+                    }}
+                  />
+
+                  {campo.label}
+                </label>
+              ))}
+            </div>
+
+            <div className="botones" style={{ marginTop: 20 }}>
+              <button className="btn btn-green" onClick={generarCatalogoClientes}>
+                Generar PDF
+              </button>
+
+              <button
+                className="btn btn-purple"
+                onClick={() => setModalCatalogo(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
     </div>
   );
 };
+
+
 
 // COMPONENTE CAMPO REUTILIZABLE
 
@@ -762,7 +997,12 @@ function CampoSelect({
       ) : (
         <div>{value}</div>
       )}
+      
+
+
+      
     </div>
+    
   );
 }
 export default BuscarClientes;
