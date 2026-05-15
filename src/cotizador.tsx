@@ -12,6 +12,7 @@ import CartuchoAlta from "./cotizadores/cartuchoalta";
 import Resorte from "./cotizadores/Resorte";
 import Termopar from "./cotizadores/termopares";
 import Cuarzo from "./cotizadores/cuarzo";
+import MantenimientoReparacion from "./cotizadores/Mantenimiento_reparacion";
 import { formatearMoneda } from "./funciones/formato_moneda";
 import {obtenerSiguienteCotizacion,obtenerSiguienteEnvio} from "./firebase/consecutivos";
 
@@ -20,8 +21,8 @@ interface Cliente {
   id?: string;
   nombre?: string;
   razonSocial?: string;
-  rfc?: string;
-  direccion?: string;
+    rfc?: string;
+    direccion?: string;
   numeroExterior?: string;
   numeroInterior?: string;
   colonia?: string;
@@ -74,7 +75,7 @@ const Cotizador = () => {
   const [envio, setEnvio] = useState<"si" | "no">("no");
   const [itemEditando, setItemEditando] = useState<ItemCotizado | null>(null); // para el ticket
   const [cotizadorActivo, setCotizadorActivo] = useState<
-      "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" | "cuarzo"
+"tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" | "cuarzo" | "mantenimiento_reparacion"
   >("tubular");
   const [factura, setFactura] = useState<number | "">("");
   const [fecha, setFecha] = useState("");
@@ -207,7 +208,7 @@ const Cotizador = () => {
 
   // 🔥 Cambio con confirmación
   const cambiarCotizador = (
-      nuevo: "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" |"cuarzo"
+      nuevo: "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" | "cuarzo" | "mantenimiento_reparacion"
   ) => {
     setItemEditando(null); // 🔥 clave
 
@@ -1130,6 +1131,14 @@ const Cotizador = () => {
             >
                 Cuarzo
             </div>
+            <div
+            className={`cotizador-tab ${
+                cotizadorActivo === "mantenimiento_reparacion" ? "active" : ""
+            }`}
+            onClick={() => cambiarCotizador("mantenimiento_reparacion")}
+            >
+            Reparación
+            </div>
         </div>
 
         {/* AREA */}
@@ -1190,6 +1199,13 @@ const Cotizador = () => {
                 setDirty={setFormDirty}
             />
         )}
+        {cotizadorActivo === "mantenimiento_reparacion" && (
+            <MantenimientoReparacion
+                data={itemEditando || undefined}
+                onGuardar={guardarCotizacion}
+                setDirty={setFormDirty}
+            />
+            )}
       </div>
 
       {/* RESUMEN */}

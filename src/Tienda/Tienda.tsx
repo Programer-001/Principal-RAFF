@@ -12,6 +12,7 @@ import CartuchoAlta from "../cotizadores/cartuchoalta";
 import Resorte from "../cotizadores/Resorte";
 import Termopar from "../cotizadores/termopares";
 import Cuarzo from "../cotizadores/cuarzo";
+import MantenimientoReparacion from "../cotizadores/Mantenimiento_reparacion";
 
 import { formatearMoneda } from "../funciones/formato_moneda";
 
@@ -98,7 +99,8 @@ type ServicioActivo =
     | "CartuchoA"
     | "Resorte"
     | "termopar"
-    | "cuarzo";
+    | "cuarzo"
+    | "mantenimiento_reparacion";
 
 const Tienda: React.FC = () => {
     const [folio, setFolio] = useState("FC-001");
@@ -1378,6 +1380,14 @@ const Tienda: React.FC = () => {
                             >
                                 Cuarzo
                             </div>
+                            <div
+                        className={`cotizador-tab ${
+                            servicioActivo === "mantenimiento_reparacion" ? "active" : ""
+                        }`}
+                        onClick={() => cambiarServicioActivo("mantenimiento_reparacion")}
+                        >
+                        Reparaciones
+                        </div>
                         </div>
 
                         {servicioActivo === "tubular" && (
@@ -1439,6 +1449,13 @@ const Tienda: React.FC = () => {
                                 onGuardar={guardarServicio}
                                 setDirty={setFormDirty}
                             />
+                        )}
+                        {servicioActivo === "mantenimiento_reparacion" && (
+                        <MantenimientoReparacion
+                            data={dataServicioEditando}
+                            onGuardar={guardarServicio}
+                            setDirty={setFormDirty}
+                        />
                         )}
                     </>
                 )}

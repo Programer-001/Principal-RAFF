@@ -59,6 +59,8 @@ const TIPOS_DISPONIBLES = [
     { value: "CartuchoA", label: "Cartucho alta concentración" },
     { value: "resorte", label: "Resorte" },
     { value: "termopar", label: "Termopar" },
+    { value: "mantenimiento_reparacion", label: "Reparaciones" },
+
 ];
 
 const Comisiones = () => {
