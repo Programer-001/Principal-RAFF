@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getDatabase, ref, get, update, remove,push, set } from "firebase/database";
+import { plantillaCatalogoClientes } from "../plantillas/plantillaCatalogoClientes";
 import { app } from "../firebase/config";
 import "../css/formulario.css";
 
@@ -243,6 +244,26 @@ const BuscarClientes: React.FC = () => {
       }, ${selectedCliente.estado || ""}`
     : "";
 
+    const generarCatalogoClientes = async () => {
+        const snap = await get(ref(db, "Clientes"));
+
+        const data = snap.val() || {};
+
+        const lista: Cliente[] = Object.keys(data).map((id) => ({
+            id,
+            ...data[id],
+        }));
+
+        if (lista.length === 0) {
+            alert("No hay clientes registrados");
+            return;
+        }
+
+        const doc = plantillaCatalogoClientes(lista);
+
+        doc.save("Catalogo_Clientes.pdf");
+    };
+
   return (
     <div className="caja-container">
       <h2>Consulta de Clientes</h2>
@@ -286,6 +307,12 @@ const BuscarClientes: React.FC = () => {
               >
                   + Nuevo Cliente
               </button>
+              <button
+                className="btn btn-blue"
+                onClick={generarCatalogoClientes}
+            >
+                Catálogo PDF
+            </button>
           </div>
 
       {/* RESULTADOS */}

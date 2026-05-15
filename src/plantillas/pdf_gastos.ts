@@ -14,8 +14,8 @@ const limpiarTextoPDF = (texto: string): string => {
     return String(texto || "")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .replace(/ñ/g, "n")
-        .replace(/Ñ/g, "N");
+        .replace(/ï¿½/g, "n")
+        .replace(/ï¿½/g, "N");
 };
 
 const cargarSVGElemento = async (path: string): Promise<SVGSVGElement | null> => {
@@ -169,11 +169,6 @@ export const generarPDFGastos = async (desde: string, hasta: string) => {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(
-        `Fondo final: ${formatearMoneda(fondoFinal)}`,
-        14,
-        finalY
-    );
     doc.text(
         `Gastos totales: ${formatearMoneda(totalGastos)}`,
         14,
