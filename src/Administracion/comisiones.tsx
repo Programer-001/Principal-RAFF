@@ -449,7 +449,7 @@ const Comisiones = () => {
                             <strong>
                                 Comisión del Supervisor ({emp.username || emp.nombre}):
                             </strong>{" "}
-                            {dinero(totalGeneral * 0.015)}
+                            {dinero(totalGeneral * 0.0125)}
                         </div>
                     ))}
                     <div><strong>Total para jose:</strong> {dinero(totalGeneral*0.002)}</div>

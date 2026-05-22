@@ -143,6 +143,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.rh,
             MENU_BASE.facturacion,
             MENU_BASE.administracion,
+            MENU_BASE.contabilidad,
         ],
     },
     {
