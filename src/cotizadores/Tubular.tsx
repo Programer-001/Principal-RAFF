@@ -73,7 +73,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
       "sellos",
       "servicios",
     ];
-
+// Función para cargar datos de Firebase
     const cargarDatos = async () => {
       const nuevosCatalogos: any = {};
 
@@ -96,7 +96,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
 
     cargarDatos();
   }, []);
-
+// Función para renderizar un select genérico
   const renderSelect = (nombre: string) => (
     <select
       value={seleccionados[nombre]?.id || ""}
@@ -122,7 +122,11 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
       ))}
     </select>
   );
-  //funcion para sacar el precio del tubo
+  /*
+  ======================================================================  
+ ZONA DE CALCULOS PARA TUBULAR
+  ======================================================================
+  */
   const obtenerPrecioPorCm = (tipo: TipoResistencia, cm: number): number => {
     const tabla = tablasPrecios[tipo];
     if (!tabla) return 0;
@@ -132,17 +136,31 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
     return rango ? rango.precio : 0;
   };
   //Calcular Aletada
-  const calcularAletada = (cm: number) => {
-    const longitud = Number(cm) || 0;
-    const precio_aleta = 1300;
-    if (longitud <= 100) return precio_aleta;
-    return longitud * (precio_aleta / 100);
-  };
+const calcularAletada = (cm: number) => {
+  const longitud = Number(cm) || 0;
+  const precioPorCm = 13; // $1300 / 100 cm
+
+  if (longitud <= 0) return 0;
+
+  // 50 cm o menos se cobra como 50 cm
+  if (longitud <= 50) return 50 * precioPorCm;
+
+  // Más de 50 cm se cobra por longitud real
+  return longitud * precioPorCm;
+};
+// Verificar si se puede usar aleta según el diámetro
+const puedeUsarAleta =
+  diametro === "7/16 tp 304" ||
+  diametro === "7/16 tp 316";
+  // La aleta solo se puede usar para ciertos diámetros, pero el precio solo cambia para 7/16, así que se cobra aletada solo si es 7/16 y el checkbox está activo
+const esAletada716 = aleta &&(diametro === "7/16 tp 304" || diametro === "7/16 tp 316");
   //variable que guarga el precio del tubo
-    const totalTubo =
-        diametro && longitud
-            ? obtenerPrecioPorCm(diametro, longitud) * longitud
-            : 0;
+const totalTubo =
+  diametro && longitud
+    ? esAletada716
+      ? calcularAletada(longitud)
+      : obtenerPrecioPorCm(diametro, longitud) * longitud
+    : 0;
   //opciones para entrar a soldar cable
   const tipoSoldarCable = seleccionados["soldar_cable_resistencia"]?.tipo || "";
 
@@ -198,7 +216,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
     //caclula desoldar base con cantidad
 
     //Calcular aletada por metros
-    const totalAleta = aleta ? calcularAletada(longitud) : 0;
+    const totalAleta = esAletada716 ? calcularAletada(longitud) : 0;
   //---------------------------TOTAL------------------------------------->>
 
   const precioBorne = Number(seleccionados["borne"]?.precio) || 0;
@@ -225,7 +243,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
             : 0;
   let totalResistencia =
     Number(cantidadResistencias) *
-      (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo + totalAleta + precioSoldadura ) +
+      (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo +  precioSoldadura ) +
       //precioSoldadura+ <-- LO QUITE POR MIENTRAS
      totalDesoldarBase +
     totalCable +
@@ -278,7 +296,11 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
       setSacarWatts(false);
   };
 
-  //descripcion
+  /*
+  ======================================================================  
+ DESCRIPCIÓN DINÁMICA PARA TUBULAR
+  ======================================================================
+  */
 
   const textoDobleces = (() => {
     const tipo = seleccionados["dobleces"]?.tipo;
@@ -407,6 +429,13 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
             setCantidadSellos(0);
         }
     }, [seleccionados["sellos"]]);
+
+    useEffect(() => {
+  if (!puedeUsarAleta) {
+    setAleta(false);
+  }
+}, [diametro]);
+
   //RESET
   useEffect(() => {
     if (data) {
@@ -435,6 +464,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
       setTermoposoBase(!!d.totalTermoposo);
         setServicioExpress(!!d.totalExpress);
         setCantidadSellos(d.cantidadSellos || 0);
+        setCantidadBarrenos(d.cantidadBarrenos || 0);
 
       // 🔹 placa
       setTipoPlaca(d.tipoPlaca || "");
@@ -689,6 +719,8 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
               <label>Cantidad de barrenados</label>
               <input
                 type="number"
+                min={0}
+                value={cantidadBarrenos === 0 ? "" : cantidadBarrenos}
                 onChange={(e) => setCantidadBarrenos(Number(e.target.value))}
               />
             </div>
@@ -799,15 +831,19 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
                     />
                 </div>
             )}
-        {/* Aleta */}
-        <div className="form-row checkbox-row">
-            <label>Aleta (según longitud)</label>
+          {/* Aleta */}
+          <div className="form-row checkbox-row">
+            <label>
+              Aleta (solo 7/16)
+            </label>
+
             <input
-                type="checkbox"
-                checked={aleta}
-                onChange={() => setAleta(!aleta)}
+              type="checkbox"
+              checked={aleta}
+              disabled={!puedeUsarAleta}
+              onChange={() => setAleta(!aleta)}
             />
-        </div>
+          </div>
           {/* Otros Servicios */}
           <div className="form-row">
             <label>Otros Servicios</label>
@@ -897,6 +933,7 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
                               totalDesoldartornillo,
                               totalTapon,
                               totalBarrenos,
+                              cantidadBarrenos,
                               totalTermoposo,
                               totalPlaca,
                               tipoPlaca,
@@ -942,54 +979,107 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
                   </div>
 
                   {mostrarDetalle && (
-                      <h3>
-                          Voltaje: {voltaje || "--"}V
-                          <br />
-                          Potencia: {potencia || "--"}W
-                          <br />
-                          Cantidad de resistencias: {cantidadResistencias || "--"}
-                          <br />
-                          Total Tubular: {totalTubo ? `$ ${totalTubo.toFixed(2)}` : "--"}
-                          <br />
-                          Precio por cm:{" "}
-                          {diametro ? obtenerPrecioPorCm(diametro, longitud) : "--"}
-                          <br />
-                          Tornillo: {seleccionados["tornillo"]?.precio ?? "--"}
-                          <br />
-                          Borne: {seleccionados["borne"]?.precio ?? "--"}
-                          <br />
-                          Desoldar de base: {seleccionados["desoldar_base"]?.precio ?? "--"}
-                          <br />
-                          Dobleces: {seleccionados["dobleces"]?.precio ?? "--"}
-                          <br />
-                          Soldadura en resistencia:{" "}
-                          {seleccionados["soldadura_resistencia"]?.precio ?? "--"}
-                          <br />
-                          Soldar cable: {tipoSoldarCable || "--"}
-                          <br />
-                          Total cable: {totalCable ? `$ ${totalCable.toFixed(2)}` : "--"}
-                          <br />
-                          Desoldar tornillo:{" "}
-                          {totalDesoldartornillo ? `$ ${totalDesoldartornillo}` : "--"}
-                          <br />
-                          Tapon macho: {totalTapon ? `$ ${totalTapon}` : "--"}
-                          <br />
-                          Barrenos: {totalBarrenos ? `$ ${totalBarrenos}` : "--"}
-                          <br />
-                          Termoposo: {totalTermoposo ? `$ ${totalTermoposo}` : "--"}
-                          <br />
-                          Tipo {tipoPlaca || "--"}: {totalPlaca ? `$ ${totalPlaca.toFixed(2)}` : "--"}
-                          <br />
-                          Puentes: {totalPuentes ? `$ ${totalPuentes}` : "--"}
-                          <br />
-                          Sello: {seleccionados["sellos"]?.precio ?? "--"}
-                          <br />
-                          Aleta: {totalAleta ? `$ ${totalAleta.toFixed(2)}` : "--"}
-                          <br />
-                          Otros Servicios: {seleccionados["servicios"]?.precio ?? "--"}
-                          <br />
-                          Servicio express: % {totalExpress.toFixed(2)}
-                      </h3>
+                    <h3>
+                      Voltaje: {voltaje || "--"}V
+                      <br />
+
+                      Potencia: {potencia || "--"}W
+                      <br />
+
+                      Cantidad de resistencias: {cantidadResistencias || "--"}
+                      <br />
+
+                      Total Tubular:{" "}
+                      {totalTubo ? formatearMoneda(totalTubo) : "--"}
+                      <br />
+
+                      Precio por cm:{" "}
+                      {diametro
+                        ? formatearMoneda(obtenerPrecioPorCm(diametro, longitud))
+                        : "--"}
+                      <br />
+
+                      Tornillo:{" "}
+                      {seleccionados["tornillo"]?.precio !== undefined
+                        ? formatearMoneda(seleccionados["tornillo"]?.precio)
+                        : "--"}
+                      <br />
+
+                      Borne:{" "}
+                      {seleccionados["borne"]?.precio !== undefined
+                        ? formatearMoneda(seleccionados["borne"]?.precio)
+                        : "--"}
+                      <br />
+
+                      Desoldar de base:{" "}
+                      {seleccionados["desoldar_base"]?.precio !== undefined
+                        ? formatearMoneda(seleccionados["desoldar_base"]?.precio)
+                        : "--"}
+                      <br />
+
+                      Dobleces:{" "}
+                      {seleccionados["dobleces"]?.precio !== undefined
+                        ? formatearMoneda(seleccionados["dobleces"]?.precio)
+                        : "--"}
+                      <br />
+
+                      Soldadura en resistencia:{" "}
+                      {seleccionados["soldadura_resistencia"]?.precio !== undefined
+                        ? formatearMoneda(seleccionados["soldadura_resistencia"]?.precio)
+                        : "--"}
+                      <br />
+
+                      Soldar cable: {tipoSoldarCable || "--"}
+                      <br />
+
+                      Total cable:{" "}
+                      {totalCable ? formatearMoneda(totalCable) : "--"}
+                      <br />
+
+                      Desoldar tornillo:{" "}
+                      {totalDesoldartornillo
+                        ? formatearMoneda(totalDesoldartornillo)
+                        : "--"}
+                      <br />
+
+                      Tapon macho:{" "}
+                      {totalTapon ? formatearMoneda(totalTapon) : "--"}
+                      <br />
+
+                      Barrenos:{" "}
+                      {totalBarrenos ? formatearMoneda(totalBarrenos) : "--"}
+                      <br />
+
+                      Termoposo:{" "}
+                      {totalTermoposo ? formatearMoneda(totalTermoposo) : "--"}
+                      <br />
+
+                      Tipo {tipoPlaca || "--"}:{" "}
+                      {totalPlaca ? formatearMoneda(totalPlaca) : "--"}
+                      <br />
+
+                      Puentes:{" "}
+                      {totalPuentes ? formatearMoneda(totalPuentes) : "--"}
+                      <br />
+
+                      Sello:{" "}
+                      {seleccionados["sellos"]?.precio !== undefined
+                        ? formatearMoneda(seleccionados["sellos"]?.precio)
+                        : "--"}
+                      <br />
+
+                      Aleta:{" "}
+                      {totalAleta ? formatearMoneda(totalAleta) : "--"}
+                      <br />
+
+                      Otros Servicios:{" "}
+                      {seleccionados["servicios"]?.precio !== undefined
+                        ? formatearMoneda(seleccionados["servicios"]?.precio)
+                        : "--"}
+                      <br />
+
+                      Servicio express: % {totalExpress.toFixed(2)}
+                    </h3>
                   )}
               </>
           )}
