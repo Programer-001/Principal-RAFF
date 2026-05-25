@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from "react";
 import { ItemCotizado } from "../cotizador";
 import { formatearMoneda } from "../funciones/formato_moneda";
+import { FiCopy } from "react-icons/fi";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 interface Props {
@@ -305,12 +306,43 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
             />
           </div>
         )}
+
+        {/* DESCRIPCIÓN FORMATEADA PARA COPIAR */}
         <div className="form-row textarea-row full-width descripcion-row">
           <div className="descripcion-box">
-            <label className="descripcion-title">Descripción</label>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <label className="descripcion-title">Descripción</label>
+
+              <button
+                type="button"
+                title="Copiar descripción"
+                onClick={() => navigator.clipboard.writeText(descripcion)}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  padding: 4,
+                }}
+              >
+                <FiCopy size={18} />
+              </button>
+            </div>
+
             <p className="descripcion-texto">{descripcion}</p>
           </div>
         </div>
+
+
+
       </div>
       {/*Fin de los inputs */}
 

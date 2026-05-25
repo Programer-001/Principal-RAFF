@@ -9,6 +9,7 @@ import {
   descuentosTubular,
 } from "../datos/PrecioTipoResistencia";
 import { ItemCotizado } from "../cotizador";
+import { FiCopy } from "react-icons/fi";
 
 interface Props {
     data?: ItemCotizado;
@@ -889,7 +890,33 @@ const totalTubo =
 
           <div className="form-row textarea-row full-width descripcion-row">
             <div className="descripcion-box">
-              <label className="descripcion-title">Descripción</label>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
+                }}
+              >
+                <label className="descripcion-title">Descripción</label>
+
+                <button
+                  type="button"
+                  title="Copiar descripción"
+                  onClick={() => navigator.clipboard.writeText(descripcion)}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: 4,
+                  }}
+                >
+                  <FiCopy size={18} />
+                </button>
+              </div>
+
               <p className="descripcion-texto">{descripcion}</p>
             </div>
           </div>

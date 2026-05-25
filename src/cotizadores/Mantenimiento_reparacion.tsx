@@ -3,6 +3,7 @@ import { get, ref } from "firebase/database";
 import { db } from "../firebase/config";
 import { ItemCotizado } from "../cotizador";
 import { formatearMoneda } from "../funciones/formato_moneda";
+import { FiCopy } from "react-icons/fi";
 
 interface Props {
   data?: ItemCotizado;
@@ -345,124 +346,134 @@ const guardar = () => {
   setDirty(false);
 };
   return (
-    <div className="form-container">
-      <h1>Mantenimiento y reparación</h1>
+  <div className="form-container">
+    <h1>Mantenimiento y reparación</h1>
 
-      <h2>Reparación</h2>
-      {/* 🔹 SOLDAR TORNILLO */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 15,
-            flexWrap: "wrap",
-          }}
-        >
-          {/* CHECK */}
-          <input
-            type="checkbox"
-            checked={soldarTornillo}
+    <h2>Reparación</h2>
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginBottom: 15,
+        flexWrap: "wrap",
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={soldarTornillo}
+        onChange={(e) => {
+          const activo = e.target.checked;
+
+          setSoldarTornillo(activo);
+
+          if (!activo) {
+            setTornilloSeleccionado(null);
+            setCantidadTornillo(0);
+          } else {
+            setCantidadTornillo(1);
+          }
+        }}
+      />
+
+      <label style={{ minWidth: 220, fontWeight: "bold" }}>
+        SOLDAR TORNILLO
+      </label>
+
+      {soldarTornillo && (
+        <>
+          <select
+            value={tornilloSeleccionado?.id || ""}
             onChange={(e) => {
-              const activo = e.target.checked;
+              const seleccionado = opcionesTornillo.find(
+                (t) => t.id === e.target.value
+              );
 
-              setSoldarTornillo(activo);
+              setTornilloSeleccionado(seleccionado || null);
+            }}
+          >
+            <option value="">Seleccione...</option>
 
-              if (!activo) {
-                setTornilloSeleccionado(null);
-                setCantidadTornillo(0);
-              } else {
-                setCantidadTornillo(1);
-              }
+            {opcionesTornillo.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.tipo}
+              </option>
+            ))}
+          </select>
 
-              setDirty(true);
+          <input
+            type="number"
+            min={1}
+            value={cantidadTornillo === 0 ? "" : cantidadTornillo}
+            placeholder="Cantidad"
+            style={{ width: 90 }}
+            onChange={(e) => {
+              setCantidadTornillo(Number(e.target.value));
             }}
           />
 
-          {/* TEXTO */}
-          <label
+          <b style={{ minWidth: 100 }}>{formatearMoneda(totalTornillo)}</b>
+        </>
+      )}
+    </div>
+
+    {serviciosReparacion.map(renderServicio)}
+
+    <h2>Mantenimiento</h2>
+    {serviciosMantenimiento.map(renderServicio)}
+
+    <div className="form-row textarea-row">
+      <label>Notas adicionales</label>
+      <textarea
+        value={notas}
+        onChange={(e) => {
+          setNotas(e.target.value);
+        }}
+        placeholder="Ej. revisar terminales, limpiar base, etc."
+      />
+    </div>
+
+    <div className="form-row textarea-row full-width descripcion-row">
+      <div className="descripcion-box">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          <label className="descripcion-title">Descripción</label>
+
+          <button
+            type="button"
+            title="Copiar descripción"
+            onClick={() => navigator.clipboard.writeText(descripcion)}
             style={{
-              minWidth: 220,
-              fontWeight: "bold",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              padding: 4,
             }}
           >
-            SOLDAR TORNILLO
-          </label>
-
-          {/* SELECT */}
-          {soldarTornillo && (
-            <>
-              <select
-                value={tornilloSeleccionado?.id || ""}
-                onChange={(e) => {
-                  const seleccionado = opcionesTornillo.find(
-                    (t) => t.id === e.target.value
-                  );
-
-                  setTornilloSeleccionado(seleccionado || null);
-                  setDirty(true);
-                }}
-              >
-                <option value="">Seleccione...</option>
-
-                {opcionesTornillo.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.tipo}
-                  </option>
-                ))}
-              </select>
-
-              {/* CANTIDAD */}
-              <input
-                type="number"
-                min={1}
-                value={cantidadTornillo === 0 ? "" : cantidadTornillo}
-                placeholder="Cantidad"
-                style={{ width: 90 }}
-                onChange={(e) => {
-                  setCantidadTornillo(Number(e.target.value));
-                  setDirty(true);
-                }}
-              />
-
-              {/* TOTAL */}
-              <b style={{ minWidth: 100 }}>
-                {formatearMoneda(totalTornillo)}
-              </b>
-            </>
-          )}
+            <FiCopy size={18} />
+          </button>
         </div>
-      {serviciosReparacion.map(renderServicio)}
 
-      <h2>Mantenimiento</h2>
-      {serviciosMantenimiento.map(renderServicio)}
-
-      <div className="form-row textarea-row">
-        <label>Notas adicionales</label>
-        <textarea
-          value={notas}
-          onChange={(e) => {
-            setNotas(e.target.value);
-            setDirty(true);
-          }}
-          placeholder="Ej. revisar terminales, limpiar base, etc."
-        />
+        <p className="descripcion-texto">{descripcion}</p>
       </div>
-
-      <div className="form-row textarea-row full-width descripcion-row">
-        <div className="descripcion-box">
-          <label className="descripcion-title">Descripción</label>
-          <p className="descripcion-texto">{descripcion}</p>
-        </div>
-      </div>
-
-      <h2>Subtotal: {formatearMoneda(totalGeneral)}</h2>
-
-      <button className="btn btn-blue" onClick={guardar}>
-        {data ? "ACTUALIZAR" : "AGREGAR"}
-      </button>
     </div>
-  );
+
+    <h2>Subtotal: {formatearMoneda(totalGeneral)}</h2>
+
+    <button className="btn btn-blue" onClick={guardar}>
+      {data ? "ACTUALIZAR" : "AGREGAR"}
+    </button>
+  </div>
+);
 };
 
 export default MantenimientoReparacion;

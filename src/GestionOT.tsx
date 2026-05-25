@@ -6,6 +6,7 @@ import { app, auth } from "./firebase/config";
 import { generarPDFOTCliente } from "./plantillas/plantillaOTCliente";
 import { generarPDFOTProduccion } from "./plantillas/plantillaOTProduccion";
 import { generarPDFOTCotizacion } from"./plantillas/plantillaOTCotizacion_Cliente";
+import { FiCopy } from "react-icons/fi";
 
 interface ClienteSnapshot {
     nombre?: string;
@@ -1452,8 +1453,34 @@ const GestionOT = () => {
                                                 <b>{trabajo.partida || `Partida ${index + 1}`}</b>
                                             </div>
 
-                                            <div>
-                                                {trabajo.descripcion || "--"}
+                                            <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 8,
+                                            }}
+                                            >
+                                            <span>{trabajo.descripcion || "--"}</span>
+
+                                            {trabajo.descripcion && (
+                                                <button
+                                                type="button"
+                                                title="Copiar descripción"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(trabajo.descripcion || "");
+                                                }}
+                                                style={{
+                                                    border: "none",
+                                                    background: "transparent",
+                                                    cursor: "pointer",
+                                                    padding: 4,
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                }}
+                                                >
+                                                <FiCopy size={16} />
+                                                </button>
+                                            )}
                                             </div>
 
                                             {/* 🔥 ESTADO BONITO Colores de estados*/}

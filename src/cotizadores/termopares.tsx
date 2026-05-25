@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { termoparJ, termoparK, bulboTornilloTermopar } from "../datos/Termopares";
 import { formatearMoneda } from "../funciones/formato_moneda";
+import { FiCopy } from "react-icons/fi";
 import { ItemCotizado } from "../cotizador";
 
 interface Props {
@@ -318,10 +319,38 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
                     placeholder="Escribe detalles adicionales"
                 />
             </div>
-
+            {/* DESCRIPCIÓN FORMATEADA PARA COPIAR */ }
             <div className="form-row textarea-row full-width descripcion-row">
                 <div className="descripcion-box">
-                    <label className="descripcion-title">Descripción</label>
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 8,
+                        }}
+                    >
+                        <label className="descripcion-title">Descripción</label>
+
+                        <button
+                            type="button"
+                            title="Copiar descripción"
+                            onClick={() =>
+                                navigator.clipboard.writeText(descripcionTermopar)
+                            }
+                            style={{
+                                border: "none",
+                                background: "transparent",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                padding: 4,
+                            }}
+                        >
+                            <FiCopy size={18} />
+                        </button>
+                    </div>
+
                     <p className="descripcion-texto">{descripcionTermopar}</p>
                 </div>
             </div>

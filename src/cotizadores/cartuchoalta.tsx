@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { obtenerPrecioCartuchoAlta, obtenerPrecioCartuchoAltaMilimetrica, anchos } from "../datos/Resistencia_alta_C";
 import { formatearMoneda } from "../funciones/formato_moneda";
+import { FiCopy } from "react-icons/fi";
 import { ItemCotizado } from "../cotizador";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
@@ -380,20 +381,46 @@ const [diametroMm, setDiametroMm] = useState("");
             placeholder="Ej. salida a 90°"
           />
         </div>
+          {/* DESCRIPCIÓN FORMATEADA PARA COPIAR */}
+            <div
+              style={{
+                border: "1px solid #ccc",
+                padding: "20px",
+                margin: "5%",
+                borderRadius: "8px",
+                background: "#f9f9f9",
+                top: "10px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 10,
+                }}
+              >
+                <h3 style={{ margin: 0 }}>Descripción</h3>
 
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "20px",
-            margin: "5%",
-            borderRadius: "8px",
-            background: "#f9f9f9",
-            top: "10px",
-          }}
-        >
-          <h3>Descripción</h3>
-          <p style={{ fontSize: "14px" }}>{descripcion}</p>
+                <button
+                  type="button"
+                  title="Copiar descripción"
+                  onClick={() => navigator.clipboard.writeText(descripcion)}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: 4,
+                  }}
+                >
+                  <FiCopy size={18} />
+                </button>
               </div>
+
+              <p style={{ fontSize: "14px" }}>{descripcion}</p>
+            </div>
 
               <h2><strong>Subtotal: </strong>{formatearMoneda(total)}</h2>
               <h1><strong>Total: </strong>{formatearMoneda(total*1.16)}</h1>

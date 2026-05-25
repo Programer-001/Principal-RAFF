@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { obtenerPrecioCartuchoBaja } from "../datos/Resistencia_baja_C";
 import { formatearMoneda } from "../funciones/formato_moneda";
 import { ItemCotizado } from "../cotizador";
+import { FiCopy } from "react-icons/fi";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 interface Props {
@@ -266,14 +267,42 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
             placeholder="Ej. salida a 90°"
           />
         </div>
+          {/* DESCRIPCIÓN FORMATEADA PARA COPIAR */}
+          <div className="form-row textarea-row full-width descripcion-row">
+            <div className="descripcion-box">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
+                }}
+              >
+                <label className="descripcion-title">Descripción</label>
 
-        <div className="form-row textarea-row full-width descripcion-row">
-          <div className="descripcion-box">
-            <label className="descripcion-title">Descripción</label>
-            <p className="descripcion-texto">{descripcion}</p>
+                <button
+                  type="button"
+                  title="Copiar descripción"
+                  onClick={() => navigator.clipboard.writeText(descripcion)}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: 4,
+                  }}
+                >
+                  <FiCopy size={18} />
+                </button>
+              </div>
+
+              <p className="descripcion-texto">{descripcion}</p>
+            </div>
           </div>
-        </div>
+        
           </div>
+          {/* TOTAL simple sin variables */}
           <h2><strong>Subtotal:</strong> {formatearMoneda(total)}</h2>
           <h1><strong>Total:</strong> {formatearMoneda(total*1.16)}</h1>
       {/* TOTAL con variables */}

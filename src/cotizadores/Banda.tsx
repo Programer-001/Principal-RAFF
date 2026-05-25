@@ -4,6 +4,7 @@ import { calcularPrecio } from "../funciones/calculos";
 import { tipoCable, termopar, tira } from "../datos/tipoCable";
 import { ItemCotizado } from "../cotizador";
 import { formatearMoneda } from "../funciones/formato_moneda";
+import { FiCopy } from "react-icons/fi";
 
 interface Props {
   data?: ItemCotizado;
@@ -641,10 +642,36 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
                   placeholder="Ej. salida a 90°"
               />
           </div>
-
+      {/*Descripción*/ }
       <div className="form-row textarea-row full-width descripcion-row">
         <div className="descripcion-box">
-          <label className="descripcion-title">Descripción</label>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+            }}
+          >
+            <label className="descripcion-title">Descripción</label>
+
+            <button
+              type="button"
+              title="Copiar descripción"
+              onClick={() => navigator.clipboard.writeText(descripcionBanda)}
+              style={{
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                padding: 4,
+              }}
+            >
+              <FiCopy size={18} />
+            </button>
+          </div>
+
           <p className="descripcion-texto">{descripcionBanda}</p>
         </div>
       </div>
