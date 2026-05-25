@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 import { tablasPrecios, TipoResistencia } from "../datos/PrecioTipoResistencia";
+import { resistenciasStock } from "../datos/resistencias_stock";
 import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 import {
   obtenerDescuento,
@@ -473,6 +474,34 @@ const totalTubo =
         setDatosAdicionales(d.datosAdicionales || "");
     }
   }, [data]);
+
+    // FUNCION STOCK
+const aplicarStock = (stock: any) => {
+  setVoltaje(Number(stock.valores.voltaje));
+  setPotencia(Number(stock.valores.potencia));
+  setLongitud(Number(stock.valores.longitud));
+  setDiametro(stock.valores.diametro);
+  setDatosAdicionales(stock.valores.datosAdicionales);
+
+  setSeleccionados((prev: any) => ({
+    ...prev,
+
+    dobleces: catalogos["dobleces"]?.find(
+      (item: any) => item.tipo === stock.valores.dobleces
+    ),
+
+    tornillo: catalogos["tornillo"]?.find(
+      (item: any) => item.tipo === stock.valores.tornillo
+    ),
+
+    borne: catalogos["borne"]?.find(
+      (item: any) => item.tipo === stock.valores.borne
+    ),
+  }));
+
+  
+};
+
   //-----------------------log---------------------
 
   console.log("Cable seleccionado:", seleccionados["cable_para_soldar"]);
@@ -988,11 +1017,42 @@ const totalTubo =
       </div>
       {/* -------------------------------------------------------------------------------------------------------------->> */}
 
-    
+
+
+
+
+
 
           {/* -------------------------------------------------------VARIABLES CUADRO----------------------------------------------------->> */}
           {esAdministracion && (
               <>
+
+              {/* BOTONES DE STOCK */}
+                    <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    marginBottom: 20,
+                  }}
+                >
+                  {resistenciasStock.map((stock) => (
+                    <button
+                      key={stock.nombre}
+                      type="button"
+                      onClick={() => aplicarStock(stock)}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: "1px solid #ccc",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {stock.nombre}
+                    </button>
+                  ))}
+                </div>
                   <div style={{ marginBottom: 10 }}>
                       <label style={{ cursor: "pointer", fontWeight: "bold" }}>
                           <input
