@@ -1,5 +1,6 @@
 ﻿// src/Produccion/GestionProduccion.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { FiCopy } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { getDatabase, ref, get, remove, update, onValue } from "firebase/database";
 import { app, auth } from "../firebase/config";
@@ -471,10 +472,6 @@ const GestionProduccion: React.FC = () => {
 
             const esTubular = (partidaSeleccionada.tipo || "").toLowerCase() === "tubular";
 
-            if (esTubular && partidaSeleccionada.materialEntregado !== true) {
-                alert("Para guardar en En proceso debes entregar el material");
-                return;
-            }
         }
 
         try {
@@ -503,6 +500,21 @@ const GestionProduccion: React.FC = () => {
             } else if (partidaSeleccionada.inspeccion) {
                 datosActualizar.inspeccion = partidaSeleccionada.inspeccion;
             }
+            // 🔥 ENTREGAR MATERIAL AUTOMÁTICAMENTE
+            const esTubular =
+                (partidaSeleccionada.tipo || "").toLowerCase() === "tubular";
+
+                if (
+                estado === "en_proceso" &&
+                esTubular &&
+                partidaSeleccionada.materialEntregado !== true
+                ) {
+                const entregado = await entregarMaterial();
+
+                if (!entregado) {
+                    return;
+                }
+                }
 
             await update(ref(db, ruta), datosActualizar);
 
@@ -628,183 +640,141 @@ const GestionProduccion: React.FC = () => {
         }
     };
 
-    // =========================
-    // ABRIR SOLICITUD DE MATERIAL
-    // =========================
-    const abrirSolicitudMaterial = () => {
-        if (!partidaSeleccionada) return;
+    // ============================================
+    // ENTREGAR MATERIAL AUTOMÁTICAMENTE AL GUARDAR
+    // ============================================
+const entregarMaterial = async (): Promise<boolean> => {
+  if (!otSeleccionada || !partidaSeleccionada || !partidaSeleccionada.key) {
+    return false;
+  }
 
-        if (partidaSeleccionada.materialEntregado === true) {
-            alert("Material entregado");
-            return;
-        }
+  if (partidaSeleccionada.materialEntregado === true) {
+    setMostrarMateriales(false);
+    return true;
+  }
 
-        const descripcion = partidaSeleccionada.descripcion || "";
-        const resultado = calcularMaterialesTubular(descripcion);
+  const confirmar = window.confirm(
+    `¿Deseas entregar material para la partida ${partidaSeleccionada.partida || ""}?`
+  );
 
-        if (!resultado.familia) {
-            alert("No se pudo identificar si es tubular 5/16 o 7/16");
-            return;
-        }
+  if (!confirmar) return false;
 
-        setMaterialesCalculados(resultado.materiales);
-        setMostrarMateriales(true);
-    };
+  try {
+    const db = getDatabase(app);
+    const fechaEntrega = new Date().toISOString();
 
-    // =========================
-    // CERRAR SOLICITUD DE MATERIAL
-    // =========================
-    const cerrarSolicitudMaterial = () => {
-        setMostrarMateriales(false);
-    };
+    const inventarioRef = ref(db, "produccion/almacen_inventario");
+    const inventarioSnap = await get(inventarioRef);
 
-    // =========================
-    // ENTREGAR MATERIAL
-    // =========================
-    const entregarMaterial = async () => {
-        if (!otSeleccionada || !partidaSeleccionada || !partidaSeleccionada.key) return;
+    if (!inventarioSnap.exists()) {
+      alert("No existe el inventario en produccion/almacen_inventario");
+      return false;
+    }
 
-        if (partidaSeleccionada.materialEntregado === true) {
-            alert("Material entregado");
-            setMostrarMateriales(false);
-            return;
-        }
+    const inventarioData = inventarioSnap.val();
 
-        const confirmar = window.confirm(
-            `¿Deseas entregar material para la partida ${partidaSeleccionada.partida || ""}?`
-        );
+    const faltantes: string[] = [];
+    const movimientosParaDescontar: Array<{
+      key: string;
+      nuevaCantidad: number;
+      descripcion: string;
+    }> = [];
 
-        if (!confirmar) return;
+    for (const material of materialesCalculados) {
+      const nombreBuscado = normalizarNombreMaterial(material.nombre);
 
-        try {
-            const db = getDatabase(app);
-            const fechaEntrega = new Date().toISOString();
+      const encontradaKey = Object.keys(inventarioData).find((key) => {
+        const item = inventarioData[key];
+        const descripcion = (item.descripcion || "")
+          .toUpperCase()
+          .trim()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
 
-            // 1. Leer inventario
-            const inventarioRef = ref(db, "produccion/almacen_inventario");
-            const inventarioSnap = await get(inventarioRef);
+        return descripcion === nombreBuscado;
+      });
 
-            if (!inventarioSnap.exists()) {
-                alert("No existe el inventario en produccion/almacen_inventario");
-                return;
-            }
+      if (!encontradaKey) {
+        faltantes.push(`${material.nombre}: no existe en inventario`);
+        continue;
+      }
 
-            const inventarioData = inventarioSnap.val();
+      const itemInventario = inventarioData[encontradaKey];
+      const cantidadActual = Number(itemInventario.cantidad || 0);
+      const requerida = Number(material.cantidad || 0);
 
-            // 2. Validar existencias antes de descontar
-            const faltantes: string[] = [];
-            const movimientosParaDescontar: Array<{
-                key: string;
-                nuevaCantidad: number;
-                descripcion: string;
-            }> = [];
+      if (cantidadActual < requerida) {
+        faltantes.push(`${material.nombre}: faltan ${requerida - cantidadActual}`);
+        continue;
+      }
 
-            for (const material of materialesCalculados) {
-                const nombreBuscado = normalizarNombreMaterial(material.nombre);
+      movimientosParaDescontar.push({
+        key: encontradaKey,
+        nuevaCantidad: cantidadActual - requerida,
+        descripcion: itemInventario.descripcion || material.nombre,
+      });
+    }
 
-                const encontradaKey = Object.keys(inventarioData).find((key) => {
-                    const item = inventarioData[key];
-                    const descripcion = (item.descripcion || "")
-                        .toUpperCase()
-                        .trim()
-                        .normalize("NFD")
-                        .replace(/[\u0300-\u036f]/g, "");
+    if (faltantes.length > 0) {
+      alert("No se puede entregar material.\n\n" + faltantes.join("\n"));
+      return false;
+    }
 
-                    return descripcion === nombreBuscado;
-                });
+    for (const mov of movimientosParaDescontar) {
+      await update(ref(db, `produccion/almacen_inventario/${mov.key}`), {
+        cantidad: mov.nuevaCantidad,
+      });
+    }
 
-                if (!encontradaKey) {
-                    faltantes.push(`${material.nombre}: no existe en inventario`);
-                    continue;
-                }
+    await update(
+      ref(
+        db,
+        `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`
+      ),
+      {
+        materialSolicitado: true,
+        materialEntregado: true,
+        materialEntregaFecha: fechaEntrega,
+      }
+    );
 
-                const itemInventario = inventarioData[encontradaKey];
-                const cantidadActual = Number(itemInventario.cantidad || 0);
-                const requerida = Number(material.cantidad || 0);
+    setPartidaSeleccionada((prev) =>
+      prev
+        ? {
+            ...prev,
+            materialSolicitado: true,
+            materialEntregado: true,
+            materialEntregaFecha: fechaEntrega,
+          }
+        : prev
+    );
 
-                if (cantidadActual < requerida) {
-                    faltantes.push(
-                        `${material.nombre}: faltan ${requerida - cantidadActual}`
-                    );
-                    continue;
-                }
+    setOtSeleccionada((prev) => {
+      if (!prev || !prev.trabajos) return prev;
 
-                movimientosParaDescontar.push({
-                    key: encontradaKey,
-                    nuevaCantidad: cantidadActual - requerida,
-                    descripcion: itemInventario.descripcion || material.nombre,
-                });
-            }
+      return {
+        ...prev,
+        trabajos: {
+          ...prev.trabajos,
+          [partidaSeleccionada.key!]: {
+            ...prev.trabajos[partidaSeleccionada.key!],
+            materialSolicitado: true,
+            materialEntregado: true,
+            materialEntregaFecha: fechaEntrega,
+          },
+        },
+      };
+    });
 
-            // 3. Si hay faltantes, no descontar nada
-            if (faltantes.length > 0) {
-                alert(
-                    "No se puede entregar material.\n\n" +
-                    faltantes.join("\n")
-                );
-                return;
-            }
-
-            // 4. Descontar inventario
-            for (const mov of movimientosParaDescontar) {
-                await update(
-                    ref(db, `produccion/almacen_inventario/${mov.key}`),
-                    {
-                        cantidad: mov.nuevaCantidad,
-                    }
-                );
-            }
-
-            // 5. Marcar partida como entregada
-            await update(
-                ref(
-                    db,
-                    `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`
-                ),
-                {
-                    materialSolicitado: true,
-                    materialEntregado: true,
-                    materialEntregaFecha: fechaEntrega,
-                }
-            );
-
-            // 6. Refrescar estado local de partida seleccionada
-            setPartidaSeleccionada((prev) => {
-                if (!prev) return prev;
-
-                return {
-                    ...prev,
-                    materialSolicitado: true,
-                    materialEntregado: true,
-                    materialEntregaFecha: fechaEntrega,
-                };
-            });
-
-            // 7. Refrescar OT local
-            setOtSeleccionada((prev) => {
-                if (!prev || !prev.trabajos) return prev;
-
-                return {
-                    ...prev,
-                    trabajos: {
-                        ...prev.trabajos,
-                        [partidaSeleccionada.key!]: {
-                            ...prev.trabajos[partidaSeleccionada.key!],
-                            materialSolicitado: true,
-                            materialEntregado: true,
-                            materialEntregaFecha: fechaEntrega,
-                        },
-                    },
-                };
-            });
-
-            setMostrarMateriales(false);
-            alert("Material entregado y descontado del inventario");
-        } catch (error) {
-            console.error("Error al entregar material:", error);
-            alert("No se pudo registrar la entrega de material");
-        }
-    };
+    setMostrarMateriales(false);
+    alert("Material entregado y descontado del inventario");
+    return true;
+  } catch (error) {
+    console.error("Error al entregar material:", error);
+    alert("No se pudo registrar la entrega de material");
+    return false;
+  }
+};
     // =========================
     // NORMALIZAR MATERIAL
     // =========================
@@ -934,6 +904,19 @@ const GestionProduccion: React.FC = () => {
             setFechaFin("");
         }
     }, [estado]);
+
+    // =========================================
+    // Generar números de serie automáticamente al marcar como terminada
+    // =========================================
+useEffect(() => {
+    if (
+        estado === "terminada" &&
+        partidaSeleccionada &&
+        !partidaSeleccionada.seriesGeneradas
+    ) {
+        generarNumerosSerie();
+    }
+}, [estado, partidaSeleccionada]);
 
     // =========================
     // NUMEROS DE SERIE GRABADO LASER
@@ -1898,57 +1881,65 @@ const GestionProduccion: React.FC = () => {
                                             background: "#fff",
                                         }}
                                     >
-                                        <label
+
+                                    {numerosSerie.length > 0 && (
+                                        <div
                                             style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 8,
-                                                fontWeight: "bold",
-                                                marginBottom: 12,
+                                                border: "1px solid #e5e7eb",
+                                                borderRadius: 8,
+                                                background: "#f9fafb",
+                                                padding: 12,
                                             }}
                                         >
-                                            <input
-                                                type="checkbox"
-                                                checked={mostrarSeries}
-                                                disabled={mostrarSeries}
-                                                onChange={async (e) => {
-                                                    if (e.target.checked) {
-                                                        await generarNumerosSerie();
-                                                    }
-                                                }}
-                                            />
-                                            Mostrar números de serie
-                                        </label>
+                                            <b>Números de serie:</b>
 
-                                        {numerosSerie.length > 0 && (
-                                            <div
-                                                style={{
-                                                    border: "1px solid #e5e7eb",
-                                                    borderRadius: 8,
-                                                    background: "#f9fafb",
-                                                    padding: 12,
-                                                }}
-                                            >
-                                                <b>Números de serie:</b>
-                                                <div style={{ marginTop: 10 }}>
-                                                    {numerosSerie.map((serie, index) => (
-                                                        <div key={`${serie}-${index}`} style={{ marginBottom: 4 }}>
-                                                            {serie}
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                            <div style={{ marginTop: 10 }}>
+                                                {numerosSerie.map((serie, index) => (
+                                                    <div
+                                                        key={`${serie}-${index}`}
+                                                        style={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "space-between",
+                                                            padding: "6px 0",
+                                                            borderBottom:
+                                                                index !== numerosSerie.length - 1
+                                                                    ? "1px solid #eee"
+                                                                    : "none",
+                                                        }}
+                                                    >
+                                                        <span>{serie}</span>
+
+                                                        <button
+                                                            onClick={() => navigator.clipboard.writeText(serie)}
+                                                            title="Copiar número de serie"
+                                                            style={{
+                                                                border: "none",
+                                                                background: "transparent",
+                                                                cursor: "pointer",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                padding: 4,
+                                                            }}
+                                                        >
+                                                            <FiCopy size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        )}
+                                        </div>
+                                    )}
                                     </div>
                                 )}
 
                             {/*SECCION DE BOTONES*/ }
                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                {!partidaEspecialSeleccionada && (
-                                    <button onClick={crearPDFPartida}>
-                                        Crear PDF
-                                    </button>
-                                )}
+                            {(estado === "en_fila" || estado === "en_proceso") && (
+                            <button onClick={crearPDFPartida}>
+                                Crear PDF
+                            </button>
+                            )}
 
                                 <button onClick={guardarPartida}>
                                     Guardar
@@ -1991,7 +1982,8 @@ const GestionProduccion: React.FC = () => {
                             
                             {/*TABLA DE ENTREGA DE MATERIAL TUBULAR*/ }
 
-                            {(partidaSeleccionada.tipo || "").toLowerCase() === "tubular" && (
+                            {(partidaSeleccionada.tipo || "").toLowerCase() === "tubular" &&
+                            estado === "en_proceso" && (
                                 <div
                                     style={{
                                         marginTop: 20,
@@ -2040,16 +2032,6 @@ const GestionProduccion: React.FC = () => {
                                         </table>
                                     </div>
 
-                                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                        <button
-                                            onClick={entregarMaterial}
-                                            disabled={partidaSeleccionada.materialEntregado === true}
-                                        >
-                                            {partidaSeleccionada.materialEntregado
-                                                ? "Material entregado"
-                                                : "Entregar material"}
-                                        </button>
-                                    </div>
                                 </div>
                             )}
                             {/*fin1*/}
