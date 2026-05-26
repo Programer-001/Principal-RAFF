@@ -90,7 +90,7 @@ const Productos_editor: React.FC = () => {
             const lista: Producto[] = Object.keys(data).map((key) => ({
                 id: key,
                 Producto: data[key].Producto,
-                PrecioNeto: data[key]["Precio neto"] || data[key].PrecioNeto || 0,
+                PrecioNeto: data[key].PrecioNeto ?? data[key]["Precio neto"] ?? 0,
                 PrecioProveedor: data[key].PrecioProveedor || 0,
                 habilitado:
                     data[key].habilitado === undefined ? true : data[key].habilitado,
@@ -164,9 +164,10 @@ const Productos_editor: React.FC = () => {
         }
 
         const datos = {
-            Producto: nombre,
-            PrecioNeto: Number(precioNeto.toFixed(2)),
-            PrecioProveedor: Number(precioProveedor.toFixed(2)),
+        Producto: nombre,
+        PrecioNeto: Number(precioNeto.toFixed(2)),
+        "Precio neto": Number(precioNeto.toFixed(2)),
+        PrecioProveedor: Number(precioProveedor.toFixed(2)),
         };
 
         if (editandoId) {
