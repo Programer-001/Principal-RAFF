@@ -1,6 +1,7 @@
 //src/productos_editor.tsx
 import React, { useEffect, useState } from "react";
 import { ref, get, set, remove, update } from "firebase/database";
+import { formatearMoneda } from "../funciones/formato_moneda";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { db, auth } from "../firebase/config";
 
@@ -287,10 +288,10 @@ const Productos_editor: React.FC = () => {
                 >
                     <h3>{productoSeleccionado.Producto}</h3>
 
-                    <p>Precio Neto: ${productoSeleccionado.PrecioNeto.toFixed(2)}</p>
+                    Precio Neto: ${formatearMoneda(productoSeleccionado.PrecioNeto)}
 
                     {puedeEditarProductos && (
-                        <p>Proveedor: ${(productoSeleccionado.PrecioProveedor || 0).toFixed(2)}</p>
+                        <p>Proveedor: ${formatearMoneda(productoSeleccionado.PrecioProveedor || 0)}</p>
                     )}
 
                     {puedeEditarProductos && (
@@ -416,11 +417,11 @@ const Productos_editor: React.FC = () => {
                                 }}
                             >
                                 <td>{p.Producto}</td>
-                                <td>${p.PrecioNeto.toFixed(2)}</td>
+                                <td>{formatearMoneda(p.PrecioNeto)}</td>
 
                                 {puedeEditarProductos && (
                                     <>
-                                        <td>${(p.PrecioProveedor || 0).toFixed(2)}</td>
+                                        <td>{formatearMoneda(p.PrecioProveedor || 0)}</td>
 
                                         <td>
                                             <input
