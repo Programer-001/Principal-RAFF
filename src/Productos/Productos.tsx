@@ -288,10 +288,10 @@ const Productos_editor: React.FC = () => {
                 >
                     <h3>{productoSeleccionado.Producto}</h3>
 
-                    Precio Neto: ${formatearMoneda(productoSeleccionado.PrecioNeto)}
+                    Precio Neto: {formatearMoneda(productoSeleccionado.PrecioNeto)}
 
                     {puedeEditarProductos && (
-                        <p>Proveedor: ${formatearMoneda(productoSeleccionado.PrecioProveedor || 0)}</p>
+                        <p>Proveedor: {formatearMoneda(productoSeleccionado.PrecioProveedor || 0)}</p>
                     )}
 
                     {puedeEditarProductos && (
