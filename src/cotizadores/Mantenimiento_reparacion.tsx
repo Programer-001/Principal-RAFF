@@ -30,13 +30,18 @@ const MantenimientoReparacion = ({ data, onGuardar, setDirty }: Props) => {
   const [soldarTornillo, setSoldarTornillo] = useState(false);
   const [tornilloSeleccionado, setTornilloSeleccionado] = useState<ServicioFirebase | null>(null);
   const [cantidadTornillo, setCantidadTornillo] = useState(0);
+//SOLDADURA en resistencia
+  const [opcionesSoldadura, setOpcionesSoldadura] = useState<ServicioFirebase[]>([]);
+  const [soldaduraSeleccionada, setSoldaduraSeleccionada] = useState<ServicioFirebase | null>(null);
+  const [cantidadSoldadura, setCantidadSoldadura] = useState(0);
 
 useEffect(() => {
   const cargarServicios = async () => {
-    const [snapServicios, snapTornillo] = await Promise.all([
-      get(ref(db, "cotizador/servicios")),
-      get(ref(db, "cotizador/tornillo")),
-    ]);
+  const [snapServicios, snapTornillo, snapSoldadura] = await Promise.all([
+    get(ref(db, "cotizador/servicios")),
+    get(ref(db, "cotizador/tornillo")),
+    get(ref(db, "cotizador/soldadura_resistencia")),
+  ]);
 
     // =========================
     // SERVICIOS
@@ -108,6 +113,24 @@ useEffect(() => {
     } else {
       setOpcionesTornillo([]);
     }
+
+    // =========================
+    // SOLDADURA PARA SELECT
+    // =========================
+    if (snapSoldadura.exists()) {
+  const dataSoldadura = snapSoldadura.val();
+
+  const listaSoldadura = Object.keys(dataSoldadura)
+    .map<ServicioFirebase>((id) => ({
+      id: `soldadura_${id}`,
+      tipo: String(dataSoldadura[id].Tipo || ""),
+      precio: Number(dataSoldadura[id].Precio || 0),
+      grupo: "reparacion",
+    }))
+    .filter((s) => s.tipo && s.tipo !== "NO");
+
+      setOpcionesSoldadura(listaSoldadura);
+    }
   };
 
   cargarServicios();
@@ -123,6 +146,9 @@ useEffect(() => {
     setSoldarTornillo(data.datos?.soldarTornillo || false);
     setTornilloSeleccionado(data.datos?.tornilloSeleccionado || null);
     setCantidadTornillo(data.datos?.cantidadTornillo || 0);
+
+    setSoldaduraSeleccionada(data.datos?.soldaduraSeleccionada || null);
+    setCantidadSoldadura(data.datos?.cantidadSoldadura || 0);
   }, [data]);
 
   const serviciosReparacion = servicios.filter(
@@ -148,8 +174,12 @@ useEffect(() => {
   soldarTornillo && tornilloSeleccionado
     ? (Number(cantidadTornillo) || 0) * tornilloSeleccionado.precio
     : 0;
+const totalSoldadura =
+  soldaduraSeleccionada
+    ? (Number(cantidadSoldadura) || 0) * soldaduraSeleccionada.precio
+    : 0;
 
-const totalGeneral = total + totalTornillo;
+const totalGeneral = total + totalTornillo + totalSoldadura;
 
 
 
@@ -186,6 +216,15 @@ const descripcion = useMemo(() => {
       `SOLDAR TORNILLO:\n${tornilloSeleccionado.tipo} CANTIDAD ${cantidadTornillo || 0}`
     );
   }
+  // =========================
+  // SOLDADURA EN RESISTENCIA 
+  //==========================
+    if (soldaduraSeleccionada) {
+    bloques.push(
+      `SOLDADURA EN RESISTENCIA:
+  ${soldaduraSeleccionada.tipo} CANTIDAD ${cantidadSoldadura || 0}`
+    );
+  }
 
   // =========================
   // MANTENIMIENTO
@@ -219,6 +258,9 @@ const descripcion = useMemo(() => {
   soldarTornillo,
   tornilloSeleccionado,
   cantidadTornillo,
+
+  soldaduraSeleccionada,
+  cantidadSoldadura,
 ]);
 
   const toggleServicio = (servicio: ServicioFirebase) => {
@@ -309,7 +351,7 @@ return (
 const guardar = () => {
   const haySeleccionado = servicios.some((s) => seleccionados[s.id]);
 
-  if (!haySeleccionado && !soldarTornillo) {
+  if (!haySeleccionado && !soldarTornillo && !soldaduraSeleccionada) {
     alert("Selecciona al menos un servicio.");
     return;
   }
@@ -317,6 +359,12 @@ const guardar = () => {
   // 🔹 VALIDAR TORNILLO
   if (soldarTornillo && !tornilloSeleccionado) {
     alert("Selecciona el tipo de tornillo.");
+    return;
+  }
+
+  // 🔹 VALIDAR SOLDADURA
+  if (soldaduraSeleccionada && !cantidadSoldadura) {
+    alert("Selecciona la cantidad de soldadura.");
     return;
   }
 
@@ -333,6 +381,9 @@ const guardar = () => {
       tornilloSeleccionado,
       cantidadTornillo,
       totalTornillo,
+      soldaduraSeleccionada,
+      cantidadSoldadura,
+      totalSoldadura,
       notas,
     },
   });
@@ -417,6 +468,68 @@ const guardar = () => {
         </>
       )}
     </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 15,
+          flexWrap: "wrap",
+        }}
+      >
+        <label style={{ minWidth: 220, fontWeight: "bold" }}>
+          SOLDADURA EN RESISTENCIA
+        </label>
+
+        <select
+          value={soldaduraSeleccionada?.id || ""}
+          onChange={(e) => {
+            const seleccionado = opcionesSoldadura.find(
+              (s) => s.id === e.target.value
+            );
+
+            setSoldaduraSeleccionada(seleccionado || null);
+
+            if (!seleccionado) {
+              setCantidadSoldadura(0);
+            } else {
+              setCantidadSoldadura(1);
+            }
+
+            setDirty(true);
+          }}
+        >
+          <option value="">Seleccione...</option>
+
+          {opcionesSoldadura.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.tipo}
+            </option>
+          ))}
+        </select>
+
+        {soldaduraSeleccionada && (
+          <>
+            <input
+              type="number"
+              min={1}
+              value={cantidadSoldadura === 0 ? "" : cantidadSoldadura}
+              placeholder="Cantidad"
+              style={{ width: 90 }}
+              onChange={(e) => {
+                setCantidadSoldadura(Number(e.target.value));
+                setDirty(true);
+              }}
+            />
+
+            <b style={{ minWidth: 100 }}>
+              {formatearMoneda(totalSoldadura)}
+            </b>
+          </>
+        )}
+      </div>
+
 
     {serviciosReparacion.map(renderServicio)}
 
