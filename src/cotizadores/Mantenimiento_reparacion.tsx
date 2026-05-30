@@ -34,14 +34,34 @@ const MantenimientoReparacion = ({ data, onGuardar, setDirty }: Props) => {
   const [opcionesSoldadura, setOpcionesSoldadura] = useState<ServicioFirebase[]>([]);
   const [soldaduraSeleccionada, setSoldaduraSeleccionada] = useState<ServicioFirebase | null>(null);
   const [cantidadSoldadura, setCantidadSoldadura] = useState(0);
+  // SOLDAR CABLES
+const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<ServicioFirebase[]>([]);
+const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
+  useState<ServicioFirebase | null>(null);
+const [cantidadSoldarCable, setCantidadSoldarCable] = useState(0);
+// CABLE PARA SOLDAR
+const [opcionesCable, setOpcionesCable] = useState<ServicioFirebase[]>([]);
+const [cableSeleccionado, setCableSeleccionado] =
+  useState<ServicioFirebase | null>(null);
+
+const [longitudCable, setLongitudCable] = useState(0);
+const [cantidadCable, setCantidadCable] = useState(0);
 
 useEffect(() => {
   const cargarServicios = async () => {
-  const [snapServicios, snapTornillo, snapSoldadura] = await Promise.all([
-    get(ref(db, "cotizador/servicios")),
-    get(ref(db, "cotizador/tornillo")),
-    get(ref(db, "cotizador/soldadura_resistencia")),
-  ]);
+const [
+  snapServicios,
+  snapTornillo,
+  snapSoldadura,
+  snapSoldarCable,
+  snapCable,
+] = await Promise.all([
+  get(ref(db, "cotizador/servicios")),
+  get(ref(db, "cotizador/tornillo")),
+  get(ref(db, "cotizador/soldadura_resistencia")),
+  get(ref(db, "cotizador/soldar_cable_resistencia")),
+  get(ref(db, "cotizador/cable_para_soldar")),
+]);
 
     // =========================
     // SERVICIOS
@@ -93,6 +113,46 @@ useEffect(() => {
     } else {
       setServicios([]);
     }
+
+// =========================
+// SOLDAR CABLES PARA SELECT
+// =========================
+if (snapSoldarCable.exists()) {
+  const dataSoldarCable = snapSoldarCable.val();
+
+  const listaSoldarCable = Object.keys(dataSoldarCable)
+    .map<ServicioFirebase>((id) => ({
+      id: `soldar_cable_${id}`,
+      tipo: String(dataSoldarCable[id].Tipo || ""),
+      precio: Number(dataSoldarCable[id].Precio || 0),
+      grupo: "reparacion",
+    }))
+    .filter((s) => s.tipo && s.tipo !== "NO");
+
+  setOpcionesSoldarCable(listaSoldarCable);
+} else {
+  setOpcionesSoldarCable([]);
+}
+// =========================
+// CABLE PARA SOLDAR
+// =========================
+if (snapCable.exists()) {
+  const dataCable = snapCable.val();
+
+  const listaCable = Object.keys(dataCable)
+    .map<ServicioFirebase>((id) => ({
+      id: `cable_${id}`,
+      tipo: String(dataCable[id].Tipo || ""),
+      precio: Number(dataCable[id].Precio || 0),
+      grupo: "reparacion",
+    }))
+    .filter((c) => c.tipo && c.tipo !== "NO");
+
+  setOpcionesCable(listaCable);
+} else {
+  setOpcionesCable([]);
+}
+
 
     // =========================
     // TORNILLO PARA SELECT
@@ -149,6 +209,14 @@ useEffect(() => {
 
     setSoldaduraSeleccionada(data.datos?.soldaduraSeleccionada || null);
     setCantidadSoldadura(data.datos?.cantidadSoldadura || 0);
+
+    setSoldarCableSeleccionado(data.datos?.soldarCableSeleccionado || null);
+
+    setCantidadSoldarCable(data.datos?.cantidadSoldarCable || 0);
+
+    setCableSeleccionado(data.datos?.cableSeleccionado || null);
+    setLongitudCable(data.datos?.longitudCable || 0);
+    setCantidadCable(data.datos?.cantidadCable || 0);
   }, [data]);
 
   const serviciosReparacion = servicios.filter(
@@ -174,15 +242,31 @@ useEffect(() => {
   soldarTornillo && tornilloSeleccionado
     ? (Number(cantidadTornillo) || 0) * tornilloSeleccionado.precio
     : 0;
+// CÁLCULO TOTAL SOLDADURA EN RESISTENCIA
 const totalSoldadura =
   soldaduraSeleccionada
     ? (Number(cantidadSoldadura) || 0) * soldaduraSeleccionada.precio
     : 0;
 
-const totalGeneral = total + totalTornillo + totalSoldadura;
+// CÁLCULO TOTAL SOLDAR CABLE
+const totalSoldarCable =
+  soldarCableSeleccionado
+    ? (Number(cantidadSoldarCable) || 0) * soldarCableSeleccionado.precio
+    : 0;
+
+const totalCable =
+  cableSeleccionado
+    ? (
+        ((Number(longitudCable) || 0) / 100) *
+        cableSeleccionado.precio *
+        (Number(cantidadCable) || 0)
+      )
+    : 0; 
+// TOTAL GENERAL 
+const totalGeneral = total + totalTornillo + totalSoldadura + totalSoldarCable + totalCable;
 
 
-
+// DESCRIPCIÓN DETALLADA
 const descripcion = useMemo(() => {
   const reparacion = serviciosReparacion.filter(
     (s) => seleccionados[s.id]
@@ -207,7 +291,23 @@ const descripcion = useMemo(() => {
 
     bloques.push(`REPARACIÓN:\n${textoReparacion}`);
   }
-
+// =========================
+// SOLDAR CABLES
+// =========================  
+if (soldarCableSeleccionado) {
+  bloques.push(
+    `SOLDAR CABLES:
+${soldarCableSeleccionado.tipo} CANTIDAD ${cantidadSoldarCable || 0}`
+  );
+}
+if (cableSeleccionado) {
+  bloques.push(
+    `CABLE PARA SOLDAR:
+${cableSeleccionado.tipo}
+LONGITUD ${longitudCable || 0} CM
+CANTIDAD ${cantidadCable || 0}`
+  );
+}
   // =========================
   // SOLDAR TORNILLO
   // =========================
@@ -261,6 +361,11 @@ const descripcion = useMemo(() => {
 
   soldaduraSeleccionada,
   cantidadSoldadura,
+  soldarCableSeleccionado,
+  cantidadSoldarCable,  
+  cableSeleccionado,
+  longitudCable,
+  cantidadCable,
 ]);
 
   const toggleServicio = (servicio: ServicioFirebase) => {
@@ -351,7 +456,7 @@ return (
 const guardar = () => {
   const haySeleccionado = servicios.some((s) => seleccionados[s.id]);
 
-  if (!haySeleccionado && !soldarTornillo && !soldaduraSeleccionada) {
+  if (!haySeleccionado && !soldarTornillo && !soldaduraSeleccionada && !soldarCableSeleccionado) {
     alert("Selecciona al menos un servicio.");
     return;
   }
@@ -367,6 +472,11 @@ const guardar = () => {
     alert("Selecciona la cantidad de soldadura.");
     return;
   }
+  // 🔹 VALIDAR SOLDAR CABLES
+  if (soldarCableSeleccionado && !cantidadSoldarCable) {
+  alert("Selecciona la cantidad de cables.");
+  return;
+}
 
   onGuardar({
     id: data?.id || Date.now().toString(),
@@ -384,17 +494,35 @@ const guardar = () => {
       soldaduraSeleccionada,
       cantidadSoldadura,
       totalSoldadura,
+      soldarCableSeleccionado,
+      cantidadSoldarCable,
+      totalSoldarCable,
+      cableSeleccionado,
+      longitudCable,
+      cantidadCable,
+      totalCable,
       notas,
     },
   });
 
-  setSeleccionados({});
-  setCantidades({});
-  setSoldarTornillo(false);
-  setTornilloSeleccionado(null);
-  setCantidadTornillo(0);
-  setNotas("");
-  setDirty(false);
+setSeleccionados({});
+setCantidades({});
+
+setSoldarTornillo(false);
+setTornilloSeleccionado(null);
+setCantidadTornillo(0);
+
+setSoldaduraSeleccionada(null);
+setCantidadSoldadura(0);
+
+setSoldarCableSeleccionado(null);
+setCantidadSoldarCable(0);
+setCableSeleccionado(null);
+setLongitudCable(0);
+setCantidadCable(0);
+
+setNotas("");
+setDirty(false);
 };
   return (
   <div className="form-container">
@@ -529,8 +657,117 @@ const guardar = () => {
           </>
         )}
       </div>
+{/* =========================
+    SOLDAR CABLES
+========================= */}
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 15,
+    flexWrap: "wrap",
+  }}
+>
+  <label style={{ minWidth: 220, fontWeight: "bold" }}>
+    SOLDAR CABLES
+  </label>
 
+  <select
+    value={soldarCableSeleccionado?.id || ""}
+    onChange={(e) => {
+      const seleccionado = opcionesSoldarCable.find(
+        (s) => s.id === e.target.value
+      );
 
+      setSoldarCableSeleccionado(seleccionado || null);
+
+      if (!seleccionado) {
+        setCantidadSoldarCable(0);
+        setCableSeleccionado(null);
+        setLongitudCable(0);
+        setCantidadCable(0);
+      } else {
+        setCantidadSoldarCable(1);
+        setCantidadCable(1);
+      }
+
+      setDirty(true);
+    }}
+  >
+    <option value="">Seleccione...</option>
+
+    {opcionesSoldarCable.map((s) => (
+      <option key={s.id} value={s.id}>
+        {s.tipo}
+      </option>
+    ))}
+  </select>
+
+  {soldarCableSeleccionado && (
+    <>
+      <input
+        type="number"
+        min={1}
+        value={cantidadSoldarCable === 0 ? "" : cantidadSoldarCable}
+        placeholder="Cant. soldar"
+        style={{ width: 100 }}
+        onChange={(e) => {
+          setCantidadSoldarCable(Number(e.target.value));
+          setDirty(true);
+        }}
+      />
+
+      <select
+        value={cableSeleccionado?.id || ""}
+        onChange={(e) => {
+          const seleccionado = opcionesCable.find(
+            (c) => c.id === e.target.value
+          );
+
+          setCableSeleccionado(seleccionado || null);
+          setDirty(true);
+        }}
+      >
+        <option value="">Cable para soldar</option>
+
+        {opcionesCable.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.tipo}
+          </option>
+        ))}
+      </select>
+
+      <input
+        type="number"
+        min={0}
+        placeholder="Longitud CM"
+        value={longitudCable === 0 ? "" : longitudCable}
+        style={{ width: 120 }}
+        onChange={(e) => {
+          setLongitudCable(Number(e.target.value));
+          setDirty(true);
+        }}
+      />
+
+      <input
+        type="number"
+        min={1}
+        placeholder="Cant. cables"
+        value={cantidadCable === 0 ? "" : cantidadCable}
+        style={{ width: 120 }}
+        onChange={(e) => {
+          setCantidadCable(Number(e.target.value));
+          setDirty(true);
+        }}
+      />
+
+      <b style={{ minWidth: 120 }}>
+        {formatearMoneda(totalSoldarCable + totalCable)}
+      </b>
+    </>
+  )}
+</div>
     {serviciosReparacion.map(renderServicio)}
 
     <h2>Mantenimiento</h2>
