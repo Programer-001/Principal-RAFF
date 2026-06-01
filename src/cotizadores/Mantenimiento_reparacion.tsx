@@ -34,6 +34,7 @@ const MantenimientoReparacion = ({ data, onGuardar, setDirty }: Props) => {
   const [opcionesSoldadura, setOpcionesSoldadura] = useState<ServicioFirebase[]>([]);
   const [soldaduraSeleccionada, setSoldaduraSeleccionada] = useState<ServicioFirebase | null>(null);
   const [cantidadSoldadura, setCantidadSoldadura] = useState(0);
+  const [soldaduraActiva, setSoldaduraActiva] = useState(false);
   // SOLDAR CABLES
 const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<ServicioFirebase[]>([]);
 const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
@@ -41,8 +42,8 @@ const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
 const [cantidadSoldarCable, setCantidadSoldarCable] = useState(0);
 // CABLE PARA SOLDAR
 const [opcionesCable, setOpcionesCable] = useState<ServicioFirebase[]>([]);
-const [cableSeleccionado, setCableSeleccionado] =
-  useState<ServicioFirebase | null>(null);
+const [cableSeleccionado, setCableSeleccionado] = useState<ServicioFirebase | null>(null);
+const [soldarCableActivo, setSoldarCableActivo] = useState(false);
 
 const [longitudCable, setLongitudCable] = useState(0);
 const [cantidadCable, setCantidadCable] = useState(0);
@@ -217,6 +218,8 @@ if (snapCable.exists()) {
     setCableSeleccionado(data.datos?.cableSeleccionado || null);
     setLongitudCable(data.datos?.longitudCable || 0);
     setCantidadCable(data.datos?.cantidadCable || 0);
+    setSoldaduraActiva(!!data.datos?.soldaduraSeleccionada);
+    setSoldarCableActivo(!!data.datos?.soldarCableSeleccionado);
   }, [data]);
 
   const serviciosReparacion = servicios.filter(
@@ -390,7 +393,6 @@ CANTIDAD ${cantidadCable || 0}`
       };
     });
 
-    setDirty(true);
   };
 
 const renderServicio = (servicio: ServicioFirebase) => {
@@ -399,57 +401,41 @@ const renderServicio = (servicio: ServicioFirebase) => {
   const subtotal = activo ? cantidad * servicio.precio : 0;
 
 return (
-  <div
-    key={servicio.id}
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      marginBottom: 10,
-      flexWrap: "wrap",
-    }}
-  >
+  <div key={servicio.id}>
     {/* CHECK */}
-    <input
-      type="checkbox"
-      checked={activo}
-      onChange={() => toggleServicio(servicio)}
-    />
+    <div className="form-row checkbox-row">
+      <input
+        type="checkbox"
+        checked={activo}
+        onChange={() => toggleServicio(servicio)}
+      />
 
-    {/* NOMBRE */}
-    <label
-      style={{
-        minWidth: 250,
-        fontWeight: "bold",
-      }}
-    >
-      {servicio.tipo}
-    </label>
+      {/* NOMBRE */}
+      <label>{servicio.tipo}</label>
+    </div>
 
     {/* CANTIDAD */}
     {activo && (
-      <input
-        type="number"
-        min={1}
-        value={cantidad === 0 ? "" : cantidad}
-        placeholder="Cantidad"
-        style={{ width: 100 }}
-        onChange={(e) => {
-          setCantidades((prev) => ({
-            ...prev,
-            [servicio.id]: Number(e.target.value),
-          }));
-          setDirty(true);
-        }}
-      />
+      <div className="form-row">
+        <label>Cantidad</label>
+
+        <input
+          type="number"
+          min={1}
+          value={cantidad === 0 ? "" : cantidad}
+          placeholder="Cantidad"
+          onChange={(e) => {
+            setCantidades((prev) => ({
+              ...prev,
+              [servicio.id]: Number(e.target.value),
+            }));
+          }}
+        />
+      </div>
     )}
 
     {/* TOTAL */}
-    {activo && (
-      <b style={{ minWidth: 100 }}>
-        {formatearMoneda(subtotal)}
-      </b>
-    )}
+    {activo && <h3>{formatearMoneda(subtotal)}</h3>}
   </div>
 );
 };
@@ -521,24 +507,22 @@ setCableSeleccionado(null);
 setLongitudCable(0);
 setCantidadCable(0);
 
+setSoldaduraActiva(false);
+setSoldarCableActivo(false);
+
 setNotas("");
-setDirty(false);
+
 };
-  return (
+return (
   <div className="form-container">
     <h1>Mantenimiento y reparación</h1>
 
     <h2>Reparación</h2>
 
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        marginBottom: 15,
-        flexWrap: "wrap",
-      }}
-    >
+    {/* =========================
+        SOLDAR TORNILLO
+    ========================= */}
+    <div className="form-row checkbox-row">
       <input
         type="checkbox"
         checked={soldarTornillo}
@@ -556,12 +540,13 @@ setDirty(false);
         }}
       />
 
-      <label style={{ minWidth: 220, fontWeight: "bold" }}>
-        SOLDAR TORNILLO
-      </label>
+      <label>SOLDAR TORNILLO</label>
+    </div>
 
-      {soldarTornillo && (
-        <>
+    {soldarTornillo && (
+      <>
+        <div className="form-row">
+          <label>Tipo tornillo</label>
           <select
             value={tornilloSeleccionado?.id || ""}
             onChange={(e) => {
@@ -580,197 +565,194 @@ setDirty(false);
               </option>
             ))}
           </select>
+        </div>
 
+        <div className="form-row">
+          <label>Cantidad</label>
           <input
             type="number"
             min={1}
             value={cantidadTornillo === 0 ? "" : cantidadTornillo}
-            placeholder="Cantidad"
-            style={{ width: 90 }}
             onChange={(e) => {
               setCantidadTornillo(Number(e.target.value));
             }}
           />
+        </div>
 
-          <b style={{ minWidth: 100 }}>{formatearMoneda(totalTornillo)}</b>
-        </>
-      )}
+        <h3>{formatearMoneda(totalTornillo)}</h3>
+      </>
+    )}
+
+    {/* =========================
+        SOLDADURA EN RESISTENCIA
+    ========================= */}
+    <div className="form-row checkbox-row">
+      <input
+        type="checkbox"
+        checked={soldaduraActiva}
+        onChange={(e) => {
+          const activo = e.target.checked;
+
+          setSoldaduraActiva(activo);
+
+          if (!activo) {
+            setSoldaduraSeleccionada(null);
+            setCantidadSoldadura(0);
+          } else {
+            setCantidadSoldadura(1);
+          }
+        }}
+      />
+
+      <label>SOLDADURA EN RESISTENCIA</label>
     </div>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: 15,
-          flexWrap: "wrap",
-        }}
-      >
-        <label style={{ minWidth: 220, fontWeight: "bold" }}>
-          SOLDADURA EN RESISTENCIA
-        </label>
+    {soldaduraActiva && (
+      <>
+        <div className="form-row">
+          <label>Tipo soldadura</label>
+          <select
+            value={soldaduraSeleccionada?.id || ""}
+            onChange={(e) => {
+              const seleccionado = opcionesSoldadura.find(
+                (s) => s.id === e.target.value
+              );
 
-        <select
-          value={soldaduraSeleccionada?.id || ""}
-          onChange={(e) => {
-            const seleccionado = opcionesSoldadura.find(
-              (s) => s.id === e.target.value
-            );
+              setSoldaduraSeleccionada(seleccionado || null);
+            }}
+          >
+            <option value="">Seleccione...</option>
 
-            setSoldaduraSeleccionada(seleccionado || null);
+            {opcionesSoldadura.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.tipo}
+              </option>
+            ))}
+          </select>
+        </div>
 
-            if (!seleccionado) {
-              setCantidadSoldadura(0);
-            } else {
-              setCantidadSoldadura(1);
-            }
+        <div className="form-row">
+          <label>Cantidad</label>
+          <input
+            type="number"
+            min={1}
+            value={cantidadSoldadura === 0 ? "" : cantidadSoldadura}
+            onChange={(e) => {
+              setCantidadSoldadura(Number(e.target.value));
+            }}
+          />
+        </div>
 
-            setDirty(true);
-          }}
-        >
-          <option value="">Seleccione...</option>
+        <h3>{formatearMoneda(totalSoldadura)}</h3>
+      </>
+    )}
 
-          {opcionesSoldadura.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.tipo}
-            </option>
-          ))}
-        </select>
-
-        {soldaduraSeleccionada && (
-          <>
-            <input
-              type="number"
-              min={1}
-              value={cantidadSoldadura === 0 ? "" : cantidadSoldadura}
-              placeholder="Cantidad"
-              style={{ width: 90 }}
-              onChange={(e) => {
-                setCantidadSoldadura(Number(e.target.value));
-                setDirty(true);
-              }}
-            />
-
-            <b style={{ minWidth: 100 }}>
-              {formatearMoneda(totalSoldadura)}
-            </b>
-          </>
-        )}
-      </div>
-{/* =========================
-    SOLDAR CABLES
-========================= */}
-<div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 15,
-    flexWrap: "wrap",
-  }}
->
-  <label style={{ minWidth: 220, fontWeight: "bold" }}>
-    SOLDAR CABLES
-  </label>
-
-  <select
-    value={soldarCableSeleccionado?.id || ""}
-    onChange={(e) => {
-      const seleccionado = opcionesSoldarCable.find(
-        (s) => s.id === e.target.value
-      );
-
-      setSoldarCableSeleccionado(seleccionado || null);
-
-      if (!seleccionado) {
-        setCantidadSoldarCable(0);
-        setCableSeleccionado(null);
-        setLongitudCable(0);
-        setCantidadCable(0);
-      } else {
-        setCantidadSoldarCable(1);
-        setCantidadCable(1);
-      }
-
-      setDirty(true);
-    }}
-  >
-    <option value="">Seleccione...</option>
-
-    {opcionesSoldarCable.map((s) => (
-      <option key={s.id} value={s.id}>
-        {s.tipo}
-      </option>
-    ))}
-  </select>
-
-  {soldarCableSeleccionado && (
-    <>
+    {/* =========================
+        SOLDAR CABLES
+    ========================= */}
+    <div className="form-row checkbox-row">
       <input
-        type="number"
-        min={1}
-        value={cantidadSoldarCable === 0 ? "" : cantidadSoldarCable}
-        placeholder="Cant. soldar"
-        style={{ width: 100 }}
+        type="checkbox"
+        checked={soldarCableActivo}
         onChange={(e) => {
-          setCantidadSoldarCable(Number(e.target.value));
-          setDirty(true);
+          const activo = e.target.checked;
+
+          setSoldarCableActivo(activo);
+
+          if (!activo) {
+            setSoldarCableSeleccionado(null);
+            setCantidadSoldarCable(0);
+            setCableSeleccionado(null);
+            setLongitudCable(0);
+            setCantidadCable(0);
+          } else {
+            setCantidadSoldarCable(1);
+            setCantidadCable(1);
+          }
         }}
       />
 
-      <select
-        value={cableSeleccionado?.id || ""}
-        onChange={(e) => {
-          const seleccionado = opcionesCable.find(
-            (c) => c.id === e.target.value
-          );
+      <label>SOLDAR CABLES</label>
+    </div>
 
-          setCableSeleccionado(seleccionado || null);
-          setDirty(true);
-        }}
-      >
-        <option value="">Cable para soldar</option>
+    {soldarCableActivo && (
+      <>
+        <div className="form-row">
+          <label>Tipo soldar cable</label>
+          <select
+            value={soldarCableSeleccionado?.id || ""}
+            onChange={(e) => {
+              const seleccionado = opcionesSoldarCable.find(
+                (s) => s.id === e.target.value
+              );
 
-        {opcionesCable.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.tipo}
-          </option>
-        ))}
-      </select>
+              setSoldarCableSeleccionado(seleccionado || null);
+            }}
+          >
+            <option value="">Seleccione...</option>
 
-      <input
-        type="number"
-        min={0}
-        placeholder="Longitud CM"
-        value={longitudCable === 0 ? "" : longitudCable}
-        style={{ width: 120 }}
-        onChange={(e) => {
-          setLongitudCable(Number(e.target.value));
-          setDirty(true);
-        }}
-      />
+            {opcionesSoldarCable.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.tipo}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <input
-        type="number"
-        min={1}
-        placeholder="Cant. cables"
-        value={cantidadCable === 0 ? "" : cantidadCable}
-        style={{ width: 120 }}
-        onChange={(e) => {
-          setCantidadCable(Number(e.target.value));
-          setDirty(true);
-        }}
-      />
+        <div className="form-row">
+          <label>Cantidad soldar</label>
+          <input
+            type="number"
+            min={1}
+            value={cantidadSoldarCable === 0 ? "" : cantidadSoldarCable}
+            onChange={(e) => {
+              setCantidadSoldarCable(Number(e.target.value));
+            }}
+          />
+        </div>
 
-      <b style={{ minWidth: 120 }}>
-        {formatearMoneda(totalSoldarCable + totalCable)}
-      </b>
-    </>
-  )}
-</div>
+        <div className="form-row">
+          <label>Cable para soldar</label>
+          <select
+            value={cableSeleccionado?.id || ""}
+            onChange={(e) => {
+              const seleccionado = opcionesCable.find(
+                (c) => c.id === e.target.value
+              );
+
+              setCableSeleccionado(seleccionado || null);
+            }}
+          >
+            <option value="">Seleccione...</option>
+
+            {opcionesCable.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.tipo}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-row">
+          <label>Longitud CM</label>
+          <input
+            type="number"
+            min={0}
+            value={longitudCable === 0 ? "" : longitudCable}
+            onChange={(e) => {
+              setLongitudCable(Number(e.target.value));
+            }}
+          />
+        </div>
+
+        <h3>{formatearMoneda(totalSoldarCable + totalCable)}</h3>
+      </>
+    )}
+
     {serviciosReparacion.map(renderServicio)}
 
     <h2>Mantenimiento</h2>
+
     {serviciosMantenimiento.map(renderServicio)}
 
     <div className="form-row textarea-row">
