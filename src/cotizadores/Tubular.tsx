@@ -470,8 +470,11 @@ const totalTubo =
 
       // 🔹 placa
       setTipoPlaca(d.tipoPlaca || "");
-        setMuestra(data.datos?.muestra || "");
+        setMuestra(d.muestra || "");
         setDatosAdicionales(d.datosAdicionales || "");
+
+        setCantidadTapon(d.cantidadTapon || 0);
+        setCantidadPuentes(d.cantidadPuentes || 0);
     }
   }, [data]);
 
@@ -717,6 +720,8 @@ const aplicarStock = (stock: any) => {
               <label>Cantidad de resistencias a desoldar</label>
               <input
                 type="number"
+                min={0}
+                value={cantidadDesoldar === 0 ? "" : cantidadDesoldar}
                 onChange={(e) => setCantidadDesoldar(Number(e.target.value))}
               />
             </div>
@@ -733,6 +738,8 @@ const aplicarStock = (stock: any) => {
               <label>Cantidad de tapones</label>
               <input
                 type="number"
+                min={0}
+                value={cantidadTapon === 0 ? "" : cantidadTapon}
                 onChange={(e) => setCantidadTapon(Number(e.target.value))}
               />
             </div>
@@ -838,6 +845,8 @@ const aplicarStock = (stock: any) => {
               <label>Cantidad de puentes</label>
               <input
                 type="number"
+                min={0}
+                value={cantidadPuentes === 0 ? "" : cantidadPuentes}
                 onChange={(e) => setCantidadPuentes(Number(e.target.value))}
               />
             </div>
@@ -1000,7 +1009,8 @@ const aplicarStock = (stock: any) => {
                               //aleta
                               aleta,
                               totalAleta,
-
+                              cantidadTapon,
+                              cantidadPuentes,
                               // 🔹 otros
                               totalExpress,
                               totalTubo,
