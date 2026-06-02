@@ -1,5 +1,6 @@
 // src/Envios.tsx
 import React, { useState, useEffect, useRef } from "react";
+import { paqueterias } from "../datos/paqueterias";
 import { useLocation } from "react-router-dom";
 import {
   getDatabase,
@@ -683,26 +684,18 @@ const Envios: React.FC = () => {
                           </div>
               <div className="form-row">
                 <label>Paquetería:</label>
-                <select
-                  value={paqueteria}
-                  onChange={(e) => setPaqueteria(e.target.value)}
-                >
-                  <option value="">Seleccionar</option>
-                  <option>PMM</option>
-                  <option>DHL</option>
-                  <option>Estafeta</option>
-                  <option>FedEx</option>
-                  <option>Castores</option>
-                  <option>Paex</option>
-                  <option>Jet paqueteria</option>
-                  <option>Paquete Express</option>
-                  <option>Servicio Express</option>
-                  <option>Flecha Amarilla</option>
-                  <option>Kora Express</option>
-                  <option>Altos Pack</option>
-                  <option>Fletes Oriente</option>
-                  
-                </select>
+            <select
+              value={paqueteria}
+              onChange={(e) => setPaqueteria(e.target.value)}
+            >
+              <option value="">Seleccionar</option>
+
+              {paqueterias.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
               </div>
 
               <div className="form-row">
