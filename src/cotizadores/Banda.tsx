@@ -128,10 +128,16 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
           resultado = precioTira * cantidad;
       }
       else {
+        //selector=2 calcula banda semicurva, selector=3 calcula banda plana, selector=1 y 4 calculan banda mica y ceramica respectivamente
           if (selector === 2) diametroPulgadas = (diametroPulgadas * 2) / Math.PI;
           if (selector === 3) diametroPulgadas = diametroPulgadas / Math.PI;
 
           resultado = calcularPrecio(diametroPulgadas, anchoPulgadas) ?? 0;
+          // Semicurva +10%
+          if (selector === 2) {
+            resultado *= 1.10;
+          }
+          // Cerámica x2
           if (selector === 4) {
               resultado *= 2;
           }
