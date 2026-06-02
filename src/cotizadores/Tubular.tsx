@@ -327,7 +327,6 @@ const totalTubo =
   ${cantidadResistencias || 0} RESISTENCIA ${diametro || ""} DE ${longitud || 0
         } CM
   /  ${voltaje || 0}V - ${maxWatts ? "MAX WATTS" : sacarWatts ? "SACAR WATTS" : `${potencia || 0}W`}
-  / TUBO: ${diametro || ""}
 
   ${aleta ? " / CON ALETA" : ""}
   
