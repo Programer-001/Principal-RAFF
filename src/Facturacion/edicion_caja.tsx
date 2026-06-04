@@ -2,430 +2,495 @@
 import React, { useState, useEffect } from "react";
 import { getDatabase, ref, onValue, update, remove } from "firebase/database";
 import { app } from "../firebase/config";
-//import "../css/caja.css";
 
 interface Pago {
-    id: string;
-    transaccion: number;
-    cantidad: number;
-    metodo: string;
-    factura: string;
-    fecha: string;
-    estatus: boolean;
-    comentarios: string;
-    fechaKey?: string;
+  id: string;
+  transaccion: number;
+  cantidad: number;
+  metodo: string;
+  factura: string;
+  fecha: string;
+  estatus: boolean;
+  comentarios: string;
+  fechaKey?: string;
 }
 
 const ModificarCaja: React.FC = () => {
-    const db = getDatabase(app);
+  const db = getDatabase(app);
 
-    const [pagos, setPagos] = useState<Pago[]>([]);
-    const [pagosOriginales, setPagosOriginales] = useState<Pago[]>([]);
-    const [busqueda, setBusqueda] = useState<string>("");
+  const [pagos, setPagos] = useState<Pago[]>([]);
+  const [pagosOriginales, setPagosOriginales] = useState<Pago[]>([]);
+  const [pagoSeleccionado, setPagoSeleccionado] = useState<Pago | null>(null);
 
-    const [mostrarTabla, setMostrarTabla] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [editandoPago, setEditandoPago] = useState<Pago | null>(null);
 
-    // Cancelación
-    const [resultado, setResultado] = useState<Pago | null>(null);
-    const [comentarioCancelacion, setComentarioCancelacion] = useState("");
-    const [mostrarCancelacion, setMostrarCancelacion] = useState(false);
+  const [comentarioCancelacion, setComentarioCancelacion] = useState("");
+  const [mostrarCancelacion, setMostrarCancelacion] = useState(false);
 
-    // Paginación
-    const [page, setPage] = useState(1);
-    const itemsPerPage = 20;
-    const datosPaginados = pagos.slice(
-        (page - 1) * itemsPerPage,
-        page * itemsPerPage
-    );
-    const totalPages = Math.ceil(pagos.length / itemsPerPage);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 20;
 
-    // Cargar toda la DB de corte-caja
-    useEffect(() => {
-        const pagosRef = ref(db, "corte-caja");
-        onValue(pagosRef, (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
+  const datosPaginados = pagos.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
 
-            const lista: Pago[] = [];
-            Object.keys(data).forEach((diaKey) => {
-                Object.keys(data[diaKey]).forEach((pagoKey) => {
-                    lista.push({
-                        id: pagoKey,
-                        fechaKey: diaKey,
-                        ...data[diaKey][pagoKey],
-                    });
-                });
-            });
+  const totalPages = Math.ceil(pagos.length / itemsPerPage);
 
-            setPagosOriginales(lista);
-        });
-    }, [db]);
+  useEffect(() => {
+    const pagosRef = ref(db, "corte-caja");
 
-    // 🔥 LIMPIAR TODO
-    const limpiarTodo = () => {
-        setResultado(null);
-        setBusqueda("");
-        setComentarioCancelacion("");
-        setMostrarCancelacion(false);
-        setMostrarTabla(false);
+    onValue(pagosRef, (snapshot) => {
+      const data = snapshot.val();
+
+      if (!data) {
+        setPagosOriginales([]);
         setPagos([]);
-        setPage(1);
-    };
+        return;
+      }
 
-    // 🔍 Buscar factura (llamado por el Botón de Cancelar)
-    const buscarParaCancelar = () => {
-        if (!busqueda.trim()) {
-            alert("⚠️ Primero escribe un número de factura.");
-            return;
-        }
+      const lista: Pago[] = [];
 
-        const encontrados = pagosOriginales.filter(
-            (p) => p.factura.toLowerCase() === busqueda.toLowerCase()
-        );
-
-        if (encontrados.length === 0) {
-            alert("❌ No se encontró la factura.");
-            limpiarTodo();
-            return;
-        }
-
-        const factura = encontrados[0];
-
-        if (factura.estatus === false) {
-            alert("⚠️ Esta factura ya está cancelada.");
-            limpiarTodo();
-            return;
-        }
-
-        // Mostrar información
-        setResultado(factura);
-        setPagos([factura]);
-        setMostrarTabla(true);
-        setPage(1);
-        setMostrarCancelacion(true);
-    };
-
-    // Cancelar factura
-    const cancelarFactura = async () => {
-        if (!resultado) {
-            alert("⚠️ No hay factura válida para cancelar.");
-            return;
-        }
-
-        if (!comentarioCancelacion.trim()) {
-            alert("⚠️ Escribe un comentario de cancelación.");
-            return;
-        }
-
-        if (!confirm("❗¿Seguro que deseas CANCELAR esta factura?")) return;
-
-        await update(ref(db, `corte-caja/${resultado.fechaKey}/${resultado.id}`), {
-            estatus: false,
-            comentarios: comentarioCancelacion,
+      Object.keys(data).forEach((diaKey) => {
+        Object.keys(data[diaKey]).forEach((pagoKey) => {
+          lista.push({
+            id: pagoKey,
+            fechaKey: diaKey,
+            ...data[diaKey][pagoKey],
+          });
         });
+      });
 
-        alert("❌ Factura cancelada correctamente");
-        limpiarTodo();
+      setPagosOriginales(lista);
+    });
+  }, [db]);
+
+  const limpiarTodo = () => {
+    setPagos([]);
+    setPagoSeleccionado(null);
+    setEditandoPago(null);
+    setModoEdicion(false);
+    setBusqueda("");
+    setComentarioCancelacion("");
+    setMostrarCancelacion(false);
+    setPage(1);
+  };
+
+  const seleccionarPago = (pago: Pago) => {
+    if (modoEdicion) {
+      const continuar = window.confirm(
+        "Tienes cambios sin guardar. Si cambias de factura se perderán. ¿Continuar?"
+      );
+
+      if (!continuar) return;
+    }
+
+    setPagoSeleccionado(pago);
+    setEditandoPago(null);
+    setModoEdicion(false);
+    setMostrarCancelacion(false);
+    setComentarioCancelacion("");
+  };
+
+  const buscarFactura = () => {
+    if (!busqueda.trim()) {
+      alert("Ingresa un número de factura para buscar.");
+      return;
+    }
+
+    const filtrados = pagosOriginales.filter((p) =>
+      p.factura.toLowerCase().includes(busqueda.toLowerCase())
+    );
+
+    if (filtrados.length === 0) {
+      alert("❌ No se encontró esa factura.");
+      limpiarTodo();
+      return;
+    }
+
+    setPagos(filtrados);
+    setPagoSeleccionado(filtrados[0]);
+    setPage(1);
+    setModoEdicion(false);
+    setEditandoPago(null);
+    setMostrarCancelacion(false);
+  };
+
+  const mostrarTodo = () => {
+    setPagos(pagosOriginales);
+    setPagoSeleccionado(pagosOriginales[0] || null);
+    setPage(1);
+    setModoEdicion(false);
+    setEditandoPago(null);
+    setMostrarCancelacion(false);
+  };
+
+  const iniciarEdicion = () => {
+    if (!pagoSeleccionado) return;
+
+    setEditandoPago({ ...pagoSeleccionado });
+    setModoEdicion(true);
+    setMostrarCancelacion(false);
+  };
+
+  const cancelarEdicion = () => {
+    setEditandoPago(null);
+    setModoEdicion(false);
+  };
+
+  const handleChange = (
+    campo: keyof Pago,
+    valor: string | number | boolean
+  ) => {
+    if (!editandoPago) return;
+
+    setEditandoPago({
+      ...editandoPago,
+      [campo]: valor,
+    });
+  };
+
+  const guardarCambios = async () => {
+    if (!editandoPago || !editandoPago.fechaKey) {
+      alert("No se puede actualizar este pago.");
+      return;
+    }
+
+    await update(
+      ref(db, `corte-caja/${editandoPago.fechaKey}/${editandoPago.id}`),
+      editandoPago
+    );
+
+    setPagos((prev) =>
+      prev.map((p) => (p.id === editandoPago.id ? editandoPago : p))
+    );
+
+    setPagosOriginales((prev) =>
+      prev.map((p) => (p.id === editandoPago.id ? editandoPago : p))
+    );
+
+    setPagoSeleccionado(editandoPago);
+    setEditandoPago(null);
+    setModoEdicion(false);
+
+    alert("Pago actualizado ✔");
+  };
+
+  const eliminarPago = async () => {
+    if (!pagoSeleccionado || !pagoSeleccionado.fechaKey) return;
+
+    if (!window.confirm("⚠️ ¿Eliminar este pago?")) return;
+
+    await remove(
+      ref(db, `corte-caja/${pagoSeleccionado.fechaKey}/${pagoSeleccionado.id}`)
+    );
+
+    setPagos((prev) => prev.filter((p) => p.id !== pagoSeleccionado.id));
+    setPagosOriginales((prev) =>
+      prev.filter((p) => p.id !== pagoSeleccionado.id)
+    );
+
+    setPagoSeleccionado(null);
+    setEditandoPago(null);
+    setModoEdicion(false);
+
+    alert("Pago eliminado ❌");
+  };
+
+  const cancelarFactura = async () => {
+    if (!pagoSeleccionado || !pagoSeleccionado.fechaKey) return;
+
+    if (!comentarioCancelacion.trim()) {
+      alert("⚠️ Escribe un comentario de cancelación.");
+      return;
+    }
+
+    if (!window.confirm("❗¿Seguro que deseas CANCELAR esta factura?")) return;
+
+    const pagoCancelado: Pago = {
+      ...pagoSeleccionado,
+      estatus: false,
+      comentarios: comentarioCancelacion,
     };
 
-    // Buscar normal (botón buscar)
-    const buscarFactura = () => {
-        if (busqueda.trim() === "") {
-            alert("Ingresa un número de factura para buscar.");
-            return;
-        }
+    await update(
+      ref(db, `corte-caja/${pagoSeleccionado.fechaKey}/${pagoSeleccionado.id}`),
+      {
+        estatus: false,
+        comentarios: comentarioCancelacion,
+      }
+    );
 
-        const filtrados = pagosOriginales.filter((p) =>
-            p.factura.toLowerCase().includes(busqueda.toLowerCase())
-        );
+    setPagos((prev) =>
+      prev.map((p) => (p.id === pagoCancelado.id ? pagoCancelado : p))
+    );
 
-        if (filtrados.length === 0) {
-            alert("❌ No se encontró esa factura.");
-            limpiarTodo();
-            return;
-        }
+    setPagosOriginales((prev) =>
+      prev.map((p) => (p.id === pagoCancelado.id ? pagoCancelado : p))
+    );
 
-        setPagos(filtrados);
-        setResultado(filtrados[0]);
-        setMostrarTabla(true);
-        setPage(1);
-    };
+    setPagoSeleccionado(pagoCancelado);
+    setComentarioCancelacion("");
+    setMostrarCancelacion(false);
 
-    // Guardar
-    const actualizarPago = (pago: Pago) => {
-        if (!pago.fechaKey) {
-            alert("No se puede actualizar un pago sin fechaKey");
-            return;
-        }
+    alert("❌ Factura cancelada correctamente");
+  };
 
-        update(ref(db, `corte-caja/${pago.fechaKey}/${pago.id}`), pago)
-            .then(() => alert("Pago actualizado ✔"))
-            .catch(console.error);
-    };
+  const pagoVista = modoEdicion ? editandoPago : pagoSeleccionado;
 
-    // Eliminar
-    const eliminarPago = (pago: Pago) => {
-        if (!window.confirm("⚠️ ¿Eliminar este pago?")) return;
+  return (
+    <div>
+      <h2 className="caja-title">🛠 Modificar Pagos</h2>
 
-        remove(ref(db, `corte-caja/${pago.fechaKey}/${pago.id}`))
-            .then(() => {
-                setPagos((prev) => prev.filter((p) => p.id !== pago.id));
-                alert("Pago eliminado ❌");
-            })
-            .catch(console.error);
-    };
+      <div className="modificar-caja-layout">
+        {/* IZQUIERDA */}
+        <div className="modificar-caja-lista">
+          <h3>Facturas</h3>
 
-    const handleChange = (
-        id: string,
-        campo: keyof Pago,
-        valor: string | number | boolean
-    ) => {
-        setPagos((prev) =>
-            prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p))
-        );
-    };
+          <input
+            className="input-caja1"
+            type="number"
+            placeholder="Buscar factura..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
 
-    return (
-        <div>
-            <h2 className="caja-title">🛠 Modificar Pagos</h2>
+          <div className="btn-container modificar-caja-botones">
+            <button className="btn btn-green" onClick={buscarFactura}>
+              Buscar
+            </button>
 
-            {/* BUSCADOR */}
-            <div className="caja-container">
-                <input
+            <button className="btn btn-blue" onClick={mostrarTodo}>
+              Mostrar todo
+            </button>
+
+            <button className="btn btn-red" onClick={limpiarTodo}>
+              Limpiar
+            </button>
+          </div>
+
+          <div className="facturas-lista">
+            <div className="facturas-lista-header">Factura</div>
+
+            {datosPaginados.length === 0 ? (
+              <p className="sin-facturas">No hay facturas para mostrar.</p>
+            ) : (
+              datosPaginados.map((p) => (
+                <button
+                  key={p.id}
+                  className={
+                    pagoSeleccionado?.id === p.id
+                      ? "factura-item factura-item-activa"
+                      : "factura-item"
+                  }
+                  onClick={() => seleccionarPago(p)}
+                >
+                  {p.factura}
+                </button>
+              ))
+            )}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="paginacion-simple">
+              <button
+                className="btn btn-blue"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                ← Anterior
+              </button>
+
+              <span>
+                Página {page} de {totalPages}
+              </span>
+
+              <button
+                className="btn btn-blue"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Siguiente →
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* DERECHA */}
+        <div className="modificar-caja-detalle">
+          <h3>Detalle de la factura</h3>
+
+          {!pagoVista ? (
+            <div className="visor-vacio">
+              Selecciona una factura del lado izquierdo.
+            </div>
+          ) : (
+            <>
+              <div className="detalle-factura-grid">
+                <label>Factura:</label>
+                {modoEdicion ? (
+                  <input
+                    className="input-caja1"
+                    type="text"
+                    value={pagoVista.factura}
+                    onChange={(e) => handleChange("factura", e.target.value)}
+                  />
+                ) : (
+                  <p>{pagoVista.factura}</p>
+                )}
+
+                <label>Fecha:</label>
+                {modoEdicion ? (
+                  <input
+                    className="input-caja1"
+                    type="text"
+                    value={pagoVista.fecha}
+                    onChange={(e) => handleChange("fecha", e.target.value)}
+                  />
+                ) : (
+                  <p>{pagoVista.fecha}</p>
+                )}
+
+                <label>Transacción:</label>
+                {modoEdicion ? (
+                  <input
                     className="input-caja1"
                     type="number"
-                    placeholder="Buscar factura..."
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                />
+                    value={pagoVista.transaccion}
+                    onChange={(e) =>
+                      handleChange("transaccion", Number(e.target.value))
+                    }
+                  />
+                ) : (
+                  <p>{pagoVista.transaccion}</p>
+                )}
 
-                <div className="btn-container">
-                    <button className="btn btn-green" onClick={buscarFactura}>
-                        Buscar
-                    </button>
+                <label>Método:</label>
+                {modoEdicion ? (
+                  <select
+                    className="input-caja1"
+                    value={pagoVista.metodo}
+                    onChange={(e) => handleChange("metodo", e.target.value)}
+                  >
+                    <option value="efectivo">Efectivo</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="tarjeta_credito">Tarjeta Crédito</option>
+                    <option value="tarjeta_debito">Tarjeta Débito</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="credito">Crédito Clientes</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                ) : (
+                  <p>{pagoVista.metodo}</p>
+                )}
 
-                    {/* Borrar */}
-                    <button className="btn btn-red" onClick={limpiarTodo}>
-                        Borrar
-                    </button>
+                <label>Cantidad:</label>
+                {modoEdicion ? (
+                  <input
+                    className="input-caja1"
+                    type="number"
+                    value={pagoVista.cantidad}
+                    onChange={(e) =>
+                      handleChange("cantidad", Number(e.target.value))
+                    }
+                  />
+                ) : (
+                  <p>${Number(pagoVista.cantidad || 0).toFixed(2)}</p>
+                )}
 
-                    {/* Mostrar Todo */}
-                    <button
-                        className="btn btn-blue"
-                        onClick={() => {
-                            if (!mostrarTabla) {
-                                setPagos(pagosOriginales);
-                                setPage(1);
-                                setMostrarTabla(true);
-                            } else {
-                                setMostrarTabla(false);
-                            }
-                        }}
-                    >
-                        {mostrarTabla ? "Ocultar Tabla" : "Mostrar Todo"}
-                    </button>
+                <label>Estatus:</label>
+                {modoEdicion ? (
+                  <select
+                    className="input-caja1"
+                    value={pagoVista.estatus ? "Vigente" : "Cancelada"}
+                    onChange={(e) =>
+                      handleChange("estatus", e.target.value === "Vigente")
+                    }
+                  >
+                    <option value="Vigente">Vigente</option>
+                    <option value="Cancelada">Cancelada</option>
+                  </select>
+                ) : (
+                  <p className={pagoVista.estatus ? "estatus-vigente" : "estatus-cancelada"}>
+                    {pagoVista.estatus ? "Vigente" : "Cancelada"}
+                  </p>
+                )}
 
-                    {/* CANCELAR FACTURA */}
-                    <button className="btn btn-red" onClick={buscarParaCancelar}>
-                        Cancelar Factura
-                    </button>
-                </div>
-            </div>
+                <label>Comentarios:</label>
+                {modoEdicion ? (
+                  <input
+                    className="input-caja1"
+                    type="text"
+                    value={pagoVista.comentarios || ""}
+                    onChange={(e) =>
+                      handleChange("comentarios", e.target.value)
+                    }
+                  />
+                ) : (
+                  <p>{pagoVista.comentarios || "Sin comentarios"}</p>
+                )}
+              </div>
 
-            {/* FORMULARIO CANCELACIÓN */}
-            {mostrarCancelacion && resultado && (
+              {mostrarCancelacion && (
                 <div className="caja-bloque">
-                    <h3>Cancelar factura: {resultado.factura}</h3>
+                  <label>Motivo de cancelación:</label>
+                  <input
+                    className="input-caja1"
+                    type="text"
+                    value={comentarioCancelacion}
+                    onChange={(e) => setComentarioCancelacion(e.target.value)}
+                    placeholder="Ej: Cliente devolvió la pieza"
+                  />
 
-                    <label>Motivo de cancelación:</label>
-                    <input
-                        type="text"
-                        value={comentarioCancelacion}
-                        onChange={(e) => setComentarioCancelacion(e.target.value)}
-                        placeholder="Ej: Cliente devolvió la pieza"
-                    />
+                  <button className="btn btn-red" onClick={cancelarFactura}>
+                    Confirmar cancelación
+                  </button>
+                </div>
+              )}
 
-                    <button className="btn btn-red" onClick={cancelarFactura}>
-                        Confirmar Cancelación
+              <div className="detalle-acciones">
+                {modoEdicion ? (
+                  <>
+                    <button className="btn btn-green" onClick={guardarCambios}>
+                      Guardar cambios
                     </button>
-                </div>
-            )}
 
-            {/* TABLA */}
-            {mostrarTabla && (
-                <div className="caja-scroll">
-                    <table className="caja-table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Transacción</th>
-                                <th>Método</th>
-                                <th>Cantidad</th>
-                                <th>Factura</th>
-                                <th>Estatus</th>
-                                <th>Comentarios</th>
-                                <th>Guardar</th>
-                                <th>Eliminar</th>
-                            </tr>
-                        </thead>
+                    <button className="btn btn-red" onClick={cancelarEdicion}>
+                      Cancelar edición
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="btn btn-blue" onClick={iniciarEdicion}>
+                      Editar
+                    </button>
 
-                        <tbody>
-                            {datosPaginados.map((p) => (
-                                <tr key={p.id} className="border-t text-center">
-                                    <td>
-                                        <input
-                                            type="date"
-                                            value={
-                                                p.fecha
-                                                    ? new Date(p.fecha.split("/").reverse().join("-"))
-                                                        .toISOString()
-                                                        .substring(0, 10)
-                                                    : ""
-                                            }
-                                            onChange={(e) =>
-                                                handleChange(
-                                                    p.id,
-                                                    "fecha",
-                                                    new Date(e.target.value).toLocaleDateString("es-ES")
-                                                )
-                                            }
-                                        />
-                                    </td>
+                    <button
+                      className="btn btn-yellow"
+                      onClick={() => setMostrarCancelacion(true)}
+                      disabled={!pagoSeleccionado?.estatus}
+                    >
+                      Cancelar factura
+                    </button>
 
-                                    <td>
-                                        <input
-                                            type="number"
-                                            value={p.transaccion}
-                                            onChange={(e) =>
-                                                handleChange(
-                                                    p.id,
-                                                    "transaccion",
-                                                    Number(e.target.value)
-                                                )
-                                            }
-                                        />
-                                    </td>
+                    <button className="btn btn-red" onClick={eliminarPago}>
+                      Eliminar
+                    </button>
 
-                                    <td>
-                                        <select
-                                            value={p.metodo}
-                                            onChange={(e) =>
-                                                handleChange(p.id, "metodo", e.target.value)
-                                            }
-                                        >
-                                            <option value="efectivo">Efectivo</option>
-                                            <option value="cheque">Cheque</option>
-                                            <option value="tarjeta_credito">Tarjeta Crédito</option>
-                                            <option value="tarjeta_debito">Tarjeta Débito</option>
-                                            <option value="transferencia">Transferencia</option>
-                                            <option value="credito">Crédito Clientes</option>
-                                            <option value="otro">Otro</option>
-                                        </select>
-                                    </td>
-
-                                    <td>
-                                        <input
-                                            type="number"
-                                            value={p.cantidad}
-                                            onChange={(e) =>
-                                                handleChange(p.id, "cantidad", Number(e.target.value))
-                                            }
-                                        />
-                                    </td>
-
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={p.factura}
-                                            onChange={(e) =>
-                                                handleChange(p.id, "factura", e.target.value)
-                                            }
-                                        />
-                                    </td>
-
-                                    <td>
-                                        <select
-                                            value={p.estatus ? "Vigente" : "Cancelada"}
-                                            onChange={(e) =>
-                                                handleChange(
-                                                    p.id,
-                                                    "estatus",
-                                                    e.target.value === "Vigente"
-                                                )
-                                            }
-                                        >
-                                            <option value="Vigente">Vigente</option>
-                                            <option value="Cancelada">Cancelada</option>
-                                        </select>
-                                    </td>
-
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={p.comentarios}
-                                            onChange={(e) =>
-                                                handleChange(p.id, "comentarios", e.target.value)
-                                            }
-                                        />
-                                    </td>
-
-                                    <td>
-                                        <button
-                                            className="btn btn-blue"
-                                            onClick={() => actualizarPago(p)}
-                                        >
-                                            Guardar
-                                        </button>
-                                    </td>
-
-                                    <td>
-                                        <button
-                                            className="btn btn-red"
-                                            onClick={() => eliminarPago(p)}
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    {/* PAGINACIÓN */}
-                    {totalPages > 1 && (
-                        <div className="paginacion">
-                            <button
-                                disabled={page === 1}
-                                onClick={() => setPage((p) => p - 1)}
-                                className="btn btn-gray"
-                            >
-                                ‹ Anterior
-                            </button>
-
-                            {[...Array(totalPages)].map((_, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setPage(i + 1)}
-                                    className={`btn-page ${page === i + 1 ? "btn-page-active" : ""
-                                        }`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
-
-                            <button
-                                disabled={page === totalPages}
-                                onClick={() => setPage((p) => p + 1)}
-                                className="btn btn-gray"
-                            >
-                                Siguiente ›
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
+                    <button className="btn btn-purple" onClick={limpiarTodo}>
+                      Cerrar
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default ModificarCaja;
