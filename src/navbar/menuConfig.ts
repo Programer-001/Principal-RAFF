@@ -48,7 +48,7 @@ const MENU_BASE: Record<string, MenuItem> = {
             { key: "gastos", label: "Gastos" },
             { key: "consultagastos", label: "Consulta de gastos" },
             { key: "modificarpago", label: "Modificar pago" },
-            { key: "modificarcaja", label: "Editar factura del día" },
+            { key: "modificarcaja", label: "Gestión de Facturas" },
             { key: "contardinero", label: "Contador de dinero" },
         ],
     },
