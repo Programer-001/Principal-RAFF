@@ -1,0 +1,87 @@
+/* =========================
+   GASTOS
+========================= */
+
+.gastos-container {
+    width: 95%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.gastos-title {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.gastos-fondo {
+    text-align: center;
+    margin: 25px 0;
+}
+
+.gastos-subtitle {
+    text-align: center;
+    margin: 30px 0 15px;
+}
+
+.gastos-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.gastos-input {
+    width: 220px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+}
+
+.gastos-btn {
+    min-width: 180px;
+}
+
+.gastos-table-wrap {
+    width: 100%;
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.gastos-table-scroll {
+    width: 100%;
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.gastos-table-scroll .caja-table {
+    width: 100%;
+}
+
+.gastos-table-scroll .caja-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #243c96;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .gastos-form {
+        flex-direction: column;
+    }
+
+    .gastos-input {
+        width: 100%;
+        max-width: 350px;
+    }
+
+    .gastos-btn {
+        width: 100%;
+        max-width: 350px;
+    }
+}

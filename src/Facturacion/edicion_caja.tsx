@@ -242,7 +242,7 @@ const ModificarCaja: React.FC = () => {
 
   return (
     <div>
-      <h2 className="caja-title">🛠 Modificar Pagos</h2>
+      <h2 className="caja-title">🛠 Gestión de Facturas</h2>
 
       <div className="modificar-caja-layout">
         {/* IZQUIERDA */}
