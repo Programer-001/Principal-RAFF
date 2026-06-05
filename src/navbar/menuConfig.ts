@@ -27,6 +27,8 @@ const MENU_BASE: Record<string, MenuItem> = {
     Gestion_tienda: { key: "gestion_tienda", label: "Consulta de ticket" },
     //checador
     checador: { key: "asistencia", label: "Asistencias" },
+    //Enrolado
+    enrolado: { key: "enrolado", label: "Enrolado de tubo" },
 
     //submenus
     rh: {
@@ -127,7 +129,8 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.administracion,
             MENU_BASE.tienda,
             MENU_BASE.Gestion_tienda,
-            MENU_BASE.checador
+            MENU_BASE.checador,
+            MENU_BASE.enrolado
 
         ],
     },
