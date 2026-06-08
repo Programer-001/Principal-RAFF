@@ -1,0 +1,99 @@
+/* TABLA AWG*/
+/* Contenedor general */
+.table-container {
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+/* Contenedor con borde, sombra y redondeo */
+.table-wrapper {
+  width: fit-content;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden; /* recorta bordes de la tabla */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Contenedor SOLO para el scroll */
+.table-scroll {
+  max-height: 400px; /* altura visible */
+  overflow-y: auto; /* scroll vertical */
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* Título */
+.table-container h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Tabla */
+.table-awg {
+  width: auto;
+  min-width: 450px;
+  border-collapse: collapse; /* ahora sí se puede usar collapse */
+}
+
+/* Encabezado fijo */
+.table-awg thead th {
+  position: sticky;
+  top: 0;
+  background-color: #4caf50; /* se mantiene para tapar filas */
+  color: white;
+  padding: 12px 10px;
+  z-index: 50;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Celdas */
+.table-awg th,
+.table-awg td {
+  padding: 10px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Filas alternadas */
+.table-awg tbody tr:nth-child(even) {
+  background-color: #f4f5f7; /* antes #f9f9f9 */
+}
+
+.table-awg tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* Hover */
+.table-awg tbody tr:hover {
+  background-color: #b8bb25;
+  transition: background-color 0.3s;
+}
+
+/* Media query para pantallas pequeñas */
+@media (max-width: 600px) {
+  .table-container {
+    padding: 10px; /* menos espacio alrededor */
+  }
+
+  .table-container h1 {
+    font-size: 1.2rem; /* título más pequeño */
+  }
+
+  .table-awg th,
+  .table-awg td {
+    padding: 6px 4px; /* menos padding para que quepa todo */
+    font-size: 0.8rem; /* letra más pequeña */
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* Opcional: ajustar ancho de columnas si necesitas */
+  .table-awg {
+    font-size: 0.8rem;
+    min-width: 100%;
+  }
+}

@@ -33,7 +33,7 @@ const Enrolado = () => {
   return (
     <div className="enrolado-container">
       <div className="encabezado-principal">
-        <h1>Enrolado de Tubo</h1>
+        <h1>Enrolado</h1>
       </div>
       <div className="enrolado-inputs">
         <label>
@@ -78,14 +78,14 @@ const Enrolado = () => {
       </h3>
 
       <div className="enrolado-buttons">
-        <button className="btn-primario" onClick={handleCalcular}>
+        <button className="btn-green" onClick={handleCalcular}>
           Calcular
         </button>
-        <button className="btn-secundario" onClick={limpiarCampos}>
+        <button className="btn-red" onClick={limpiarCampos}>
           Borrar
         </button>
         <button
-          className="btn-neutro"
+          className="btn-yellow"
           onClick={() => setMostrarTabla(!mostrarTabla)}
         >
           {mostrarTabla ? "Cerrar Tabla" : "Tabla alambres"}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
+import "../css/AWG.css";
 
 interface FilaAWG {
   calibre: number;
@@ -40,33 +41,37 @@ const Table_AWG = () => {
 
   if (cargando) return <p>Cargando tabla AWG...</p>;
 
-  return (
-    <div className="tabla-awg-container">
-      <h3>Tabla AWG</h3>
+return (
+  <div className="table-container">
+    <h3 style={{ textAlign: "center" }}>Tabla de alambres</h3>
 
-      <table className="tabla-awg">
-        <thead>
-          <tr>
-            <th>Calibre</th>
-            <th>Diámetro</th>
-            <th>Resistencia</th>
-            <th>Aumento</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {tabla.map((fila) => (
-            <tr key={fila.calibre}>
-              <td>{fila.calibre}</td>
-              <td>{fila.diametro}</td>
-              <td>{fila.resistencia}</td>
-              <td>{fila.aumento}</td>
+    <div className="table-wrapper">
+      <div className="table-scroll">
+        <table className="table-awg">
+          <thead>
+            <tr>
+              <th>Calibre</th>
+              <th>Diámetro</th>
+              <th>Resistencia</th>
+              <th>Aumento</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {tabla.map((fila) => (
+              <tr key={fila.calibre}>
+                <td>{fila.calibre}</td>
+                <td>{fila.diametro}</td>
+                <td>{fila.resistencia}</td>
+                <td>{fila.aumento}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default Table_AWG;

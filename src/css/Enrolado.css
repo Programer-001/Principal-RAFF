@@ -1,9 +1,7 @@
-/* Enrolado.css */
-body {
-  background-color: #f2f2f2; /* gris muy claro */
-}
-
-/* Contenedor principal */
+/* Enrolado.css 
+src/css/Enrolado.css
+El css sirve para darle estilo a la página de enrolado, con un diseño limpio, moderno y fácil de usar. Se enfoca en la legibilidad, la organización visual y la adaptabilidad a diferentes dispositivos.
+Contenedor principal */
 .enrolado-container {
   max-width: 1080px;
   margin: auto;
@@ -83,59 +81,9 @@ body {
   border-radius: 10px;
   cursor: pointer;
   white-space: nowrap; /* evita que el texto haga salto de línea */
-}
-button {
-  flex: 1; /* Ambos botones ocuparán el MISMO ancho */
-  min-width: 150px; /* Que no sean demasiado chicos */
-  max-width: 150px; /* Que no sean exageradamente largos */
-  padding: 12px 16px;
-  font-size: 20px;
-  font-weight: bold;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  white-space: nowrap; /* evita que el texto haga salto de línea */
-}
-
-/* Botón primario (azul) */
-.btn-primario {
-  background-color: #007bff;
   color: white;
 }
 
-.btn-primario:hover {
-  background-color: #0056b3;
-}
-
-/* Botón secundario (verde) */
-.btn-secundario {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-secundario:hover {
-  background-color: #1e7e34;
-}
-
-.btn-secundario {
-  background: #198754;
-  color: white;
-}
-
-.btn-neutro {
-  background: #6c757d; /* gris neutro */
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 18px;
-  transition: background 0.2s ease;
-}
-
-.btn-neutro:hover {
-  background: #5a6268; /* gris un poco más oscuro */
-}
 /* Tabla mejores opciones */
 .resultados-table {
   border-collapse: collapse;
@@ -190,97 +138,4 @@ button {
   }
 }
 
-/* TABLA AWG*/
-/* Contenedor general */
-.table-container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  max-width: 900px;
-  margin: 0 auto;
-}
 
-/* Contenedor con borde, sombra y redondeo */
-.table-wrapper {
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  overflow: hidden; /* recorta bordes de la tabla */
-}
-/* Contenedor SOLO para el scroll */
-.table-scroll {
-  max-height: 400px; /* altura visible */
-  overflow-y: auto; /* scroll vertical */
-  border: 1px solid #ddd;
-  border-radius: 6px;
-}
-
-/* Título */
-.table-container h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-/* Tabla */
-.table-awg {
-  width: 100%;
-  border-collapse: collapse; /* ahora sí se puede usar collapse */
-}
-
-/* Encabezado fijo */
-.table-awg thead th {
-  position: sticky;
-  top: 0;
-  background-color: #4caf50; /* se mantiene para tapar filas */
-  color: white;
-  padding: 12px 10px;
-  z-index: 50;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Celdas */
-.table-awg th,
-.table-awg td {
-  padding: 10px;
-  text-align: left;
-  text-align: center;
-  vertical-align: middle;
-}
-
-/* Filas alternadas */
-.table-awg tbody tr:nth-child(even) {
-  background-color: #f4f5f7; /* antes #f9f9f9 */
-}
-
-.table-awg tbody tr:nth-child(odd) {
-  background-color: #ffffff;
-}
-
-/* Hover */
-.table-awg tbody tr:hover {
-  background-color: #b8bb25;
-  transition: background-color 0.3s;
-}
-
-/* Media query para pantallas pequeñas */
-@media (max-width: 600px) {
-  .table-container {
-    padding: 10px; /* menos espacio alrededor */
-  }
-
-  .table-container h1 {
-    font-size: 1.2rem; /* título más pequeño */
-  }
-
-  .table-awg th,
-  .table-awg td {
-    padding: 6px 4px; /* menos padding para que quepa todo */
-    font-size: 0.8rem; /* letra más pequeña */
-    text-align: center;
-    vertical-align: middle;
-  }
-
-  /* Opcional: ajustar ancho de columnas si necesitas */
-  .table-awg {
-    font-size: 0.8rem;
-  }
-}
