@@ -62,7 +62,7 @@ export const resistenciasStock: ResistenciaStock[] = [
       longitud: "90",
       diametro: "7/16 cobre",
       dobleces: "3 DOBLECES",
-      tornillo: "",
+      tornillo: "NO",
       borne: "GALVANIZADO",
       datosAdicionales: "RESISTENCIAS DE M DE COBRE STOCK RAFF SIN TORNILLO",
     },
@@ -93,4 +93,17 @@ export const resistenciasStock: ResistenciaStock[] = [
       datosAdicionales: "STOCK BOILER STOCK RAFF",
     },
   },
+  {
+  nombre: "Autoclave",
+  valores: {
+    voltaje: "220",
+    potencia: "3000",
+    longitud: "100",
+    diametro: "7/16 tp 304",
+    dobleces: "1 DOBLEZ",
+    tornillo: "ACERO INOX 3/4 CON ARGON (Resistencias inoxidable)",
+    borne: "GALVANIZADO",
+    datosAdicionales: "RESISTENCIA AUTOCLAVE STOCK RAFF",
+  },
+},
 ];

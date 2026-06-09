@@ -35,6 +35,7 @@ const Menu = ({ vista, setVista }: Props) => {
     const [eventosCalendario, setEventosCalendario] = useState<EventoCalendario[]>([]);
     const [modalCrearEventoAbierto, setModalCrearEventoAbierto] = useState(false);
     const [notificaciones, setNotificaciones] = useState<NotificacionSistema[]>([]);
+    const [menuAbierto, setMenuAbierto] = useState(false);
     const notiRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -208,65 +209,81 @@ const Menu = ({ vista, setVista }: Props) => {
     // HTML
     // =========================
     return (
-        <header className="menu-header">
-            <div
-                className="menu-logo-area"
-                onClick={() => setVista("home")}
-                style={{ cursor: "pointer" }}
-            >
-                <img
-                    src="/svg/logo_negro.svg"
-                    alt="Logo empresa"
-                    className="menu-logo"
-                />
-            </div>
+    <header className="menu-header">
+        <div
+            className="menu-logo-area"
+            onClick={() => {
+                setVista("home");
+                setMenuAbierto(false);
+            }}
+            style={{ cursor: "pointer" }}
+        >
+            <img
+                src="/svg/logo_negro.svg"
+                alt="Logo empresa"
+                className="menu-logo"
+            />
+        </div>
 
-            <nav className="menu-nav">
-                {itemsMenu.map((item) =>
-                    item.children && item.children.length > 0 ? (
-                        <div key={item.key} className="menu-dropdown">
-                            <button className="menu-link">
-                                {item.label}
-                            </button>
+        {/* BOTÓN HAMBURGUESA */}
+        <button
+            className="menu-toggle"
+            onClick={() => setMenuAbierto((prev) => !prev)}
+        >
+            {menuAbierto ? "✕" : "☰"}
+        </button>
 
-                            <div className="menu-dropdown-content">
-                                {item.children.map((subitem) => (
-                                    <button
-                                        key={subitem.key}
-                                        className={`menu-sublink ${vista === subitem.key ? "activo" : ""}`}
-                                        onClick={() => setVista(subitem.key)}
-                                    >
-                                        {subitem.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <button
-                            key={item.key}
-                            className={`menu-link ${vista === item.key ? "activo" : ""}`}
-                            onClick={() => setVista(item.key)}
-                        >
+        <nav className={`menu-nav ${menuAbierto ? "abierto" : ""}`}>
+            {itemsMenu.map((item) =>
+                item.children && item.children.length > 0 ? (
+                    <div key={item.key} className="menu-dropdown">
+                        <button className="menu-link">
                             {item.label}
                         </button>
-                    )
-                )}
-            </nav>
 
+                        <div className="menu-dropdown-content">
+                            {item.children.map((subitem) => (
+                                <button
+                                    key={subitem.key}
+                                    className={`menu-sublink ${vista === subitem.key ? "activo" : ""}`}
+                                    onClick={() => {
+                                        setVista(subitem.key);
+                                        setMenuAbierto(false);
+                                    }}
+                                >
+                                    {subitem.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <button
+                        key={item.key}
+                        className={`menu-link ${vista === item.key ? "activo" : ""}`}
+                        onClick={() => {
+                            setVista(item.key);
+                            setMenuAbierto(false);
+                        }}
+                    >
+                        {item.label}
+                    </button>
+                )
+            )}
+        </nav>
 
-            <div className="menu-user-area">
-                <div className="menu-notificaciones-wrap" ref={notiRef}>
-                    {/* Botón de calendario */}
+        <div className="menu-user-area">
+            <div className="menu-notificaciones-wrap" ref={notiRef}>
+                {/* Botón de calendario */}
                 <button
                     className={`menu-calendario-btn ${calendarioAbierto ? "activa" : ""}`}
                     onClick={() => setCalendarioAbierto((prev) => !prev)}
                 >
                     <Calendario className="menu-calendario-icono" />
                 </button>
+
                 {/* Aquí podrías agregar un panel similar al de notificaciones para mostrar el calendario si "calendarioAbierto" es true */}
                 {calendarioAbierto && (
                     <div className="menu-calendario-panel">
-
                         <div className="menu-calendario-header">
                             Eventos de hoy
                         </div>
@@ -292,6 +309,7 @@ const Menu = ({ vista, setVista }: Props) => {
                             className="menu-calendario-footer"
                             onClick={() => {
                                 setCalendarioAbierto(false);
+                                setMenuAbierto(false);
                                 setVista("calendario");
                             }}
                         >
@@ -307,81 +325,84 @@ const Menu = ({ vista, setVista }: Props) => {
                         >
                             Crear evento
                         </div>
-
                     </div>
                 )}
+
                 {/* Botón de notificaciones */}
-                    <button
-                        className={`menu-campana-btn ${notificacionesAbiertas ? "activa" : ""}`}
-                        onClick={() => setNotificacionesAbiertas((prev) => !prev)}
-                    >
-                        <Campana  className="menu-campana-icono" />
-                        {totalNotificacionesPendientes > 0 && (
-                            <span className="menu-campana-badge">
-                                {totalNotificacionesPendientes > 99
-                                    ? "99+"
-                                    : totalNotificacionesPendientes}
-                            </span>
-                        )}
-                    </button>
-
-                    {notificacionesAbiertas && (
-                        <div className="menu-notificaciones-panel">
-                            <div className="menu-notificaciones-header">
-                                Notificaciones
-                            </div>
-
-                            <div className="menu-notificaciones-lista">
-                                {notificaciones.length === 0 ? (
-                                    <div className="menu-notificacion-item">
-                                        Sin notificaciones
-                                    </div>
-                                ) : (
-                                    notificaciones.map((notificacion) => (
-                                        <div
-                                            key={notificacion.id}
-                                            className="menu-notificacion-item"
-                                        >
-                                            <div className="menu-notificacion-contenido">
-                                                <strong>{notificacion.titulo}</strong>
-                                                <br />
-                                                <span>{notificacion.mensaje}</span>
-                                            </div>
-
-                                            <button
-                                                className="menu-notificacion-visto"
-                                                onClick={() => marcarVista(notificacion.id)}
-                                                title="Marcar como visto"
-                                            >
-                                                ✓
-                                            </button>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            <div className="menu-notificaciones-footer">
-                                Ver todas
-                            </div>
-                            <div
-                                className="menu-notificaciones-footer"
-                                onClick={crearNotificacionPrueba}
-                            >
-                                Crear prueba
-                            </div>
-                        </div>
+                <button
+                    className={`menu-campana-btn ${notificacionesAbiertas ? "activa" : ""}`}
+                    onClick={() => setNotificacionesAbiertas((prev) => !prev)}
+                >
+                    <Campana className="menu-campana-icono" />
+                    {totalNotificacionesPendientes > 0 && (
+                        <span className="menu-campana-badge">
+                            {totalNotificacionesPendientes > 99
+                                ? "99+"
+                                : totalNotificacionesPendientes}
+                        </span>
                     )}
-                </div>
+                </button>
 
-                <div className="menu-user-info">
+                {notificacionesAbiertas && (
+                    <div className="menu-notificaciones-panel">
+                        <div className="menu-notificaciones-header">
+                            Notificaciones
+                        </div>
+
+                        <div className="menu-notificaciones-lista">
+                            {notificaciones.length === 0 ? (
+                                <div className="menu-notificacion-item">
+                                    Sin notificaciones
+                                </div>
+                            ) : (
+                                notificaciones.map((notificacion) => (
+                                    <div
+                                        key={notificacion.id}
+                                        className="menu-notificacion-item"
+                                    >
+                                        <div className="menu-notificacion-contenido">
+                                            <strong>{notificacion.titulo}</strong>
+                                            <br />
+                                            <span>{notificacion.mensaje}</span>
+                                        </div>
+
+                                        <button
+                                            className="menu-notificacion-visto"
+                                            onClick={() => marcarVista(notificacion.id)}
+                                            title="Marcar como visto"
+                                        >
+                                            ✓
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="menu-notificaciones-footer">
+                            Ver todas
+                        </div>
+
+                        <div
+                            className="menu-notificaciones-footer"
+                            onClick={crearNotificacionPrueba}
+                        >
+                            Crear prueba
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="menu-user-info">
                 <div className="menu-user-name">
-
-
-                    👤 {textoUsuario}</div>
+                    👤 {textoUsuario}
+                </div>
 
                 <button
                     className="menu-user-action"
-                    onClick={() => setVista("perfil")}
+                    onClick={() => {
+                        setVista("perfil");
+                        setMenuAbierto(false);
+                    }}
                 >
                     Perfil
                 </button>
@@ -391,17 +412,17 @@ const Menu = ({ vista, setVista }: Props) => {
                     onClick={cerrarSesion}
                 >
                     Cerrar sesión
-                    </button>
-                </div>
+                </button>
             </div>
-            {/* Modal para crear evento del calendario */}
-            <CrearEventoModal
-                abierto={modalCrearEventoAbierto}
-                onClose={() => setModalCrearEventoAbierto(false)}
-            />
+        </div>
 
-        </header>
-    );
+        {/* Modal para crear evento del calendario */}
+        <CrearEventoModal
+            abierto={modalCrearEventoAbierto}
+            onClose={() => setModalCrearEventoAbierto(false)}
+        />
+    </header>
+);
 };
 
 export default Menu;

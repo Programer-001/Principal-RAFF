@@ -397,3 +397,142 @@
 .menu-calendario-footer:hover {
     background: #f9fafb;
 }
+
+/* =========================
+   RESPONSIVE - IPHONE / MÓVIL
+========================= */
+
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 32px;
+    cursor: pointer;
+    color: #111;
+}
+
+/* Móvil */
+@media (max-width: 768px) {
+    .menu-header {
+        padding: 12px 18px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .menu-logo-area {
+        margin-left: 0;
+    }
+
+    .menu-logo {
+        height: 55px;
+    }
+
+    .menu-toggle {
+        display: block;
+        margin-left: auto;
+        line-height: 1;
+    }
+
+    .menu-nav {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        order: 3;
+        flex: none;
+        padding-top: 8px;
+    }
+
+    .menu-nav.abierto {
+        display: flex;
+    }
+
+    .menu-link {
+        width: 100%;
+        text-align: left;
+        padding: 13px 46px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+    }
+
+    .menu-link::after {
+        display: none;
+    }
+
+    .menu-dropdown-content {
+        position: static;
+        display: none;
+        border: none;
+        padding-left: 20px;
+        background: #f9fafb;
+    }
+
+    .menu-dropdown:hover .menu-dropdown-content {
+        display: flex;
+    }
+
+    .menu-sublink {
+        padding: 11px 46px;
+        font-size: 13px;
+    }
+
+    .menu-user-area {
+        width: 100%;
+        margin-right: 0;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+        order: 4;
+        padding: 12px 0 4px;
+        border-top: 1px solid #eee;
+
+        display: none;
+    }
+
+    .menu-nav.abierto + .menu-user-area {
+        display: flex;
+    }
+
+    .menu-notificaciones-wrap {
+        gap: 10px;
+    }
+
+    .menu-user-info {
+        align-items: center;
+        gap: 2px;
+    }
+
+    .menu-user-name {
+        font-size: 13px;
+    }
+
+    .menu-user-action {
+        font-size: 12px;
+    }
+
+    .menu-campana-icono,
+    .menu-calendario-icono {
+        width: 20px;
+        height: 20px;
+    }
+
+    .menu-campana-badge {
+        top: -5px;
+        right: -6px;
+        font-size: 8px;
+        min-width: 13px;
+        height: 13px;
+    }
+
+    .menu-notificaciones-panel {
+        right: -95px;
+        width: 280px;
+    }
+
+    .menu-calendario-panel {
+        top: 34px;
+        right: -120px;
+        width: 285px;
+    }
+}

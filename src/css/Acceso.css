@@ -1,0 +1,193 @@
+.acceso-page {
+  min-height: 100vh;
+  background: #eef1f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.acceso-card {
+  display: flex;
+  width: 900px;
+  max-width: 100%;
+  min-height: 500px;
+  background: #ffffff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.acceso-left {
+  flex: 1;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 32px;
+  box-sizing: border-box;
+}
+
+.acceso-right {
+  flex: 1;
+  background:transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+
+.acceso-logo-pc{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 116px;
+    height: 116px;
+    background: black;
+    margin: 0 auto 36px;
+}
+
+.acceso-logo-pc svg{
+  width: 500px;
+  max-width: 80%;
+  height: auto;
+}
+
+.acceso-form {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.acceso-title {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 34px;
+  font-weight: 700;
+  color: #111;
+}
+
+.acceso-input {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  outline: none;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.acceso-btn {
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #000000;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+  width: 100%;
+}
+
+.acceso-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.acceso-error {
+  color: #d62828;
+  font-size: 14px;
+  text-align: center;
+}
+
+
+
+.acceso-logo-mobile {
+  display: none;
+}
+
+/* =========================
+   IPHONE / MÓVIL
+========================= */
+
+@media (max-width: 768px) {
+  .acceso-page {
+    padding: 0;
+  }
+
+  .acceso-card {
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 28px;
+    box-sizing: border-box;
+  }
+
+  .acceso-left {
+    background: transparent;
+    padding: 0;
+    width: 100%;
+    flex: none;
+  }
+
+  .acceso-right {
+  flex: 1;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+  .acceso-logo-mobile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 116px;
+    height: 116px;
+    background: black;
+    margin: 0 auto 36px;
+  }
+
+  .acceso-logo-mobile svg {
+    width: 100px;
+    max-height: 100px;
+  }
+
+  .acceso-title {
+    display: none;
+  }
+
+  .acceso-form {
+    max-width: 320px;
+    width: 100%;
+    gap: 18px;
+  }
+
+  .acceso-input {
+    height: 46px;
+    border-radius: 0;
+    border: none;
+    background: rgba(255, 255, 255, 0.86);
+  }
+
+  .acceso-btn {
+    margin-top: 18px;
+    height: 48px;
+    border-radius: 0;
+    background: rgba(20, 18, 36, 0.7);
+    font-weight: 500;
+  }
+
+  .acceso-error {
+    color: #ffdddd;
+  }
+}

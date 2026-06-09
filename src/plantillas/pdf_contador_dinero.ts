@@ -69,7 +69,7 @@ export const generarPDF = async (
         body: billetes.map((f) => [
             f.denom,
             f.cantidad,
-            `$${formatearMoneda(f.subtotal)}`,
+            `${formatearMoneda(f.subtotal)}`,
         ]),
         theme: "grid",
         headStyles: { fillColor: [41, 128, 185], textColor: 255 },
@@ -91,7 +91,7 @@ export const generarPDF = async (
         body: monedas.map((f) => [
             f.denom,
             f.cantidad,
-            `$${formatearMoneda(f.subtotal)}`,
+            `${formatearMoneda(f.subtotal)}`,
         ]),
         theme: "grid",
         headStyles: { fillColor: [39, 174, 96], textColor: 255 },
@@ -104,7 +104,7 @@ export const generarPDF = async (
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(
-        `Total General: $${formatearMoneda(total)}`,
+        `Total General: ${formatearMoneda(total)}`,
         14,
         posY
     );
