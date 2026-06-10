@@ -33,9 +33,9 @@ const Checador: React.FC = () => {
                 Checada Manual
             </button>
             <button
-            className={vista === "manual" ? "tab-activa" : ""}
+            className={vista === "respaldo" ? "tab-activa" : ""}
             onClick={() => setVista("respaldo")}
-        >
+            >
             Archivo
             </button>
             </div>

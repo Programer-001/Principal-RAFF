@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import { onValue, ref } from "firebase/database";
 import { db } from "../firebase/config";
+import { generarPDFBonoPuntualidad } from "../plantillas/plantillaBonoPuntualidad";
 import {
     calcularEstadoEntrada,
     calcularEstadoDia,
@@ -551,13 +552,87 @@ const ReporteBonoPuntualidad: React.FC = () => {
             <section className="bono-card acciones-card">
                 <h3>4. Acciones</h3>
 
-                <button
-                    type="button"
-                    className="btn-pdf"
-                    onClick={() => alert("PDF pendiente")}
-                >
-                    Generar PDF
-                </button>
+                    <button
+                        type="button"
+                        className="btn-pdf"
+                        onClick={async () => {
+                            const dataPDF = {
+                                fechaInicio,
+                                fechaFin,
+
+                                dias: diasRango.map((dia) => ({
+                                    fecha: dia.fecha,
+                                    titulo: `${dia.diaTexto.slice(0, 3)} ${dia.fechaTexto}`,
+                                })),
+
+                                empleados: empleadosVisibles.map((emp) => ({
+                                    empleado:
+                                        emp.nombre ||
+                                        emp.username ||
+                                        emp.id,
+
+                                    dias: diasRango.map((dia) => {
+                                        const registro =
+                                            obtenerRegistro(
+                                                dia.fecha,
+                                                emp.id
+                                            );
+
+                                        const estado =
+                                            obtenerEstado(
+                                                dia.fecha,
+                                                emp.id,
+                                                registro
+                                            );
+
+                                        const permiso =
+                                            obtenerPermisoEmpleado(
+                                                dia.fecha,
+                                                emp.id
+                                            );
+
+                                        const salida =
+                                            obtenerSalida(
+                                                registro
+                                            );
+
+                                        return {
+                                            entrada:
+                                                estado ===
+                                                "permiso"
+                                                    ? permiso?.horaPermiso ||
+                                                    "Permiso"
+                                                    : formatoHora(
+                                                        registro?.entrada
+                                                    ),
+
+                                            estado:
+                                                LABEL_ESTADO[
+                                                    estado
+                                                ].toUpperCase(),
+
+                                            salida: salida
+                                                ? formatoHora(
+                                                    salida
+                                                )
+                                                : "-",
+
+                                            color:
+                                                COLORES_ASISTENCIA[
+                                                    estado
+                                                ],
+                                        };
+                                    }),
+                                })),
+                            };
+
+                            await generarPDFBonoPuntualidad(
+                                dataPDF
+                            );
+                        }}
+                    >
+                        Generar PDF
+                    </button>
                     </section>
                 </>
             )}

@@ -4,7 +4,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import initSqlJs from "sql.js";
 import { ref, onValue, update } from "firebase/database";
 import { db } from "../firebase/config";
-import "../css/asistencia.css";
+import { formatearFechaMX} from "../funciones/formato_fechas";
+//import "../css/asistencia.css";
+import "../css/respaldo.css";
 
 type EmpleadoRH = {
   id: string;
@@ -320,30 +322,24 @@ const empleadosFiltrados = empleadosDelRespaldo.filter((emp) => {
     return empleadosSeleccionados.includes(r.empleadoId);
     });
 
- return (
+return (
   <div className="asistencia-page">
     <h2>Subir respaldo del checador</h2>
 
-    <div className="asistencia-table-wrap">
+    <div className="respaldo-card">
       <input
         type="file"
         accept=".db,.sqlite"
         onChange={leerRespaldo}
       />
 
-      {archivoNombre && (
-        <p>Archivo: {archivoNombre}</p>
-      )}
-
-      {procesando && (
-        <p>Procesando respaldo...</p>
-      )}
+      {archivoNombre && <p>Archivo: {archivoNombre}</p>}
+      {procesando && <p>Procesando respaldo...</p>}
 
       {registros.length > 0 && (
         <>
           <p>
-            Días/empleados encontrados:{" "}
-            <b>{registrosFinales.length}</b>
+            Días/empleados encontrados: <b>{registrosFinales.length}</b>
             {" | "}
             Checadas:{" "}
             <b>
@@ -354,198 +350,136 @@ const empleadosFiltrados = empleadosDelRespaldo.filter((emp) => {
             </b>
           </p>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "280px 1fr",
-              gap: "20px",
-              marginTop: "20px",
-            }}
-          >
-            {/* PANEL IZQUIERDO */}
-            <aside className="asistencia-table-wrap">
+          <div className="respaldo-layout">
+            <aside className="respaldo-sidebar">
 
-              <input
+            <input
+                className="respaldo-buscador"
                 type="text"
                 placeholder="Buscar por ID o nombre"
                 value={busquedaEmpleado}
                 onChange={(e) =>
-                  setBusquedaEmpleado(
-                    e.target.value
-                  )
+                setBusquedaEmpleado(e.target.value)
                 }
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  marginBottom: "15px",
-                }}
-              />
+            />
 
-              {Object.entries(
-                empleadosPorArea
-              ).map(([area, lista]) => (
-                <div
-                  key={area}
-                  style={{
-                    marginBottom: "20px",
-                  }}
-                >
-                  <h4>{area}</h4>
+            <div className="respaldo-contenido">
+                {Object.entries(empleadosPorArea).map(([area, lista]) => (
+                <div key={area}>
+                    <h4>{area}</h4>
 
-                  {lista.map((emp) => (
+                    {lista.map((emp) => (
                     <label
-                      key={emp.id}
-                      style={{
+                        key={emp.id}
+                        style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         cursor: "pointer",
-                      }}
+                        }}
                     >
-                      <input
+                        <input
                         type="checkbox"
-                        checked={empleadosSeleccionados.includes(
-                          emp.id
-                        )}
+                        checked={empleadosSeleccionados.includes(emp.id)}
                         onChange={() =>
-                          setEmpleadosSeleccionados(
-                            (prev) =>
-                              prev.includes(
-                                emp.id
-                              )
-                                ? prev.filter(
-                                    (id) =>
-                                      id !== emp.id
-                                  )
-                                : [
-                                    ...prev,
-                                    emp.id,
-                                  ]
-                          )
+                            setEmpleadosSeleccionados((prev) =>
+                            prev.includes(emp.id)
+                                ? prev.filter((id) => id !== emp.id)
+                                : [...prev, emp.id]
+                            )
                         }
-                      />
+                        />
 
-                      {" "}
-                      {emp.id} - {emp.nombre}
+                        {" "}
+                        {emp.id} - {emp.nombre}
                     </label>
-                  ))}
+                    ))}
                 </div>
-              ))}
+                ))}
+            </div>
+
             </aside>
 
-            {/* PANEL DERECHO */}
-            <div>
-
-              {/* Filtros */}
-              <div className="filtros-grid">
+            <section className="respaldo-main">
+              <div className="respaldo-filtros">
                 <label>
                   Desde
-
                   <input
                     type="date"
                     value={fechaDesde}
-                    onChange={(e) =>
-                      setFechaDesde(
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => setFechaDesde(e.target.value)}
                   />
                 </label>
 
                 <label>
                   Hasta
-
                   <input
                     type="date"
                     value={fechaHasta}
-                    onChange={(e) =>
-                      setFechaHasta(
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => setFechaHasta(e.target.value)}
                   />
                 </label>
               </div>
 
-              {/* Tabla */}
-              <table className="asistencia-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Empleado</th>
-                    <th>Área</th>
-                    <th>Entrada</th>
-                    <th>Última checada</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {registrosFinales.map(
-                    (r) => (
-                      <tr
-                        key={`${r.fecha}_${r.empleadoId}`}
-                      >
-                        <td>
-                          {r.empleadoId}
-                        </td>
-
-                        <td>{r.fecha}</td>
-
-                        <td>
-                          {r.nombre}
-                        </td>
-
-                        <td>
-                          {r.area || "-"}
-                        </td>
-
-                        <td>
-                          {r.entrada}
-                        </td>
-
-                        <td>
-                          {
-                            r.ultimaChecada
-                          }
-                        </td>
-
-                        <td>
-                          {
-                            r.totalChecadas
-                          }
-                        </td>
+              <div className="respaldo-tabla-wrap">
+                <div className="respaldo-tabla-scroll">
+                  <table className="respaldo-tabla">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Empleado</th>
+                        <th>Área</th>
+                        <th>Entrada</th>
+                        <th>Última checada</th>
+                        <th>Total</th>
                       </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
+                    </thead>
 
-              <br />
+                    <tbody>
+                      {[...registrosFinales]
+                        .sort((a, b) => {
+                          if (a.fecha !== b.fecha) {
+                            return a.fecha.localeCompare(b.fecha);
+                          }
 
-              <button
-                type="button"
-                onClick={
-                  sobrescribirFirebase
-                }
-                disabled={guardando}
-              >
-                {guardando
-                  ? "Guardando..."
-                  : "Sobrescribir"}
-              </button>
+                          return Number(a.empleadoId) - Number(b.empleadoId);
+                        })
+                        .map((r) => (
+                          <tr key={`${r.fecha}_${r.empleadoId}`}>
+                            <td>{r.empleadoId}</td>
+                            <td>{formatearFechaMX(r.fecha)}</td>
+                            <td>{r.nombre}</td>
+                            <td>{r.area || "-"}</td>
+                            <td>{r.entrada}</td>
+                            <td>{r.ultimaChecada}</td>
+                            <td>{r.totalChecadas}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-              {" "}
+              <div className="respaldo-botones">
+                <button
+                  type="button"
+                  className="btn-importar"
+                  onClick={sobrescribirFirebase}
+                  disabled={guardando}
+                >
+                  {guardando ? "Guardando..." : "Sobrescribir"}
+                </button>
 
-              <button
-                type="button"
-                onClick={cancelar}
-                disabled={guardando}
-              >
-                Cancelar
-              </button>
-
-            </div>
+                <button
+                  type="button"
+                  className="btn-cancelar"
+                  onClick={cancelar}
+                  disabled={guardando}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </section>
           </div>
         </>
       )}
