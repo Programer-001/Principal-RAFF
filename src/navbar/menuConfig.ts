@@ -156,6 +156,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.gestion,
             MENU_BASE.inventario_almacen,
             MENU_BASE.compras_solicitud,
+            MENU_BASE.checador,
 
         ],
     },

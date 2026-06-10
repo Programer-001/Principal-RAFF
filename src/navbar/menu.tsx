@@ -38,43 +38,57 @@ const Menu = ({ vista, setVista }: Props) => {
     const [menuAbierto, setMenuAbierto] = useState(false);
     const notiRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const unsub = onAuthStateChanged(auth, async (usuario) => {
-            setUser(usuario);
+useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (usuario) => {
+        setUser(usuario);
 
-            if (!usuario?.uid) {
+        if (!usuario?.uid) {
+            setPerfil(null);
+            localStorage.removeItem("perfil");
+            return;
+        }
+
+        try {
+            const snapshot = await get(ref(db, "RH/Empleados"));
+
+            if (!snapshot.exists()) {
                 setPerfil(null);
+                localStorage.removeItem("perfil");
                 return;
             }
 
-            try {
-                const snapshot = await get(ref(db, "RH/Empleados"));
+            const empleados = snapshot.val();
+            let encontrado: EmpleadoPerfil | null = null;
 
-                if (!snapshot.exists()) {
-                    setPerfil(null);
-                    return;
+            for (const key in empleados) {
+                const emp = empleados[key];
+
+                if (emp?.uid === usuario.uid) {
+                    encontrado = emp;
+                    break;
                 }
-
-                const empleados = snapshot.val();
-                let encontrado: EmpleadoPerfil | null = null;
-
-                for (const key in empleados) {
-                    const emp = empleados[key];
-                    if (emp?.uid === usuario.uid) {
-                        encontrado = emp;
-                        break;
-                    }
-                }
-
-                setPerfil(encontrado);
-            } catch (error) {
-                console.error("Error cargando perfil:", error);
-                setPerfil(null);
             }
-        });
 
-        return () => unsub();
-    }, []);
+            setPerfil(encontrado);
+
+            // 👇 ESTO ES LO NUEVO
+            if (encontrado) {
+                localStorage.setItem(
+                    "perfil",
+                    JSON.stringify(encontrado)
+                );
+            }
+        } catch (error) {
+            console.error("Error cargando perfil:", error);
+
+            setPerfil(null);
+
+            localStorage.removeItem("perfil");
+        }
+    });
+
+    return () => unsub();
+}, []);
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (

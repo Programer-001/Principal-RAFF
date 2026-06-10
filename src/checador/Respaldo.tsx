@@ -1,4 +1,5 @@
 // src/checador/Respaldo.tsx
+//Aqui se guardan las asistencias de la base de datos del checador
 
 import React, { useEffect, useMemo, useState } from "react";
 import initSqlJs from "sql.js";

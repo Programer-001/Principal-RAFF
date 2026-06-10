@@ -1,4 +1,6 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿//src/checador/ReporteBonoPuntualidad.tsx
+// Reporte de bono de puntualidad
+import React, { useEffect, useMemo, useState } from "react";
 import { onValue, ref } from "firebase/database";
 import { db } from "../firebase/config";
 import { generarPDFBonoPuntualidad } from "../plantillas/plantillaBonoPuntualidad";

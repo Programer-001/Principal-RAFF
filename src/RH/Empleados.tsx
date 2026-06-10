@@ -29,6 +29,7 @@ interface Empleado {
     municipio?: string;
     estado?: string;
     cp?: string;
+    puedeChecarCelular?: boolean;
 }
 
 const estadoInicial = {
@@ -53,6 +54,7 @@ const estadoInicial = {
     municipio: "",
     estado: "",
     cp: "",
+    puedeChecarCelular: false,
 };
 
 const puestos = [
@@ -156,6 +158,7 @@ const Empleados: React.FC = () => {
             estado: empleado.estado || "",
             cp: empleado.cp || "",
             fechaNacimiento: empleado.fechaNacimiento || "",
+            puedeChecarCelular:empleado.puedeChecarCelular ?? false,
         });
 
         setModoEdicion(false);
@@ -221,6 +224,7 @@ const crearLoginSiFalta = async () => {
         puesto: nuevoEmpleado.puesto,
         salario: Number(nuevoEmpleado.salario || 0),
         diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
+        puedeChecarCelular: nuevoEmpleado.puedeChecarCelular ?? false,
         uid: uidFinal,
 
         fechaIngreso: nuevoEmpleado.fechaIngreso || "",
@@ -666,6 +670,41 @@ const crearLoginSiFalta = async () => {
                                         </label>
                                     ) : (
                                         <p>{nuevoEmpleado.activo ? "Sí" : "No"}</p>
+                                    )}
+                                </div>
+
+                                <div className="campo">
+                                    <label className="campo-label">
+                                        Checador celular
+                                    </label>
+
+                                    {modoNuevo || modoEdicion ? (
+                                        <label className="empleado-check-activo">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    nuevoEmpleado.puedeChecarCelular ??
+                                                    false
+                                                }
+                                                onChange={(e) =>
+                                                    setNuevoEmpleado({
+                                                        ...nuevoEmpleado,
+                                                        puedeChecarCelular:
+                                                            e.target.checked,
+                                                    })
+                                                }
+                                            />
+
+                                            {nuevoEmpleado.puedeChecarCelular
+                                                ? "Permitido"
+                                                : "No permitido"}
+                                        </label>
+                                    ) : (
+                                        <p>
+                                            {nuevoEmpleado.puedeChecarCelular
+                                                ? "Sí"
+                                                : "No"}
+                                        </p>
                                     )}
                                 </div>
 
