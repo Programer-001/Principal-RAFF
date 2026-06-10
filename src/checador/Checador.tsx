@@ -2,9 +2,10 @@
 import AsistenciaHoy from "./AsistenciaHoy";
 import ReporteBonoPuntualidad from "./ReporteBonoPuntualidad";
 import ChecadaManual from "./ChecadaManual";
+import Respaldo from "./Respaldo";
 import "../css/checador.css";
 
-type VistaChecador = "asistencia" | "bono" | "manual";
+type VistaChecador = "asistencia" | "bono" | "manual"|"respaldo";
 
 const Checador: React.FC = () => {
     const [vista, setVista] = useState<VistaChecador>("asistencia");
@@ -31,12 +32,19 @@ const Checador: React.FC = () => {
             >
                 Checada Manual
             </button>
+            <button
+            className={vista === "manual" ? "tab-activa" : ""}
+            onClick={() => setVista("respaldo")}
+        >
+            Archivo
+            </button>
             </div>
 
             {vista === "asistencia" && <AsistenciaHoy />}
 
             {vista === "bono" && <ReporteBonoPuntualidad />}
-            {vista === "manual" && <ChecadaManual />}   
+            {vista === "manual" && <ChecadaManual />}
+            {vista === "respaldo" && <Respaldo />}      
         </div>
     );
 };
