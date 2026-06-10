@@ -15,6 +15,7 @@ import Cuarzo from "./cotizadores/cuarzo";
 import MantenimientoReparacion from "./cotizadores/Mantenimiento_reparacion";
 import { formatearMoneda } from "./funciones/formato_moneda";
 import {obtenerSiguienteCotizacion,obtenerSiguienteEnvio} from "./firebase/consecutivos";
+import "./css/cotizador.css";
 
 // 🔹 Tipos
 interface Cliente {
@@ -1081,6 +1082,25 @@ const Cotizador = () => {
             {/* luego aquí puedes mostrar dirección */}
           </div>
         )}
+                {/* SELECT SOLO CELULAR */}
+        <select
+            className="cotizador-select-mobile"
+            value={cotizadorActivo}
+            onChange={(e) =>
+                cambiarCotizador(e.target.value as any)
+            }
+        >
+            <option value="tubular">Tubular</option>
+            <option value="banda">Banda</option>
+            <option value="CartuchoB">Cartucho Baja</option>
+            <option value="CartuchoA">Cartucho Alta</option>
+            <option value="Resorte">Resorte</option>
+            <option value="termopar">Termopar</option>
+            <option value="cuarzo">Cuarzo</option>
+            <option value="mantenimiento_reparacion">
+                Reparación
+            </option>
+        </select>
 
         {/* MENU */}
         <div className="cotizador-tabs">

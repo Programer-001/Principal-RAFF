@@ -47,7 +47,7 @@ import Calendario from "./Calendario/Calendario";
 import MostrarTablas from "./Configuracion/Mostrar_tablas"; 
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
-import "./styles.css";
+//import "./styles.css";
 
 function AppLayout() {
     const location = useLocation();

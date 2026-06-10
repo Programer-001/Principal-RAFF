@@ -609,7 +609,10 @@
     .resumen-caja h4 {
         margin: 6px 0;
     }
-
+/* Por defecto oculto */
+.cotizador-select-mobile {
+    display: none;
+}
 /* ====== CAJA ====== */
 .grid-inputs {
     display: grid;
@@ -1806,5 +1809,24 @@
         width: 816px; /* conserva tamaño carta visual */
         min-width: 816px;
         padding: 75px;
+    }
+}
+/* Celular */
+@media (max-width: 768px) {
+
+    /* Ocultar pestañas */
+    .cotizador-tabs {
+        display: none;
+    }
+
+    /* Mostrar select */
+    .cotizador-select-mobile {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 16px;
     }
 }

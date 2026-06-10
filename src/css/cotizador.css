@@ -1,0 +1,347 @@
+/* =========================
+   FORMULARIOS COTIZADORES
+========================= */
+
+.form-container {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.form-container h1 {
+  margin-bottom: 20px;
+}
+
+.form-container h2 {
+  margin-bottom: 18px;
+}
+
+.form-container h3 {
+  margin-bottom: 26px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-row-inline {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-row select {
+  max-width: 100%;
+}
+
+.form-row label {
+  font-weight: 600;
+}
+
+.form-row input[type="number"],
+.form-row input[type="text"],
+.form-row input,
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  justify-self: start;
+}
+
+.textarea-row {
+  align-items: start;
+}
+
+.textarea-row textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.descripcion-row {
+  display: block;
+  width: 100%;
+}
+
+.descripcion-box {
+  width: 100%;
+  margin: 0;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  background: #f9f9f9;
+  box-sizing: border-box;
+}
+
+.descripcion-title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.descripcion-texto {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* =========================
+   ENCABEZADO COTIZADOR
+========================= */
+
+.encabezado-cotizador {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.encabezado-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.encabezado-centro {
+  justify-content: center;
+}
+
+.encabezado-factura {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.input-factura {
+  width: 90px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* =========================
+   RESUMEN COTIZADOR
+========================= */
+
+.resumen-cotizador {
+  width: 240px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 10px #0003;
+  position: sticky;
+  top: 20px;
+  margin: 20px;
+  margin-left: auto;
+}
+
+.resumen-cotizador h2 {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.resumen-cotizador h3 {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.resumen-cotizador p,
+.resumen-cotizador h4 {
+  margin: 6px 0;
+}
+
+.cotizador-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 95%;
+}
+
+/* =========================
+   MENU TABS COTIZADOR
+========================= */
+
+.cotizador-tabs {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.cotizador-tab {
+  position: relative;
+  padding: 8px 0 8px 12px;
+  font-size: 20px;
+  font-weight: 400;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.cotizador-tab:hover {
+  color: #555;
+}
+
+.cotizador-tab.active {
+  color: #000;
+  font-weight: 600;
+}
+
+.cotizador-tab.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 75%;
+  background-color: #333;
+  border-radius: 2px;
+}
+
+/* =========================
+   CLIENTES COTIZADOR
+========================= */
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 250px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.clientes-resultados-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: auto;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.clientes-resultados-scroll .caja-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.clientes-resultados-scroll .caja-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* =========================
+   RESPONSIVE COTIZADOR
+========================= */
+
+.cotizador-select-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .cotizador-tabs {
+    display: none;
+  }
+
+  .cotizador-select-mobile {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+
+  .cotizador-layout {
+    flex-direction: column;
+    width: 100%;
+    padding: 0 12px;
+    box-sizing: border-box;
+  }
+
+  .resumen-cotizador {
+    width: 100%;
+    box-sizing: border-box;
+    position: static;
+    margin: 20px 0;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .resumen-cotizador h2 {
+    font-size: 22px;
+    margin: 0 0 10px;
+  }
+
+  .resumen-cotizador h3 {
+    font-size: 18px;
+    margin: 0 0 10px;
+  }
+
+  .resumen-cotizador div {
+    font-size: 15px;
+  }
+
+  .resumen-cotizador hr {
+    margin: 10px 0;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .encabezado-cotizador {
+    grid-template-columns: 1fr;
+  }
+
+  .encabezado-centro,
+  .encabezado-factura {
+    justify-content: flex-start;
+  }
+}

@@ -4,7 +4,7 @@ import { ref, get, set, update,remove  } from "firebase/database";
 import { db } from "../firebase/config";
 import { formatearFechaHora } from "../funciones/formato_fechas";
 import { generarPDFOrdenCompraProduccion } from "../plantillas/OC_Produccion";
-import "../styles.css";
+//import "../styles.css";
 
 interface Material {
   id: string;
