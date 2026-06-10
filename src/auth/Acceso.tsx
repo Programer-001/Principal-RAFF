@@ -48,10 +48,6 @@ return (
       <div className="acceso-left">
         <form onSubmit={handleLogin} className="acceso-form">
 
-          <div className="acceso-logo-mobile">
-            <LogoBlanco className="logo" />
-          </div>
-
           <h1 className="acceso-title">Bienvenido</h1>
 
           <input
@@ -81,9 +77,9 @@ return (
       </div>
 
     <div className="acceso-right">
-    <div className="acceso-logo-pc">
-    <LogoBlanco className="logo" />
-    </div>
+   <LogoBlanco
+    className="logo acceso-logo-pc"
+    />
     </div>
 
     </div>
