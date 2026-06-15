@@ -156,7 +156,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
     const totalCeramica = obtenerPrecioCeramica();
 
     const resultado = obtenerPrecioTermopar();//VARIABLE QUE SE CONECTA CON LAS TABLAS J Y K
-    const totalBase = resultado.precio * (cantidad || 1);
+    const totalBase = resultado.precio;
     // si es K con cerámica, usa cerámica
     // en cualquier otro caso, usa base J/K
     const usarCeramica =
