@@ -5,10 +5,8 @@ import { db } from "../firebase/config";
 import { tablasPrecios, TipoResistencia } from "../datos/PrecioTipoResistencia";
 import { resistenciasStock } from "../datos/resistencias_stock";
 import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
-import {
-  obtenerDescuento,
-  descuentosTubular,
-} from "../datos/PrecioTipoResistencia";
+import {obtenerDescuento, descuentosTubular} from "../datos/PrecioTipoResistencia";
+import ProductosExtras, {ProductoExtra} from "./ProductosExtras";
 import { ItemCotizado } from "../cotizador";
 import { FiCopy } from "react-icons/fi";
 
@@ -55,6 +53,8 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
     const [aleta, setAleta] = useState(false);
     const [datosAdicionales, setDatosAdicionales] = useState("");
+    const [extrasActivos, setExtrasActivos] = useState(false);
+const [productosExtras, setProductosExtras] = useState<ProductoExtra[]>([]);
     const esAdministracion = perfil?.area === "Administración";
   //-------------------------------------------------------------------------------->>
   const [catalogos, setCatalogos] = useState<any>({});
@@ -219,6 +219,12 @@ const totalTubo =
 
     //Calcular aletada por metros
     const totalAleta = esAletada716 ? calcularAletada(longitud) : 0;
+// Total productos extras
+const totalProductosExtras = productosExtras.reduce(
+  (acc, item) =>
+    acc + (Number(item.cantidad) || 0) * (Number(item.precio) || 0),
+  0
+);
   //---------------------------TOTAL------------------------------------->>
 
   const precioBorne = Number(seleccionados["borne"]?.precio) || 0;
@@ -256,7 +262,8 @@ const totalTubo =
     totalPlaca +
     totalPuentes +
     totalSellos +
-    precioServicios;
+    precioServicios+
+    totalProductosExtras;
   // aplicar descuento
     let totalConDescuento = totalResistencia * (1 - descuento);
     if (servicioExpress) {
@@ -296,6 +303,8 @@ const totalTubo =
       setDatosAdicionales("");
       setMaxWatts(false);
       setSacarWatts(false);
+      setExtrasActivos(false);
+      setProductosExtras([]);
   };
 
   /*
@@ -363,6 +372,14 @@ const totalTubo =
   
  ${agregarCantidad("SELLOS", seleccionados["sellos"]?.tipo, cantidadSellos)}
   ${agregar("SERVICIOS", seleccionados["servicios"]?.tipo)}
+  ${productosExtras.length > 0
+  ? productosExtras
+      .map(
+        (item) =>
+          ` / EXTRA: ${item.descripcion} (${item.cantidad})`
+      )
+      .join("")
+  : ""}
   
   ${servicioExpress ? " / SERVICIO EXPRESS" : ""}
   ${muestra === "si" ? ` / DEJO MUESTRA` : ""}
@@ -474,6 +491,10 @@ const totalTubo =
 
         setCantidadTapon(d.cantidadTapon || 0);
         setCantidadPuentes(d.cantidadPuentes || 0);
+        // 🔹 productos extras
+        setExtrasActivos(!!d.extrasActivos);
+        setProductosExtras(d.productosExtras || []);
+
     }
   }, [data]);
 
@@ -527,7 +548,20 @@ const aplicarStock = (stock: any) => {
               type="number"
               min={0}
               value={cantidadResistencias === 0 ? "" : cantidadResistencias}
-              onChange={(e) => setCantidadResistencias(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "e") {
+                  e.preventDefault();
+                }
+              }}
+              onChange={(e) => {
+                const valor = e.target.value;
+
+                if (valor === "") {
+                  setCantidadResistencias(0);
+                } else {
+                  setCantidadResistencias(Math.max(0, Number(valor)));
+                }
+              }}
             />
           </div>
 
@@ -536,8 +570,22 @@ const aplicarStock = (stock: any) => {
             <label>Voltaje</label>
             <input
               type="number"
+              min={0}
               value={voltaje === 0 ? "" : voltaje}
-              onChange={(e) => setVoltaje(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (["-", "+", "e", "E"].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              onChange={(e) => {
+                const valor = e.target.value;
+
+                if (valor === "") {
+                  setVoltaje(0);
+                } else {
+                  setVoltaje(Math.max(0, Number(valor)));
+                }
+              }}
             />
           </div>
 
@@ -546,8 +594,22 @@ const aplicarStock = (stock: any) => {
             <label>Potencia</label>
             <input
               type="number"
+              min={0}
               value={potencia === 0 ? "" : potencia}
-              onChange={(e) => setPotencia(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (["-", "+", "e", "E"].includes(e.key)  ) {
+                  e.preventDefault();
+                }
+              }}
+              onChange={(e) => {
+                const valor = e.target.value;
+
+                if (valor === "") {
+                  setPotencia(0);
+                } else {
+                  setPotencia(Math.max(0, Number(valor)));
+                }
+              }}
             />
         </div>
         {/* Max Watts */}
@@ -576,16 +638,30 @@ const aplicarStock = (stock: any) => {
                 }}
             />
         </div>
-          {/* Longitud */}
-          <div className="form-row">
-            <label>Longitud (cm)</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              value={longitud === 0 ? "" : longitud}
-              onChange={(e) => setLongitud(Number(e.target.value))}
-            />
-          </div>
+        {/* Longitud */}
+        <div className="form-row">
+          <label>Longitud (cm)</label>
+          <input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={longitud === 0 ? "" : longitud}
+            onKeyDown={(e) => {
+              if (["-", "+", "e", "E"].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            onChange={(e) => {
+              const valor = e.target.value;
+
+              if (valor === "") {
+                setLongitud(0);
+              } else {
+                setLongitud(Math.max(0, Number(valor)));
+              }
+            }}
+          />
+        </div>
 
           {/* Aspecto Resistencia 
     <div>
@@ -687,8 +763,14 @@ const aplicarStock = (stock: any) => {
                   <label>Longitud de cable para soldar</label>
                   <input
                 type="number"
+                min={0}   
                 value={longitudCable === 0 ? "" : longitudCable}
                     onChange={(e) => setLongitudCable(Number(e.target.value))}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e") {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
 
@@ -698,6 +780,11 @@ const aplicarStock = (stock: any) => {
                   type="number"
                   value={cantidadCable === 0 ? "" : cantidadCable}
                     onChange={(e) => setCantidadCable(Number(e.target.value))}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e") {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
               </>
@@ -778,7 +865,22 @@ const aplicarStock = (stock: any) => {
               <label>Cantidad de termoposos</label>
               <input
                 type="number"
-                onChange={(e) => setCantidadTermoposo(Number(e.target.value))}
+                min={0}
+                value={cantidadTermoposo === 0 ? "" : cantidadTermoposo}
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  const valor = e.target.value;
+
+                  if (valor === "") {
+                    setCantidadTermoposo(0);
+                  } else {
+                    setCantidadTermoposo(Math.max(0, Number(valor)));
+                  }
+                }}
               />
             </div>
           )}
@@ -887,7 +989,13 @@ const aplicarStock = (stock: any) => {
             <label>Otros Servicios</label>
             {renderSelect("servicios")}
           </div>
-
+          {/* Productos extras */}
+            <ProductosExtras
+            activo={extrasActivos}
+            setActivo={setExtrasActivos}
+            productosExtras={productosExtras}
+            setProductosExtras={setProductosExtras}
+          />
           {/* Servicio Express */}
           <div className="form-row checkbox-row">
             <label>Servicio Express</label>
@@ -1010,6 +1118,10 @@ const aplicarStock = (stock: any) => {
                               totalAleta,
                               cantidadTapon,
                               cantidadPuentes,
+                              // 🔹 productos extras
+                              extrasActivos,
+                              productosExtras,
+                              totalProductosExtras,
                               // 🔹 otros
                               totalExpress,
                               totalTubo,
@@ -1175,6 +1287,12 @@ const aplicarStock = (stock: any) => {
                       <br />
 
                       Servicio express: % {totalExpress.toFixed(2)}
+                      <br />
+
+                      Productos extras:{" "}
+                      {totalProductosExtras
+                        ? formatearMoneda(totalProductosExtras)
+                        : "--"}
                     </h3>
                   )}
               </>

@@ -275,6 +275,54 @@
   z-index: 5;
 }
 
+
+/* =========================
+   PRODUCTOS EXTRAS
+========================= */
+
+.productos-extras-box {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #f9fafb;
+}
+
+.producto-extra-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.producto-extra-row input[type="text"] {
+    flex: 1;
+    min-width: 220px;
+}
+
+.producto-extra-row input[type="number"] {
+    width: 100px;
+}
+
+.subtotal-extra {
+    width: 100%;
+    margin: 4px 0 12px 0;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.productos-extras-box .btn-red {
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+    font-weight: bold;
+}
+
+.productos-extras-box .btn-blue {
+    margin-top: 10px;
+}
+
 /* =========================
    RESPONSIVE COTIZADOR
 ========================= */
@@ -337,28 +385,32 @@
     grid-template-columns: 1fr;
   }
 
-  /* 🔥 Esto evita que Safari haga zoom y cambie el tamaño */
+  /* Evita zoom de Safari */
   .form-row input,
   .form-row select,
   .form-row textarea {
     font-size: 16px;
     width: 100%;
-    min-width: 100%;
-    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
   }
 
-  /* 🔥 Mantiene alineados los checkboxes */
+  /* Checkboxes alineados */
   .checkbox-row {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 32px;
     align-items: center;
+    gap: 10px;
+  }
+
+  .checkbox-row label {
+    margin: 0;
   }
 
   .checkbox-row input[type="checkbox"] {
-    flex-shrink: 0;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
+    justify-self: start;
   }
 
   .encabezado-cotizador {
@@ -368,5 +420,35 @@
   .encabezado-centro,
   .encabezado-factura {
     justify-content: flex-start;
+  }
+
+  /* =========================
+     PRODUCTOS EXTRAS
+  ========================= */
+
+  .producto-extra-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .producto-extra-row input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .producto-extra-row button {
+    width: 100%;
+    height: 42px;
+  }
+
+  .subtotal-extra {
+    text-align: center;
+    font-size: 14px;
+    margin: 0 0 12px;
+  }
+
+  .productos-extras-box .btn-blue {
+    width: 100%;
   }
 }
