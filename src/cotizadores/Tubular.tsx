@@ -1109,6 +1109,8 @@ const aplicarStock = (stock: any) => {
                               totalTermoposo,
                               totalPlaca,
                               tipoPlaca,
+                              cantidadPlaca,
+                              precioPlaca,
                               totalPuentes,
                               //sellos
                               cantidadSellos,
@@ -1187,113 +1189,166 @@ const aplicarStock = (stock: any) => {
                   </div>
 
                   {mostrarDetalle && (
-                    <h3>
-                      Voltaje: {voltaje || "--"}V
-                      <br />
+                  <div className="resumen-detalle">
+                    <p>
+                      <strong>Voltaje</strong>
+                      <span>{voltaje || "--"}V</span>
+                    </p>
 
-                      Potencia: {potencia || "--"}W
-                      <br />
+                    <p>
+                      <strong>Potencia</strong>
+                      <span>{potencia || "--"}W</span>
+                    </p>
 
-                      Cantidad de resistencias: {cantidadResistencias || "--"}
-                      <br />
+                    <p>
+                      <strong>Cantidad de resistencias</strong>
+                      <span>{cantidadResistencias || "--"}</span>
+                    </p>
 
-                      Total Tubular:{" "}
-                      {totalTubo ? formatearMoneda(totalTubo) : "--"}
-                      <br />
+                    <p>
+                      <strong>Total Tubular</strong>
+                      <span>{totalTubo ? formatearMoneda(totalTubo) : "--"}</span>
+                    </p>
 
-                      Precio por cm:{" "}
-                      {diametro
-                        ? formatearMoneda(obtenerPrecioPorCm(diametro, longitud))
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Precio por cm</strong>
+                      <span>
+                        {diametro
+                          ? formatearMoneda(obtenerPrecioPorCm(diametro, longitud))
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Tornillo:{" "}
-                      {seleccionados["tornillo"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["tornillo"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Tornillo</strong>
+                      <span>
+                        {seleccionados["tornillo"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["tornillo"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Borne:{" "}
-                      {seleccionados["borne"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["borne"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Borne</strong>
+                      <span>
+                        {seleccionados["borne"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["borne"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Desoldar de base:{" "}
-                      {seleccionados["desoldar_base"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["desoldar_base"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Desoldar de base</strong>
+                      <span>
+                        {seleccionados["desoldar_base"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["desoldar_base"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Dobleces:{" "}
-                      {seleccionados["dobleces"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["dobleces"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Dobleces</strong>
+                      <span>
+                        {seleccionados["dobleces"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["dobleces"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Soldadura en resistencia:{" "}
-                      {seleccionados["soldadura_resistencia"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["soldadura_resistencia"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Soldadura en resistencia</strong>
+                      <span>
+                        {seleccionados["soldadura_resistencia"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["soldadura_resistencia"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Soldar cable: {tipoSoldarCable || "--"}
-                      <br />
+                    <p>
+                      <strong>Soldar cable</strong>
+                      <span>{tipoSoldarCable || "--"}</span>
+                    </p>
 
-                      Total cable:{" "}
-                      {totalCable ? formatearMoneda(totalCable) : "--"}
-                      <br />
+                    <p>
+                      <strong>Total cable</strong>
+                      <span>{totalCable ? formatearMoneda(totalCable) : "--"}</span>
+                    </p>
 
-                      Desoldar tornillo:{" "}
-                      {totalDesoldartornillo
-                        ? formatearMoneda(totalDesoldartornillo)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Desoldar tornillo</strong>
+                      <span>
+                        {totalDesoldartornillo
+                          ? formatearMoneda(totalDesoldartornillo)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Tapon macho:{" "}
-                      {totalTapon ? formatearMoneda(totalTapon) : "--"}
-                      <br />
+                    <p>
+                      <strong>Tapón macho</strong>
+                      <span>{totalTapon ? formatearMoneda(totalTapon) : "--"}</span>
+                    </p>
 
-                      Barrenos:{" "}
-                      {totalBarrenos ? formatearMoneda(totalBarrenos) : "--"}
-                      <br />
+                    <p>
+                      <strong>Barrenos</strong>
+                      <span>{totalBarrenos ? formatearMoneda(totalBarrenos) : "--"}</span>
+                    </p>
 
-                      Termoposo:{" "}
-                      {totalTermoposo ? formatearMoneda(totalTermoposo) : "--"}
-                      <br />
+                    <p>
+                      <strong>Termoposo</strong>
+                      <span>{totalTermoposo ? formatearMoneda(totalTermoposo) : "--"}</span>
+                    </p>
 
-                      Tipo {tipoPlaca || "--"}:{" "}
-                      {totalPlaca ? formatearMoneda(totalPlaca) : "--"}
-                      <br />
+                    <p>
+                      <strong>Puentes</strong>
+                      <span>{totalPuentes ? formatearMoneda(totalPuentes) : "--"}</span>
+                    </p>
 
-                      Puentes:{" "}
-                      {totalPuentes ? formatearMoneda(totalPuentes) : "--"}
-                      <br />
+                    <p>
+                      <strong>Sello</strong>
+                      <span>
+                        {seleccionados["sellos"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["sellos"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Sello:{" "}
-                      {seleccionados["sellos"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["sellos"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Aleta</strong>
+                      <span>{totalAleta ? formatearMoneda(totalAleta) : "--"}</span>
+                    </p>
 
-                      Aleta:{" "}
-                      {totalAleta ? formatearMoneda(totalAleta) : "--"}
-                      <br />
+                    <p>
+                      <strong>Placa / Base / Brida</strong>
+                      <span>
+                        {tipoPlaca || "--"} - {cantidadPlaca ? `x${cantidadPlaca}` : "--"} -
+                        Precio unitario: {precioPlaca ? formatearMoneda(precioPlaca) : "--"} -
+                        Total: {totalPlaca ? formatearMoneda(totalPlaca) : "--"}
+                      </span>
+                    </p>
 
-                      Otros Servicios:{" "}
-                      {seleccionados["servicios"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["servicios"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Otros Servicios</strong>
+                      <span>
+                        {seleccionados["servicios"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["servicios"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Servicio express: % {totalExpress.toFixed(2)}
-                      <br />
+                    <p>
+                      <strong>Servicio express</strong>
+                      <span>% {totalExpress.toFixed(2)}</span>
+                    </p>
 
-                      Productos extras:{" "}
-                      {totalProductosExtras
-                        ? formatearMoneda(totalProductosExtras)
-                        : "--"}
-                    </h3>
+                    <p>
+                      <strong>Productos extras</strong>
+                      <span>
+                        {totalProductosExtras
+                          ? formatearMoneda(totalProductosExtras)
+                          : "--"}
+                      </span>
+                    </p>
+                  </div>
                   )}
               </>
           )}

@@ -324,6 +324,67 @@
 }
 
 /* =========================
+   Resumen detalle
+========================= */
+
+
+.resumen-detalle {
+  width: 70%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  margin: 14px auto 0 auto;
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-top: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.resumen-detalle p {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 14px;
+
+  margin: 0;
+  padding: 9px 0;
+
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+
+.resumen-detalle p:last-child {
+  border-bottom: none;
+}
+
+.resumen-detalle strong {
+  color: #374151;
+  font-weight: 700;
+}
+
+.resumen-detalle span {
+  color: #111827;
+  background: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Para textos largos como Placa / Base / Brida */
+.resumen-detalle p span {
+  max-width: 260px;
+  white-space: normal;
+}
+
+/* Responsive móvil */
+@media (max-width: 768px) {
+
+}
+
+/* =========================
    RESPONSIVE COTIZADOR
 ========================= */
 
@@ -450,5 +511,25 @@
 
   .productos-extras-box .btn-blue {
     width: 100%;
+  }
+
+/* =========================
+   Resumen detalle  
+========================= */
+    .resumen-detalle {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .resumen-detalle p {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 0;
+  }
+
+  .resumen-detalle span {
+    width: fit-content;
+    max-width: 100%;
+    text-align: left;
   }
 }
