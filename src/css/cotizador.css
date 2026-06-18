@@ -281,47 +281,58 @@
 ========================= */
 
 .productos-extras-box {
-    margin: 15px 0;
-    padding: 15px;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    background: #f9fafb;
+  margin: 15px 0;
+  padding: 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #f9fafb;
 }
 
 .producto-extra-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 110px 130px 42px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.producto-extra-row input {
+  height: 38px;
+  box-sizing: border-box;
 }
 
 .producto-extra-row input[type="text"] {
-    flex: 1;
-    min-width: 220px;
+  width: 100%;
+  min-width: 0;
 }
 
 .producto-extra-row input[type="number"] {
-    width: 100px;
+  width: 100%;
 }
 
 .subtotal-extra {
-    width: 100%;
-    margin: 4px 0 12px 0;
-    font-weight: 600;
-    color: #4b5563;
+  margin: 4px 0 12px 0;
+  font-weight: 600;
+  color: #4b5563;
 }
 
 .productos-extras-box .btn-red {
-    min-width: 40px;
-    height: 40px;
-    padding: 0;
-    font-weight: bold;
+  width: 42px;
+  height: 38px;
+  min-width: 42px;
+  padding: 0;
+  font-weight: bold;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .productos-extras-box .btn-blue {
-    margin-top: 10px;
+  margin-top: 10px;
 }
+
 
 /* =========================
    Resumen detalle
