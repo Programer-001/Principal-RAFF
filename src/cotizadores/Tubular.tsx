@@ -478,14 +478,16 @@ const totalProductosExtras = productosExtras.reduce(
         setAleta(!!d.aleta);
         setDesoldarTornillo(!!d.totalDesoldartornillo);
         setCantidadDesoldarBase(d.cantidadDesoldarBase || 0);
-      setPuentes(!!d.totalPuentes);
-      setTermoposoBase(!!d.totalTermoposo);
+        setPuentes(!!d.totalPuentes);
+        setTermoposoBase(!!d.totalTermoposo);
         setServicioExpress(!!d.totalExpress);
         setCantidadSellos(d.cantidadSellos || 0);
         setCantidadBarrenos(d.cantidadBarrenos || 0);
 
       // 🔹 placa
-      setTipoPlaca(d.tipoPlaca || "");
+        setTipoPlaca(d.tipoPlaca || "");
+        setPrecioPlaca(d.precioPlaca || 0);
+        setCantidadPlaca(d.cantidadPlaca || 0);
         setMuestra(d.muestra || "");
         setDatosAdicionales(d.datosAdicionales || "");
 
@@ -889,6 +891,7 @@ const aplicarStock = (stock: any) => {
           <div className="form-row">
             <label>Placa / Base / Brida</label>
             <select
+              value={tipoPlaca}
               onChange={(e) => {
                 setTipoPlaca(e.target.value);
                 setPrecioPlaca(0);
@@ -908,6 +911,7 @@ const aplicarStock = (stock: any) => {
                 <label>Precio ({tipoPlaca})</label>
                 <input
                   type="number"
+                  value={precioPlaca === 0 ? "" : precioPlaca}
                   onChange={(e) => setPrecioPlaca(Number(e.target.value))}
                 />
               </div>
@@ -916,6 +920,7 @@ const aplicarStock = (stock: any) => {
                 <label>Cantidad ({tipoPlaca})</label>
                 <input
                   type="number"
+                  value={cantidadPlaca === 0 ? "" : cantidadPlaca}
                   onChange={(e) => setCantidadPlaca(Number(e.target.value))}
                 />
               </div>

@@ -1,5 +1,4 @@
-//src/cotizadores/ProductosExtras.tsx
-// Este componente permite agregar productos extras a la cotización, como cables, conectores, etc.
+// src/cotizadores/ProductosExtras.tsx
 import React from "react";
 import { formatearMoneda } from "../funciones/formato_moneda";
 
@@ -89,128 +88,71 @@ const ProductosExtras = ({
             const subtotal = (item.cantidad || 0) * (item.precio || 0);
 
             return (
- <div className="productos-extras-box">
-  {productosExtras.map((item) => {
-    const subtotal =
-      (item.cantidad || 0) * (item.precio || 0);
-
-    return (
-      <React.Fragment key={item.id}>
-              <div className="producto-extra-row">
-                {/* Descripción */}
-                <input
-                  type="text"
-                  placeholder="Descripción"
-                  value={item.descripcion}
-                  onChange={(e) =>
-                    actualizarExtra(
-                      item.id,
-                      "descripcion",
-                      e.target.value
-                    )
-                  }
-                />
-
-                {/* Cantidad */}
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="Cantidad"
-                  value={
-                    item.cantidad === 0
-                      ? ""
-                      : item.cantidad
-                  }
-                  onKeyDown={(e) => {
-                    if (
-                      ["-", "+", "e", "E"].includes(
-                        e.key
-                      )
-                    ) {
-                      e.preventDefault();
+              <div key={item.id} className="producto-extra-item">
+                <div className="producto-extra-row">
+                  <input
+                    type="text"
+                    placeholder="Descripción"
+                    value={item.descripcion}
+                    onChange={(e) =>
+                      actualizarExtra(item.id, "descripcion", e.target.value)
                     }
-                  }}
-                  onChange={(e) =>
-                    actualizarExtra(
-                      item.id,
-                      "cantidad",
-                      Math.max(
-                        0,
-                        Number(e.target.value)
-                      )
-                    )
-                  }
-                />
+                  />
 
-                {/* Precio */}
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="Precio"
-                  value={
-                    item.precio === 0
-                      ? ""
-                      : item.precio
-                  }
-                  onKeyDown={(e) => {
-                    if (
-                      ["-", "+", "e", "E"].includes(
-                        e.key
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Cantidad"
+                    value={item.cantidad === 0 ? "" : item.cantidad}
+                    onKeyDown={(e) => {
+                      if (["-", "+", "e", "E"].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) =>
+                      actualizarExtra(
+                        item.id,
+                        "cantidad",
+                        Math.max(0, Number(e.target.value))
                       )
-                    ) {
-                      e.preventDefault();
                     }
-                  }}
-                  onChange={(e) =>
-                    actualizarExtra(
-                      item.id,
-                      "precio",
-                      Math.max(
-                        0,
-                        Number(e.target.value)
-                      )
-                    )
-                  }
-                />
+                  />
 
-                {/* Botón eliminar */}
-                <button
-                  type="button"
-                  className="btn btn-red"
-                  onClick={() =>
-                    eliminarExtra(item.id)
-                  }
-                >
-                  X
-                </button>
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Precio"
+                    value={item.precio === 0 ? "" : item.precio}
+                    onKeyDown={(e) => {
+                      if (["-", "+", "e", "E"].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) =>
+                      actualizarExtra(
+                        item.id,
+                        "precio",
+                        Math.max(0, Number(e.target.value))
+                      )
+                    }
+                  />
+
+                  <button
+                    type="button"
+                    className="btn btn-red"
+                    onClick={() => eliminarExtra(item.id)}
+                  >
+                    X
+                  </button>
+                </div>
+
+                <p className="subtotal-extra">
+                  <strong>{formatearMoneda(subtotal)}</strong>
+                </p>
               </div>
-
-              {/* Subtotal abajo */}
-              <p className="subtotal-extra">
-                <strong>
-                  {formatearMoneda(subtotal)}
-                </strong>
-              </p>
-            </React.Fragment>
-          );
-        })}
-
-        <button
-          type="button"
-          className="btn btn-blue"
-          onClick={agregarExtra}
-        >
-          + Agregar producto extra
-        </button>
-
-        <h3>
-          Total extras:{" "}
-          {formatearMoneda(totalProductosExtras)}
-        </h3>
-      </div>
             );
           })}
-        {/* Botón agregar nuevo producto extra */}
+
           <button
             type="button"
             className="btn btn-blue"
