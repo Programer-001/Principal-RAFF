@@ -376,7 +376,7 @@ const totalProductosExtras = productosExtras.reduce(
   ? productosExtras
       .map(
         (item) =>
-          ` / EXTRA: ${item.descripcion} (${item.cantidad})`
+          ` / PRODUCTO EXTRA: ${item.descripcion} (${item.cantidad})`
       )
       .join("")
   : ""}
@@ -454,6 +454,11 @@ const totalProductosExtras = productosExtras.reduce(
   }
 }, [diametro]);
 
+useEffect(() => {
+  if (maxWatts || sacarWatts) {
+    setPotencia(0);
+  }
+}, [maxWatts, sacarWatts]);
   //RESET
   useEffect(() => {
     if (data) {
@@ -597,6 +602,7 @@ const aplicarStock = (stock: any) => {
             <input
               type="number"
               min={0}
+              disabled={maxWatts || sacarWatts}
               value={potencia === 0 ? "" : potencia}
               onKeyDown={(e) => {
                 if (["-", "+", "e", "E"].includes(e.key)  ) {
