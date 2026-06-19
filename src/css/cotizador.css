@@ -332,7 +332,17 @@
 .productos-extras-box .btn-blue {
   margin-top: 10px;
 }
+/* =========================
+   Stock botones
+========================= */
 
+.btn-stock {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    font-weight: bold;
+}
 
 /* =========================
    Resumen detalle
