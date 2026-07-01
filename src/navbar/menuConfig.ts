@@ -29,6 +29,8 @@ const MENU_BASE: Record<string, MenuItem> = {
     checador: { key: "asistencia", label: "Asistencias" },
     //Enrolado
     enrolado: { key: "enrolado", label: "Enrolado de tubo" },
+    //devoluciones
+    devoluciones: { key: "devoluciones", label: "Devoluciones de mercancía" },
 
     //submenus
     rh: {
@@ -130,7 +132,8 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.tienda,
             MENU_BASE.Gestion_tienda,
             MENU_BASE.checador,
-            MENU_BASE.enrolado
+            MENU_BASE.enrolado,
+            MENU_BASE.devoluciones,
 
         ],
     },
@@ -147,6 +150,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.facturacion,
             MENU_BASE.administracion,
             MENU_BASE.contabilidad,
+            MENU_BASE.devoluciones,
         ],
     },
     {
