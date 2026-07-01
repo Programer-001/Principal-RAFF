@@ -41,6 +41,11 @@ import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiale
 import Tienda from "./Tienda/Tienda"
 import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
+<<<<<<< HEAD
+=======
+import DevolucionesMercancia from "./DevolucionesMercancia/DevolucionesMercancia";
+import Enrolado from "./Enrolado/Enrolado";
+>>>>>>> 3f30292 (Agregar acceso al modulo devoluciones)
 import Checador from "./checador/Checador";
 import Calendario from "./Calendario/Calendario";
 import MostrarTablas from "./Configuracion/Mostrar_tablas"; 
@@ -83,6 +88,7 @@ function AppLayout() {
         if (pathname.startsWith("/tienda")) return "tienda";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
         if (pathname.startsWith("/asistencia")) return "asistencia";
+        if (pathname.startsWith("/devoluciones")) return "devoluciones";
         if (pathname.startsWith("/calendario")) return "calendario";
         if (pathname.startsWith("/mostrar_tablas")) return "mostrar_tablas";
         if (pathname.startsWith("/perfil")) return "perfil";
@@ -126,6 +132,7 @@ function AppLayout() {
             gestion_tienda: "/gestion_tienda",
             asistencia: "/asistencia",
             calendario: "/calendario",
+            devoluciones: "/devoluciones",
             perfil: "/perfil",
             home: "/home",
             mostrar_tablas: "/mostrar_tablas",
@@ -176,6 +183,11 @@ function AppLayout() {
                 <Route path="/perfil" element={<Perfil />} />
                 <Route path="/mostrar_tablas" element={<MostrarTablas />} />
                 <Route path="/solicitud_compra" element={<Solicitud_compra />} />
+<<<<<<< HEAD
+=======
+                <Route path="/enrolado" element={<Enrolado />} />
+                <Route path="/devoluciones" element={<DevolucionesMercancia />} />
+>>>>>>> 3f30292 (Agregar acceso al modulo devoluciones)
             </Routes>
         </div>
     );
