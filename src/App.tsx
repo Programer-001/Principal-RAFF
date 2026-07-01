@@ -41,17 +41,14 @@ import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiale
 import Tienda from "./Tienda/Tienda"
 import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
-<<<<<<< HEAD
-=======
 import DevolucionesMercancia from "./DevolucionesMercancia/DevolucionesMercancia";
 import Enrolado from "./Enrolado/Enrolado";
->>>>>>> 3f30292 (Agregar acceso al modulo devoluciones)
 import Checador from "./checador/Checador";
 import Calendario from "./Calendario/Calendario";
 import MostrarTablas from "./Configuracion/Mostrar_tablas"; 
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
-import "./styles.css";
+//import "./styles.css";
 
 function AppLayout() {
     const location = useLocation();
@@ -87,6 +84,7 @@ function AppLayout() {
         if (pathname.startsWith("/tienda_productos")) return "tienda_productos";
         if (pathname.startsWith("/tienda")) return "tienda";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
+        if (pathname.startsWith("/enrolado")) return "enrolado";
         if (pathname.startsWith("/asistencia")) return "asistencia";
         if (pathname.startsWith("/devoluciones")) return "devoluciones";
         if (pathname.startsWith("/calendario")) return "calendario";
@@ -136,7 +134,7 @@ function AppLayout() {
             perfil: "/perfil",
             home: "/home",
             mostrar_tablas: "/mostrar_tablas",
-            
+            enrolado: "/enrolado"
         };
 
         navigate(mapa[v] || "/home");
@@ -183,11 +181,8 @@ function AppLayout() {
                 <Route path="/perfil" element={<Perfil />} />
                 <Route path="/mostrar_tablas" element={<MostrarTablas />} />
                 <Route path="/solicitud_compra" element={<Solicitud_compra />} />
-<<<<<<< HEAD
-=======
                 <Route path="/enrolado" element={<Enrolado />} />
                 <Route path="/devoluciones" element={<DevolucionesMercancia />} />
->>>>>>> 3f30292 (Agregar acceso al modulo devoluciones)
             </Routes>
         </div>
     );

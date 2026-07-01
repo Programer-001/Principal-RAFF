@@ -27,13 +27,10 @@ const MENU_BASE: Record<string, MenuItem> = {
     Gestion_tienda: { key: "gestion_tienda", label: "Consulta de ticket" },
     //checador
     checador: { key: "asistencia", label: "Asistencias" },
-<<<<<<< HEAD
-=======
     //Enrolado
     enrolado: { key: "enrolado", label: "Enrolado de tubo" },
     //devoluciones
     devoluciones: { key: "devoluciones", label: "Devoluciones de mercancía" },
->>>>>>> 3f30292 (Agregar acceso al modulo devoluciones)
 
     //submenus
     rh: {
@@ -134,13 +131,9 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.administracion,
             MENU_BASE.tienda,
             MENU_BASE.Gestion_tienda,
-<<<<<<< HEAD
-            MENU_BASE.checador
-=======
             MENU_BASE.checador,
             MENU_BASE.enrolado,
             MENU_BASE.devoluciones,
->>>>>>> 3f30292 (Agregar acceso al modulo devoluciones)
 
         ],
     },
@@ -167,6 +160,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.gestion,
             MENU_BASE.inventario_almacen,
             MENU_BASE.compras_solicitud,
+            MENU_BASE.checador,
 
         ],
     },
