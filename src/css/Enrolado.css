@@ -1,0 +1,141 @@
+/* Enrolado.css 
+src/css/Enrolado.css
+El css sirve para darle estilo a la página de enrolado, con un diseño limpio, moderno y fácil de usar. Se enfoca en la legibilidad, la organización visual y la adaptabilidad a diferentes dispositivos.
+Contenedor principal */
+.enrolado-container {
+  max-width: 1080px;
+  margin: auto;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+}
+.enrolado-container h1 {
+  font-size: 32px; /* Tamaño grande y legible */
+  font-weight: bold;
+  text-align: center; /* Centrado para mejor presentación */
+  margin-bottom: 20px;
+  color: #333; /* Color oscuro, alto contraste */
+  letter-spacing: 1px; /* Separación leve para facilitar lectura */
+}
+
+.encabezado-principal {
+  display: flex;
+  align-items: center; /* centra verticalmente */
+  gap: 20px; /* ✔ separación controlada */
+  margin-bottom: 20px;
+  justify-content: center;
+}
+/* Formularios de inputs */
+.enrolado-inputs {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  justify-content: center; /* centra los items horizontalmente */
+  align-items: center; /* centra los items verticalmente */
+}
+
+.enrolado-inputs label {
+  flex: 0;
+  min-width: auto;
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+  white-space: nowrap; /* evita que el texto haga salto de línea */
+  align-items: center;
+}
+
+.enrolado-inputs label input,
+.enrolado-inputs label select {
+  padding: 8px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  margin-top: 5px;
+  width: 100px;
+}
+
+.enrolado-inputs label input:focus,
+.enrolado-inputs label select:focus {
+  border-color: red; /* cambia el color del borde */
+  outline: none; /* quita el contorno predeterminado del navegador */
+  box-shadow: 0 0 5px #ff9a3d; /* opcional: un pequeño resplandor rojo */
+}
+
+/* Botones */
+.enrolado-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center; /* centra los items horizontalmente */
+  align-items: center; /* centra los items verticalmente */
+}
+
+.enrolado-buttons button {
+  flex: 1; /* Ambos botones ocuparán el MISMO ancho */
+  min-width: 150px; /* Que no sean demasiado chicos */
+  max-width: 200px; /* Que no sean exageradamente largos */
+  padding: 12px 16px;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap; /* evita que el texto haga salto de línea */
+  color: white;
+}
+
+/* Tabla mejores opciones */
+.resultados-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  margin-bottom: 20px;
+}
+
+.resultados-table th,
+.resultados-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+  word-wrap: break-word;
+}
+
+/* Separador por opción */
+.resultado-opcion {
+  margin-bottom: 15px;
+  border-bottom: 2px solid #aaa;
+  padding-bottom: 10px;
+}
+
+/* Media query para móviles */
+@media (max-width: 600px) {
+  .encabezado-principal {
+    flex-direction: column; /* apila verticalmente */
+    align-items: center; /* centra horizontalmente los elementos */
+    gap: 3px; /* menor espacio entre ellos en móvil */
+  }
+  .enrolado-inputs {
+    flex-direction: column;
+  }
+
+  .enrolado-buttons {
+    flex-direction: column; /* pone los botones uno debajo del otro */
+    gap: 12px;
+  }
+
+  .enrolado-buttons button {
+    max-width: 90%; /* que ocupen todo el ancho disponible */
+    font-size: 18px; /* un poquito más pequeño si quieres */
+    padding: 10px 16px;
+  }
+  .resultados-table th,
+  .resultados-table td {
+    font-size: 10px;
+    padding: 6px;
+  }
+  h2 {
+    font-size: 20px;
+  }
+}
+
+
