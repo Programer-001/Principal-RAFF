@@ -1,4 +1,6 @@
-﻿export const diametros = [
+﻿//src/datos/Resistencia_alta_C.ts
+
+export const diametros = [
   { label: "1/4", value: 0.25 },
   { label: "3/8", value: 0.375 },
   { label: "1/2", value: 0.5 },
@@ -68,7 +70,7 @@ export const obtenerPrecioCartuchoAlta = (
 
     // Extra terminal 90°
     if (terminal90) {
-        precioProveedor += 150;
+        precioProveedor += 170;
     }
 
     return precioProveedor *1.70;
@@ -105,6 +107,100 @@ export const obtenerPrecioCartuchoAltaMilimetrica = (
     precio *= 1.10;
 
     return precio;
+};
+
+/*
+====================================
+Calcula en milimetros y pulgadas del proveedor
+====================================
+*/
+
+
+export const convertirDiametroCartuchoAlta = (mm: number): string => {
+    const pulgadas = Number(mm) / 25.4;
+
+    if (pulgadas <= 0.25) return "1/4";
+    if (pulgadas <= 0.3125) return "5/16";
+    if (pulgadas <= 0.375) return "3/8";
+    if (pulgadas <= 0.5) return "1/2";
+    if (pulgadas <= 0.625) return "5/8";
+
+    return "3/4";
+};
+
+export const buscarLongitudComercialCartuchoAlta = (longitudCm: number) => {
+    const pulgadasSolicitadas = longitudCm / 2.54;
+
+    const index = anchos.findIndex((pulgadas) => pulgadas >= pulgadasSolicitadas);
+
+    const fila = index === -1 ? anchos.length - 1 : index;
+
+    return {
+        fila,
+        cm: Number((anchos[fila] * 2.54).toFixed(2)),
+        pulgadas: anchos[fila],
+    };
+};
+
+export const calcularCartuchoAltaProveedor = (datos: {
+    tipo: "pulgadas" | "milimetros";
+    diametro: string;
+    mm: number;
+    longitudCm: number;
+    cableCm: number;
+    terminal90: boolean;
+    descuento30: boolean;
+}) => {
+    let diametroFinal = datos.diametro;
+
+    if (datos.tipo === "milimetros") {
+        diametroFinal = convertirDiametroCartuchoAlta(datos.mm);
+    }
+
+    const longitudComercial = buscarLongitudComercialCartuchoAlta(datos.longitudCm);
+
+    let diametroParaPrecio = diametroFinal;
+
+    // 5/16 usa precio de 1/4, igual que tu código de Sheets
+    if (diametroFinal === "5/16") {
+        diametroParaPrecio = "1/4";
+    }
+
+    const col = diametros.findIndex((d) => d.label === diametroParaPrecio);
+
+    const precioBase = col === -1 ? 0 : precios[longitudComercial.fila][col] ?? 0;
+
+    const incrementoMilimetrico =
+        datos.tipo === "milimetros" ? precioBase * 0.1 : 0;
+
+    const excedenteCable =
+        datos.cableCm > 25 ? (datos.cableCm - 25) * 1.5 : 0;
+
+    const terminal = datos.terminal90 ? 170 : 0;
+
+    const subtotal =
+        precioBase +
+        incrementoMilimetrico +
+        excedenteCable +
+        terminal;
+
+    const descuento = datos.descuento30 ? subtotal * 0.3 : 0;
+
+    const total = subtotal - descuento;
+
+    return {
+        diametro: diametroFinal,
+        longitudSolicitada: datos.longitudCm,
+        longitudComercialCm: longitudComercial.cm,
+        longitudComercialPulgadas: longitudComercial.pulgadas,
+        precioBase,
+        incrementoMilimetrico,
+        excedenteCable,
+        terminal,
+        subtotal,
+        descuento,
+        total,
+    };
 };
 /*
 export const precios = [

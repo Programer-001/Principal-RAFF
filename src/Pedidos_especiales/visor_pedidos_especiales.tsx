@@ -2,9 +2,10 @@
 import React, { useState } from "react";
 import PedidosEspeciales from "../Pedidos_especiales/pedidos_especiales";
 import ConsultaPedidosEspeciales from "../Pedidos_especiales/consulta_pedidos_especiales";
+import CalculadoraCartuchos from "../Pedidos_especiales/CalculadoraCartuchos";
 
 const VisorPedidosEspeciales: React.FC = () => {
-    const [vista, setVista] = useState<"crear" | "consulta">("crear");
+    const [vista, setVista] = useState<"crear" | "consulta" | "calculadora">("crear");
 
     return (
         <div>
@@ -25,12 +26,20 @@ const VisorPedidosEspeciales: React.FC = () => {
                 >
                     Consulta
                 </div>
+
+                <div
+                    className={`cotizador-tab ${vista === "calculadora" ? "active" : ""}`}
+                    onClick={() => setVista("calculadora")}
+                >
+                    Calculadora
+                </div>
             </div>
 
             {/* CONTENIDO */}
             <div style={{ marginTop: 20 }}>
                 {vista === "crear" && <PedidosEspeciales />}
                 {vista === "consulta" && <ConsultaPedidosEspeciales />}
+                {vista === "calculadora" && <CalculadoraCartuchos />}
             </div>
         </div>
     );

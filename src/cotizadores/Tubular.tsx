@@ -249,9 +249,8 @@ const totalProductosExtras = productosExtras.reduce(
         tipoDesoldarBase !== "NO" && tipoDesoldarBase !== ""
             ? precioDesoldarbase * (Number(cantidadDesoldarBase) || 0)
             : 0;
-  let totalResistencia =
-    Number(cantidadResistencias) *
-      (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo +  precioSoldadura ) +
+  let totalResistencia = Number(cantidadResistencias) *
+(Number(totalTubo) + precioBorne + precioDobleces + precioTornillo +  precioSoldadura ) +
       //precioSoldadura+ <-- LO QUITE POR MIENTRAS
      totalDesoldarBase +
     totalCable +
@@ -376,7 +375,7 @@ const totalProductosExtras = productosExtras.reduce(
   ? productosExtras
       .map(
         (item) =>
-          ` / PRODUCTO EXTRA: ${item.descripcion} (${item.cantidad})`
+          ` / EXTRA: ${item.descripcion} (${item.cantidad})`
       )
       .join("")
   : ""}
@@ -447,18 +446,13 @@ const totalProductosExtras = productosExtras.reduce(
             setCantidadSellos(0);
         }
     }, [seleccionados["sellos"]]);
-// Reset aleta si el diámetro no es compatible
+
     useEffect(() => {
   if (!puedeUsarAleta) {
     setAleta(false);
   }
 }, [diametro]);
-// Si se activa maxWatts o sacarWatts, resetear potencia a 0
-useEffect(() => {
-  if (maxWatts || sacarWatts) {
-    setPotencia(0);
-  }
-}, [maxWatts, sacarWatts]);
+
   //RESET
   useEffect(() => {
     if (data) {
@@ -483,16 +477,14 @@ useEffect(() => {
         setAleta(!!d.aleta);
         setDesoldarTornillo(!!d.totalDesoldartornillo);
         setCantidadDesoldarBase(d.cantidadDesoldarBase || 0);
-        setPuentes(!!d.totalPuentes);
-        setTermoposoBase(!!d.totalTermoposo);
+      setPuentes(!!d.totalPuentes);
+      setTermoposoBase(!!d.totalTermoposo);
         setServicioExpress(!!d.totalExpress);
         setCantidadSellos(d.cantidadSellos || 0);
         setCantidadBarrenos(d.cantidadBarrenos || 0);
 
       // 🔹 placa
-        setTipoPlaca(d.tipoPlaca || "");
-        setPrecioPlaca(d.precioPlaca || 0);
-        setCantidadPlaca(d.cantidadPlaca || 0);
+      setTipoPlaca(d.tipoPlaca || "");
         setMuestra(d.muestra || "");
         setDatosAdicionales(d.datosAdicionales || "");
 
@@ -602,7 +594,6 @@ const aplicarStock = (stock: any) => {
             <input
               type="number"
               min={0}
-              disabled={maxWatts || sacarWatts}
               value={potencia === 0 ? "" : potencia}
               onKeyDown={(e) => {
                 if (["-", "+", "e", "E"].includes(e.key)  ) {
@@ -897,7 +888,6 @@ const aplicarStock = (stock: any) => {
           <div className="form-row">
             <label>Placa / Base / Brida</label>
             <select
-              value={tipoPlaca}
               onChange={(e) => {
                 setTipoPlaca(e.target.value);
                 setPrecioPlaca(0);
@@ -917,7 +907,6 @@ const aplicarStock = (stock: any) => {
                 <label>Precio ({tipoPlaca})</label>
                 <input
                   type="number"
-                  value={precioPlaca === 0 ? "" : precioPlaca}
                   onChange={(e) => setPrecioPlaca(Number(e.target.value))}
                 />
               </div>
@@ -926,7 +915,6 @@ const aplicarStock = (stock: any) => {
                 <label>Cantidad ({tipoPlaca})</label>
                 <input
                   type="number"
-                  value={cantidadPlaca === 0 ? "" : cantidadPlaca}
                   onChange={(e) => setCantidadPlaca(Number(e.target.value))}
                 />
               </div>
@@ -1082,7 +1070,6 @@ const aplicarStock = (stock: any) => {
               <h2>Subtotal Tubular: {formatearMoneda(totalConDescuento)}</h2>
               <h1>Total: {formatearMoneda(totalconiva)}</h1>
               {/*<h3>Descuento aplicado: {(descuento * 100).toFixed(0)}%</h3>*/}
-              <div className="btn-container">
               <button
                   className="btn btn-blue"
                   onClick={() => {
@@ -1149,19 +1136,6 @@ const aplicarStock = (stock: any) => {
               >
                   {data ? "ACTUALIZAR" : "AGREGAR"}
               </button >
-
-             <button
-              type="button"
-              className="btn btn-red"
-              onClick={() => {
-                if (window.confirm("¿Desea limpiar el formulario Tubular?")) {
-                  resetForm();
-                }
-              }}
-            >
-              LIMPIAR
-            </button>
-            </div>  
       </div>
       {/* -------------------------------------------------------------------------------------------------------------->> */}
 
@@ -1176,19 +1150,31 @@ const aplicarStock = (stock: any) => {
               <>
 
               {/* BOTONES DE STOCK */}
-                  <div className="btn-container">
-                    {resistenciasStock.map((stock) => (
-                      <button
-                        key={stock.nombre}
-                        type="button"
-                        onClick={() => aplicarStock(stock)}
-                        className="btn btn-orange"
-                      >
-                        {stock.nombre}
-                      </button>
-                    ))}
-                  </div>
-                {/*Detalle técnico */}
+                    <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    marginBottom: 20,
+                  }}
+                >
+                  {resistenciasStock.map((stock) => (
+                    <button
+                      key={stock.nombre}
+                      type="button"
+                      onClick={() => aplicarStock(stock)}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: "1px solid #ccc",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {stock.nombre}
+                    </button>
+                  ))}
+                </div>
                   <div style={{ marginBottom: 10 }}>
                       <label style={{ cursor: "pointer", fontWeight: "bold" }}>
                           <input
