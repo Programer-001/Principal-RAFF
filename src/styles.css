@@ -1,4 +1,9 @@
-﻿* {
+﻿/** src/styles.css
+ * Este archivo contiene los estilos globales de la aplicación.
+ * Se aplican a todos los elementos y componentes de la aplicación.
+ */ 
+
+* {
   box-sizing: border-box;
 }
 

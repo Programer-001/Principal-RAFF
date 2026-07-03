@@ -45,6 +45,7 @@ Calcula en pulgadas
 export const obtenerPrecioCartuchoAlta = (
     diametro: string,
     longitud: number,
+    cableCm: number,
     terminal90: boolean = false
 ): number => {
     const diametroLimpio = diametro.replace(/"/g, "").trim();
@@ -55,7 +56,7 @@ export const obtenerPrecioCartuchoAlta = (
     const longitudMaxTabla = 22;
     const longitudBase = longitud > longitudMaxTabla ? longitudMaxTabla : longitud;
 
-    const fila = anchos.findIndex((a) => a === longitudBase);
+    const fila = anchos.findIndex((a) => a >= longitudBase);
     if (fila === -1) return 0;
 
     let precioProveedor = precios[fila][col] ?? 0;
@@ -69,11 +70,11 @@ export const obtenerPrecioCartuchoAlta = (
     }
 
     // Extra terminal 90°
-    if (terminal90) {
+    /*if (terminal90) {
         precioProveedor += 170;
-    }
+    }*/
 
-    return precioProveedor *1.70;
+    return precioProveedor;
 };
 /*
 ====================================
@@ -83,30 +84,39 @@ Calcula en milimetros
 export const obtenerPrecioCartuchoAltaMilimetrica = (
     diametroMm: number,
     longitudPulgadas: number,
+    cableCm: number,
     terminal90: boolean = false
 ): number => {
 
-    // 🔹 Convertir mm → pulgadas aproximadas
-    const pulgadas = diametroMm / 25.4;
+    // Convertir al diámetro comercial
+    let diametroComercial = convertirDiametroCartuchoAlta(diametroMm);
 
-    // 🔹 Buscar diámetro más cercano
-    const diametroCercano = diametros.reduce((prev, curr) => {
-        return Math.abs(curr.value - pulgadas) < Math.abs(prev.value - pulgadas)
-            ? curr
-            : prev;
-    });
+    // El 5/16 utiliza el precio del 1/4
+    if (diametroComercial === "5/16") {
+        diametroComercial = "1/4";
+    }
 
-    // 🔹 Calcular precio base normal
-    let precio = obtenerPrecioCartuchoAlta(
-        diametroCercano.label,
+    // Calcular precio normal
+    const precio = obtenerPrecioCartuchoAlta(
+        diametroComercial,
         longitudPulgadas,
+        cableCm,
         terminal90
     );
 
-    // 🔥 Incremento milimétrica
-    precio *= 1.10;
+    // Incremento por milimétrica
+
 
     return precio;
+};
+
+
+const convertidorcable = (cableCm: number): number => {
+    // Excedente después de 25 cm
+    if (cableCm > 25) {
+        return (cableCm - 25) * 1.5;
+    }
+    return 0;
 };
 
 /*
@@ -273,3 +283,69 @@ export const precios = [
 
 */
 
+/*
+export const obtenerPrecioCartuchoAlta = (
+    diametro: string,
+    longitud: number,
+    terminal90: boolean = false
+): number => {
+    const diametroLimpio = diametro.replace(/"/g, "").trim();
+
+    const col = diametros.findIndex((d) => d.label === diametroLimpio);
+    if (col === -1 || !longitud) return 0;
+
+    const longitudMaxTabla = 22;
+    const longitudBase = longitud > longitudMaxTabla ? longitudMaxTabla : longitud;
+
+    const fila = anchos.findIndex((a) => a === longitudBase);
+    if (fila === -1) return 0;
+
+    let precioProveedor = precios[fila][col] ?? 0;
+
+    // Excedente después de 22 pulgadas
+    if (longitud > longitudMaxTabla) {
+        const excedentePulgadas = longitud - longitudMaxTabla;
+        const excedenteCm = excedentePulgadas * 2.54;
+
+        precioProveedor += excedenteCm * 1.5;
+    }
+
+    // Extra terminal 90°
+    if (terminal90) {
+        precioProveedor += 170;
+    }
+
+    return precioProveedor *1.70;
+};
+
+
+
+export const obtenerPrecioCartuchoAltaMilimetrica = (
+    diametroMm: number,
+    longitudPulgadas: number,
+    terminal90: boolean = false
+): number => {
+
+    // 🔹 Convertir mm → pulgadas aproximadas
+    const pulgadas = diametroMm / 25.4;
+
+    // 🔹 Buscar diámetro más cercano
+    const diametroCercano = diametros.reduce((prev, curr) => {
+        return Math.abs(curr.value - pulgadas) < Math.abs(prev.value - pulgadas)
+            ? curr
+            : prev;
+    });
+
+    // 🔹 Calcular precio base normal
+    let precio = obtenerPrecioCartuchoAlta(
+        diametroCercano.label,
+        longitudPulgadas,
+        terminal90
+    );
+
+    // 🔥 Incremento milimétrica
+    precio *= 1.10;
+
+    return precio;
+};
+*/

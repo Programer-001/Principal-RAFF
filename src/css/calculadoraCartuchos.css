@@ -49,6 +49,25 @@
     margin: 16px 0;
 }
 
+.cartuchos-checkbox-row {
+    display: flex;
+    justify-content: flex-start;
+    margin: 12px 0;
+    padding-left: 230px;
+}
+
+.cartuchos-checkbox-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cartuchos-checkbox-line input {
+    margin: 0;
+}
+
 @media (max-width: 768px) {
     .calculadora-cartuchos-page {
         flex-direction: column;

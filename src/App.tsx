@@ -1,10 +1,6 @@
-﻿import {
-    Routes,
-    Route,
-    Navigate,
-    useLocation,
-    useNavigate,
-} from "react-router-dom";
+﻿//src/App.tsx
+//este archivo contiene la logica de las rutas y el menu de navegacion, ademas de la logica de autenticacion con firebase
+import {Routes,Route,Navigate,useLocation,useNavigate} from "react-router-dom";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 

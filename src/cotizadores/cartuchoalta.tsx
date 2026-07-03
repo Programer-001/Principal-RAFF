@@ -78,7 +78,7 @@ const [diametroMm, setDiametroMm] = useState("");
     (Number(cantidadCables) || 0);
 //convierto longitud de cm -> pulgadas
     const pulgadasReal = longitudCm ? Number(longitudCm) / 2.54 : 0;
-
+//convierto diametro de mm -> pulgadas
     const pulgadas = anchos.reduce((prev, curr) => {
         return Math.abs(curr - pulgadasReal) < Math.abs(prev - pulgadasReal)
             ? curr
@@ -90,20 +90,28 @@ const [diametroMm, setDiametroMm] = useState("");
             ? obtenerPrecioCartuchoAltaMilimetrica(
                 Number(diametroMm),
                 pulgadas,
+                Number(medidaCableCm),
                 terminal90
             )
             : diametro && pulgadas
-                ? obtenerPrecioCartuchoAlta(diametro, pulgadas, terminal90)
+                ? obtenerPrecioCartuchoAlta(diametro, pulgadas, Number(medidaCableCm),terminal90)
                 : 0;
 
     const extraMilimetrica = milimetrica ? precioUnitario * 0.1 : 0;
-
-  const totalTerminal90 = terminal90 ? 150 : 0;//preguntar si se queda o se omite porque ya cobra con el precio del proveedor
+    //precio del cabble si excede los 25cm
+    const convertidorcable = (cableCm: number): number => {
+        // Excedente después de 25 cm
+        if (cableCm > 25) {
+            return (cableCm - 25) * 1.5;
+        }
+        return 0;
+    };
+  const totalTerminal90 = terminal90 ? 170 : 0;//preguntar si se queda o se omite porque ya cobra con el precio del proveedor
     const totalTuboZapa = tubozapa ? 130 : 0;
 //prueba para que salgan los valores 
     const precioNormal =
         diametro && pulgadas
-            ? obtenerPrecioCartuchoAlta(diametro, pulgadas, terminal90)
+            ? obtenerPrecioCartuchoAlta(diametro, pulgadas, Number(medidaCableCm),terminal90)
             : 0;
 
     const precioMilimetrico =
@@ -111,20 +119,25 @@ const [diametroMm, setDiametroMm] = useState("");
             ? obtenerPrecioCartuchoAltaMilimetrica(
                 Number(diametroMm),
                 pulgadas,
+                Number(medidaCableCm),
                 terminal90
             )
             : 0;
+
+  
 
   // total por UNA resistencia
   const totalPorResistencia =
     precioUnitario +
     //extraMilimetrica +
-    totalCable +
-    //totalTerminal90 +
+    (precioMilimetrico*.10) +
+    convertidorcable(Number(medidaCableCm)) +
+    //totalCable +
+    totalTerminal90 +
     totalTuboZapa;
-
+  const subtotal = totalPorResistencia*0.7;
   // total general
-  const total = totalPorResistencia * (Number(cantidadResistencias) || 0);
+  const total = subtotal * (Number(cantidadResistencias) || 0)*1.7;
 
   const resetForm = () => {
     setCantidadResistencias("");
@@ -427,8 +440,8 @@ const [diametroMm, setDiametroMm] = useState("");
               {/* TOTAL */}
               {esAdministracion && (
                   <div>
-                      <p>Precio normal: {formatearMoneda(precioNormal)}</p>
-                      <p>Precio milimétrica: {formatearMoneda(precioMilimetrico)}</p>
+                      <p>Precio normal: {formatearMoneda(precioNormal*.7)}</p>
+                      <p>Precio milimétrica: {formatearMoneda(precioMilimetrico*0.7)}</p>
 
                       <hr />
 

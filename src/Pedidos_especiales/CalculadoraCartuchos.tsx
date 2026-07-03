@@ -38,7 +38,7 @@ const CalculadoraCartuchos: React.FC = () => {
     return (
         <div className="calculadora-cartuchos-page">
             <div className="calculadora-cartuchos-form">
-                <h2>Calculadora de Cartuchos</h2>
+                <h2>Calculadora de Cartuchos de alta concentración</h2>
 
                 <div className="form-row">
                     <label>Tipo</label>
@@ -109,9 +109,8 @@ const CalculadoraCartuchos: React.FC = () => {
                     />
                 </div>
 
-                <div className="form-row">
-                    <label></label>
-                    <label className="checkbox-line">
+                <div className="cartuchos-checkbox-row">
+                    <label className="cartuchos-checkbox-line">
                         <input
                             type="checkbox"
                             checked={terminal90}
@@ -121,9 +120,8 @@ const CalculadoraCartuchos: React.FC = () => {
                     </label>
                 </div>
 
-                <div className="form-row">
-                    <label></label>
-                    <label className="checkbox-line">
+                <div className="cartuchos-checkbox-row">
+                    <label className="cartuchos-checkbox-line">
                         <input
                             type="checkbox"
                             checked={descuento30}

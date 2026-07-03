@@ -133,7 +133,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.Gestion_tienda,
             MENU_BASE.checador,
             MENU_BASE.enrolado,
-            MENU_BASE.devoluciones,
+            MENU_BASE.devoluciones
 
         ],
     },
@@ -160,7 +160,6 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.gestion,
             MENU_BASE.inventario_almacen,
             MENU_BASE.compras_solicitud,
-            MENU_BASE.checador,
 
         ],
     },

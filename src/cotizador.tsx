@@ -15,7 +15,7 @@ import Cuarzo from "./cotizadores/cuarzo";
 import MantenimientoReparacion from "./cotizadores/Mantenimiento_reparacion";
 import { formatearMoneda } from "./funciones/formato_moneda";
 import {obtenerSiguienteCotizacion,obtenerSiguienteEnvio} from "./firebase/consecutivos";
-import "./css/cotizador.css";
+//import "./css/cotizador.css";
 
 // 🔹 Tipos
 interface Cliente {
