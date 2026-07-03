@@ -1,0 +1,64 @@
+.calculadora-cartuchos-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    width: 100%;
+    padding: 20px;
+}
+
+.calculadora-cartuchos-form {
+    width: 650px;
+}
+
+.calculadora-cartuchos-form h2 {
+    margin-bottom: 30px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 25px;
+}
+
+.checkbox-line {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.calculadora-cartuchos-resumen {
+    width: 280px;
+    margin-top: 75px;
+    padding: 18px;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.18);
+}
+
+.calculadora-cartuchos-resumen p {
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+.calculadora-cartuchos-resumen h2 {
+    text-align: center;
+    color: #064f93;
+}
+
+.calculadora-cartuchos-resumen hr {
+    margin: 16px 0;
+}
+
+@media (max-width: 768px) {
+    .calculadora-cartuchos-page {
+        flex-direction: column;
+        padding: 12px;
+        gap: 20px;
+    }
+
+    .calculadora-cartuchos-form,
+    .calculadora-cartuchos-resumen {
+        width: 100%;
+        margin-top: 0;
+    }
+}

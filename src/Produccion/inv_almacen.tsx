@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { get, getDatabase, onValue, ref, set, update } from "firebase/database";
 import { app } from "../firebase/config";
-import "../styles.css";
+//import "../styles.css";
 
 interface ItemAlmacen {
     id: string;

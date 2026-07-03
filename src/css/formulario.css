@@ -1,4 +1,7 @@
-/* FORMULARIO */
+/* FORMULARIO 
+src/css/formulario.css
+este formulario se utiliza para agregar o editar empleados, y también para buscar clientes.
+*/
 .empleadoForm {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* adaptable */

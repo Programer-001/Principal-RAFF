@@ -28,6 +28,8 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
   const [cantidadCables, setCantidadCables] = useState("");
   const [datosAdicionales, setDatosAdicionales] = useState("");
   const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<any[]>([]);
+  const [terminal90, setterminal90] = useState(false);
+  const [tubozapa, settubozapa] = useState(false);
   const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
         useState<any>(null);
     //Area administracion
@@ -58,6 +60,8 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
 
   const tipoSoldarCable = soldarCableSeleccionado?.tipo || "";
   const precioSoldarCable = soldarCableSeleccionado?.precio || 0;
+  const totalTerminal90 = terminal90 ? 150 : 0;//preguntar si se queda o se omite porque ya cobra con el precio del proveedor
+  const totalTuboZapa = tubozapa ? 130 : 0;
 
   const calcularPrecioCable = (precioPorMetro: number, cm: number): number => {
     if (!precioPorMetro || !cm) return 0;
@@ -77,7 +81,7 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
   const precioUnitario =
     diametro && pulgadas ? obtenerPrecioCartuchoBaja(diametro, pulgadas) : 0;
 
-  const totalPorResistencia = precioUnitario + totalCable;
+  const totalPorResistencia = precioUnitario + totalCable+ totalTerminal90 + totalTuboZapa;
 
   const total = totalPorResistencia * (Number(cantidadResistencias) || 0);
 
@@ -90,8 +94,10 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
     setCantidadCables("");
     setCableAltaTemperatura("");
     setMedidaCableCm("");
+    setterminal90(false);
     setDatosAdicionales("");
     setSoldarCableSeleccionado(null);
+    settubozapa(false);
   };
   //------------------------DESCRIPCION-------------------------------------------------->>
 
@@ -107,6 +113,9 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
           Number(cantidadCables) > 1 ? "S" : ""
         } DE: ${tipoSoldarCable} DE ${medidaCableCm || 0} CM C/U`
       : null,
+      terminal90 ? `/ TERMINAL 90°` : null,
+
+    tubozapa ? `/ TUBO ZAPA` : null,
 
     datosAdicionales ? `/ DATOS: ${datosAdicionales}` : null,
   ]
@@ -127,6 +136,8 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
       setMedidaCableCm(d.medidaCableCm || "");
       setDatosAdicionales(d.datosAdicionales || "");
 
+      setterminal90(!!d.terminal90);
+      settubozapa(!!d.tubozapa);
       setSoldarCableSeleccionado(d.soldarCableSeleccionado || null);
     }
   }, [data]);
@@ -259,6 +270,24 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
                   />
               </div>
 
+              <div className="form-row checkbox-row">
+              <label>Terminal de cable a 90°:</label>
+              <input
+                type="checkbox"
+                checked={terminal90}
+                onChange={(e) => setterminal90(e.target.checked)}
+              />
+            </div>
+
+        <div className="form-row checkbox-row">
+          <label>Tubo zapa:</label>
+          <input
+            type="checkbox"
+            checked={tubozapa}
+            onChange={(e) => settubozapa(e.target.checked)}
+          />
+        </div>
+
         <div className="form-row textarea-row">
           <label>Datos Adicionales: </label>
           <textarea
@@ -313,6 +342,8 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
                       <p>Precio del cable: {formatearMoneda(precioSoldarCable)}</p>
                       <p>Precio cable: {formatearMoneda(totalCable)}</p>
                       <p>Precio de resistencia: {formatearMoneda(totalPorResistencia)}</p>
+                      <p>Precio terminal 90°: {formatearMoneda(totalTerminal90)}</p>
+                      <p>Precio tubo zapa: {formatearMoneda(totalTuboZapa)}</p>
                       <p>Subtotal: {formatearMoneda(total)}</p>
                   </div>
               </div>
@@ -342,6 +373,10 @@ const CartuchoBaja = ({ data, onGuardar, setDirty,perfil }: Props) => {
 
               precioUnitario,
               datosAdicionales,
+              terminal90,
+              totalTerminal90,
+              tubozapa,
+              totalTuboZapa,
             },
           });
           resetForm();

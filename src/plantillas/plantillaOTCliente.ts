@@ -206,7 +206,7 @@ export const generarPDFOTCliente = async (data: OTClienteData) => {
         body: data.conceptos.map((c) => [
             c.partida,
             c.descripcion,
-            `$ ${formatearMoneda(c.subtotal)}`,
+            `${formatearMoneda(c.subtotal)}`,
         ]),
         styles: {
             fontSize: 9,
@@ -305,13 +305,13 @@ No aplica garantía en productos fabricados conforme a especificaciones del clie
     doc.text("Total:", totalesX, finalY + 22);
 
     doc.setFont("helvetica", "normal");
-    doc.text(`$ ${formatearMoneda(data.subtotal)}`, pageWidth - 20, finalY + 10, {
+    doc.text(`${formatearMoneda(data.subtotal)}`, pageWidth - 20, finalY + 10, {
         align: "right",
     });
-    doc.text(`$ ${formatearMoneda(data.iva)}`, pageWidth - 20, finalY + 16, {
+    doc.text(`${formatearMoneda(data.iva)}`, pageWidth - 20, finalY + 16, {
         align: "right",
     });
-    doc.text(`$ ${formatearMoneda(data.total)}`, pageWidth - 20, finalY + 22, {
+    doc.text(`${formatearMoneda(data.total)}`, pageWidth - 20, finalY + 22, {
         align: "right",
     });
 

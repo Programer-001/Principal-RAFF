@@ -5,10 +5,8 @@ import { db } from "../firebase/config";
 import { tablasPrecios, TipoResistencia } from "../datos/PrecioTipoResistencia";
 import { resistenciasStock } from "../datos/resistencias_stock";
 import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
-import {
-  obtenerDescuento,
-  descuentosTubular,
-} from "../datos/PrecioTipoResistencia";
+import {obtenerDescuento, descuentosTubular} from "../datos/PrecioTipoResistencia";
+import ProductosExtras, {ProductoExtra} from "./ProductosExtras";
 import { ItemCotizado } from "../cotizador";
 import { FiCopy } from "react-icons/fi";
 
@@ -55,6 +53,8 @@ const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
     const [aleta, setAleta] = useState(false);
     const [datosAdicionales, setDatosAdicionales] = useState("");
+    const [extrasActivos, setExtrasActivos] = useState(false);
+const [productosExtras, setProductosExtras] = useState<ProductoExtra[]>([]);
     const esAdministracion = perfil?.area === "Administración";
   //-------------------------------------------------------------------------------->>
   const [catalogos, setCatalogos] = useState<any>({});
@@ -219,6 +219,12 @@ const totalTubo =
 
     //Calcular aletada por metros
     const totalAleta = esAletada716 ? calcularAletada(longitud) : 0;
+// Total productos extras
+const totalProductosExtras = productosExtras.reduce(
+  (acc, item) =>
+    acc + (Number(item.cantidad) || 0) * (Number(item.precio) || 0),
+  0
+);
   //---------------------------TOTAL------------------------------------->>
 
   const precioBorne = Number(seleccionados["borne"]?.precio) || 0;
@@ -243,9 +249,8 @@ const totalTubo =
         tipoDesoldarBase !== "NO" && tipoDesoldarBase !== ""
             ? precioDesoldarbase * (Number(cantidadDesoldarBase) || 0)
             : 0;
-  let totalResistencia =
-    Number(cantidadResistencias) *
-      (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo +  precioSoldadura ) +
+  let totalResistencia = Number(cantidadResistencias) *
+(Number(totalTubo) + precioBorne + precioDobleces + precioTornillo +  precioSoldadura ) +
       //precioSoldadura+ <-- LO QUITE POR MIENTRAS
      totalDesoldarBase +
     totalCable +
@@ -256,7 +261,8 @@ const totalTubo =
     totalPlaca +
     totalPuentes +
     totalSellos +
-    precioServicios;
+    precioServicios+
+    totalProductosExtras;
   // aplicar descuento
     let totalConDescuento = totalResistencia * (1 - descuento);
     if (servicioExpress) {
@@ -296,6 +302,8 @@ const totalTubo =
       setDatosAdicionales("");
       setMaxWatts(false);
       setSacarWatts(false);
+      setExtrasActivos(false);
+      setProductosExtras([]);
   };
 
   /*
@@ -363,6 +371,14 @@ const totalTubo =
   
  ${agregarCantidad("SELLOS", seleccionados["sellos"]?.tipo, cantidadSellos)}
   ${agregar("SERVICIOS", seleccionados["servicios"]?.tipo)}
+  ${productosExtras.length > 0
+  ? productosExtras
+      .map(
+        (item) =>
+          ` / EXTRA: ${item.descripcion} (${item.cantidad})`
+      )
+      .join("")
+  : ""}
   
   ${servicioExpress ? " / SERVICIO EXPRESS" : ""}
   ${muestra === "si" ? ` / DEJO MUESTRA` : ""}
@@ -474,6 +490,10 @@ const totalTubo =
 
         setCantidadTapon(d.cantidadTapon || 0);
         setCantidadPuentes(d.cantidadPuentes || 0);
+        // 🔹 productos extras
+        setExtrasActivos(!!d.extrasActivos);
+        setProductosExtras(d.productosExtras || []);
+
     }
   }, [data]);
 
@@ -527,7 +547,20 @@ const aplicarStock = (stock: any) => {
               type="number"
               min={0}
               value={cantidadResistencias === 0 ? "" : cantidadResistencias}
-              onChange={(e) => setCantidadResistencias(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "e") {
+                  e.preventDefault();
+                }
+              }}
+              onChange={(e) => {
+                const valor = e.target.value;
+
+                if (valor === "") {
+                  setCantidadResistencias(0);
+                } else {
+                  setCantidadResistencias(Math.max(0, Number(valor)));
+                }
+              }}
             />
           </div>
 
@@ -536,8 +569,22 @@ const aplicarStock = (stock: any) => {
             <label>Voltaje</label>
             <input
               type="number"
+              min={0}
               value={voltaje === 0 ? "" : voltaje}
-              onChange={(e) => setVoltaje(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (["-", "+", "e", "E"].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              onChange={(e) => {
+                const valor = e.target.value;
+
+                if (valor === "") {
+                  setVoltaje(0);
+                } else {
+                  setVoltaje(Math.max(0, Number(valor)));
+                }
+              }}
             />
           </div>
 
@@ -546,8 +593,22 @@ const aplicarStock = (stock: any) => {
             <label>Potencia</label>
             <input
               type="number"
+              min={0}
               value={potencia === 0 ? "" : potencia}
-              onChange={(e) => setPotencia(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (["-", "+", "e", "E"].includes(e.key)  ) {
+                  e.preventDefault();
+                }
+              }}
+              onChange={(e) => {
+                const valor = e.target.value;
+
+                if (valor === "") {
+                  setPotencia(0);
+                } else {
+                  setPotencia(Math.max(0, Number(valor)));
+                }
+              }}
             />
         </div>
         {/* Max Watts */}
@@ -576,16 +637,30 @@ const aplicarStock = (stock: any) => {
                 }}
             />
         </div>
-          {/* Longitud */}
-          <div className="form-row">
-            <label>Longitud (cm)</label>
-            <input
-              type="number"
-              inputMode="numeric"
-              value={longitud === 0 ? "" : longitud}
-              onChange={(e) => setLongitud(Number(e.target.value))}
-            />
-          </div>
+        {/* Longitud */}
+        <div className="form-row">
+          <label>Longitud (cm)</label>
+          <input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={longitud === 0 ? "" : longitud}
+            onKeyDown={(e) => {
+              if (["-", "+", "e", "E"].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            onChange={(e) => {
+              const valor = e.target.value;
+
+              if (valor === "") {
+                setLongitud(0);
+              } else {
+                setLongitud(Math.max(0, Number(valor)));
+              }
+            }}
+          />
+        </div>
 
           {/* Aspecto Resistencia 
     <div>
@@ -687,8 +762,14 @@ const aplicarStock = (stock: any) => {
                   <label>Longitud de cable para soldar</label>
                   <input
                 type="number"
+                min={0}   
                 value={longitudCable === 0 ? "" : longitudCable}
                     onChange={(e) => setLongitudCable(Number(e.target.value))}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e") {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
 
@@ -698,6 +779,11 @@ const aplicarStock = (stock: any) => {
                   type="number"
                   value={cantidadCable === 0 ? "" : cantidadCable}
                     onChange={(e) => setCantidadCable(Number(e.target.value))}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e") {
+                        e.preventDefault();
+                      }
+                    }}
                   />
                 </div>
               </>
@@ -778,7 +864,22 @@ const aplicarStock = (stock: any) => {
               <label>Cantidad de termoposos</label>
               <input
                 type="number"
-                onChange={(e) => setCantidadTermoposo(Number(e.target.value))}
+                min={0}
+                value={cantidadTermoposo === 0 ? "" : cantidadTermoposo}
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  const valor = e.target.value;
+
+                  if (valor === "") {
+                    setCantidadTermoposo(0);
+                  } else {
+                    setCantidadTermoposo(Math.max(0, Number(valor)));
+                  }
+                }}
               />
             </div>
           )}
@@ -887,7 +988,13 @@ const aplicarStock = (stock: any) => {
             <label>Otros Servicios</label>
             {renderSelect("servicios")}
           </div>
-
+          {/* Productos extras */}
+            <ProductosExtras
+            activo={extrasActivos}
+            setActivo={setExtrasActivos}
+            productosExtras={productosExtras}
+            setProductosExtras={setProductosExtras}
+          />
           {/* Servicio Express */}
           <div className="form-row checkbox-row">
             <label>Servicio Express</label>
@@ -1001,6 +1108,8 @@ const aplicarStock = (stock: any) => {
                               totalTermoposo,
                               totalPlaca,
                               tipoPlaca,
+                              cantidadPlaca,
+                              precioPlaca,
                               totalPuentes,
                               //sellos
                               cantidadSellos,
@@ -1010,6 +1119,10 @@ const aplicarStock = (stock: any) => {
                               totalAleta,
                               cantidadTapon,
                               cantidadPuentes,
+                              // 🔹 productos extras
+                              extrasActivos,
+                              productosExtras,
+                              totalProductosExtras,
                               // 🔹 otros
                               totalExpress,
                               totalTubo,
@@ -1075,107 +1188,166 @@ const aplicarStock = (stock: any) => {
                   </div>
 
                   {mostrarDetalle && (
-                    <h3>
-                      Voltaje: {voltaje || "--"}V
-                      <br />
+                  <div className="resumen-detalle">
+                    <p>
+                      <strong>Voltaje</strong>
+                      <span>{voltaje || "--"}V</span>
+                    </p>
 
-                      Potencia: {potencia || "--"}W
-                      <br />
+                    <p>
+                      <strong>Potencia</strong>
+                      <span>{potencia || "--"}W</span>
+                    </p>
 
-                      Cantidad de resistencias: {cantidadResistencias || "--"}
-                      <br />
+                    <p>
+                      <strong>Cantidad de resistencias</strong>
+                      <span>{cantidadResistencias || "--"}</span>
+                    </p>
 
-                      Total Tubular:{" "}
-                      {totalTubo ? formatearMoneda(totalTubo) : "--"}
-                      <br />
+                    <p>
+                      <strong>Total Tubular</strong>
+                      <span>{totalTubo ? formatearMoneda(totalTubo) : "--"}</span>
+                    </p>
 
-                      Precio por cm:{" "}
-                      {diametro
-                        ? formatearMoneda(obtenerPrecioPorCm(diametro, longitud))
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Precio por cm</strong>
+                      <span>
+                        {diametro
+                          ? formatearMoneda(obtenerPrecioPorCm(diametro, longitud))
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Tornillo:{" "}
-                      {seleccionados["tornillo"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["tornillo"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Tornillo</strong>
+                      <span>
+                        {seleccionados["tornillo"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["tornillo"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Borne:{" "}
-                      {seleccionados["borne"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["borne"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Borne</strong>
+                      <span>
+                        {seleccionados["borne"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["borne"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Desoldar de base:{" "}
-                      {seleccionados["desoldar_base"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["desoldar_base"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Desoldar de base</strong>
+                      <span>
+                        {seleccionados["desoldar_base"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["desoldar_base"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Dobleces:{" "}
-                      {seleccionados["dobleces"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["dobleces"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Dobleces</strong>
+                      <span>
+                        {seleccionados["dobleces"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["dobleces"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Soldadura en resistencia:{" "}
-                      {seleccionados["soldadura_resistencia"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["soldadura_resistencia"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Soldadura en resistencia</strong>
+                      <span>
+                        {seleccionados["soldadura_resistencia"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["soldadura_resistencia"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Soldar cable: {tipoSoldarCable || "--"}
-                      <br />
+                    <p>
+                      <strong>Soldar cable</strong>
+                      <span>{tipoSoldarCable || "--"}</span>
+                    </p>
 
-                      Total cable:{" "}
-                      {totalCable ? formatearMoneda(totalCable) : "--"}
-                      <br />
+                    <p>
+                      <strong>Total cable</strong>
+                      <span>{totalCable ? formatearMoneda(totalCable) : "--"}</span>
+                    </p>
 
-                      Desoldar tornillo:{" "}
-                      {totalDesoldartornillo
-                        ? formatearMoneda(totalDesoldartornillo)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Desoldar tornillo</strong>
+                      <span>
+                        {totalDesoldartornillo
+                          ? formatearMoneda(totalDesoldartornillo)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Tapon macho:{" "}
-                      {totalTapon ? formatearMoneda(totalTapon) : "--"}
-                      <br />
+                    <p>
+                      <strong>Tapón macho</strong>
+                      <span>{totalTapon ? formatearMoneda(totalTapon) : "--"}</span>
+                    </p>
 
-                      Barrenos:{" "}
-                      {totalBarrenos ? formatearMoneda(totalBarrenos) : "--"}
-                      <br />
+                    <p>
+                      <strong>Barrenos</strong>
+                      <span>{totalBarrenos ? formatearMoneda(totalBarrenos) : "--"}</span>
+                    </p>
 
-                      Termoposo:{" "}
-                      {totalTermoposo ? formatearMoneda(totalTermoposo) : "--"}
-                      <br />
+                    <p>
+                      <strong>Termoposo</strong>
+                      <span>{totalTermoposo ? formatearMoneda(totalTermoposo) : "--"}</span>
+                    </p>
 
-                      Tipo {tipoPlaca || "--"}:{" "}
-                      {totalPlaca ? formatearMoneda(totalPlaca) : "--"}
-                      <br />
+                    <p>
+                      <strong>Puentes</strong>
+                      <span>{totalPuentes ? formatearMoneda(totalPuentes) : "--"}</span>
+                    </p>
 
-                      Puentes:{" "}
-                      {totalPuentes ? formatearMoneda(totalPuentes) : "--"}
-                      <br />
+                    <p>
+                      <strong>Sello</strong>
+                      <span>
+                        {seleccionados["sellos"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["sellos"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Sello:{" "}
-                      {seleccionados["sellos"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["sellos"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Aleta</strong>
+                      <span>{totalAleta ? formatearMoneda(totalAleta) : "--"}</span>
+                    </p>
 
-                      Aleta:{" "}
-                      {totalAleta ? formatearMoneda(totalAleta) : "--"}
-                      <br />
+                    <p>
+                      <strong>Placa / Base / Brida</strong>
+                      <span>
+                        {tipoPlaca || "--"} - {cantidadPlaca ? `x${cantidadPlaca}` : "--"} -
+                        Precio unitario: {precioPlaca ? formatearMoneda(precioPlaca) : "--"} -
+                        Total: {totalPlaca ? formatearMoneda(totalPlaca) : "--"}
+                      </span>
+                    </p>
 
-                      Otros Servicios:{" "}
-                      {seleccionados["servicios"]?.precio !== undefined
-                        ? formatearMoneda(seleccionados["servicios"]?.precio)
-                        : "--"}
-                      <br />
+                    <p>
+                      <strong>Otros Servicios</strong>
+                      <span>
+                        {seleccionados["servicios"]?.precio !== undefined
+                          ? formatearMoneda(seleccionados["servicios"]?.precio)
+                          : "--"}
+                      </span>
+                    </p>
 
-                      Servicio express: % {totalExpress.toFixed(2)}
-                    </h3>
+                    <p>
+                      <strong>Servicio express</strong>
+                      <span>% {totalExpress.toFixed(2)}</span>
+                    </p>
+
+                    <p>
+                      <strong>Productos extras</strong>
+                      <span>
+                        {totalProductosExtras
+                          ? formatearMoneda(totalProductosExtras)
+                          : "--"}
+                      </span>
+                    </p>
+                  </div>
                   )}
               </>
           )}

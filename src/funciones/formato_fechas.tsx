@@ -14,6 +14,8 @@ export const obtenerFechaLocal = () => {
 
 // Convierte una fecha ISO "YYYY-MM-DD" a formato "DD/MM/YYYY"
 export const formatearFechaMX = (fechaISO: string) => {
+    if (!fechaISO) return "-";
+
     const [year, month, day] = fechaISO.split("-");
 
     return `${day}/${month}/${year}`;
