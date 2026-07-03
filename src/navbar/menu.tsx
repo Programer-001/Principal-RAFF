@@ -7,6 +7,8 @@ import { crearNotificacionSistema } from "../Notificaciones/centralNotificacione
 import { marcarNotificacionVista } from "../Notificaciones/marcarNotificacionVista";
 import { ReactComponent as Campana } from "../Imagenes/svg/notificaciones/campana.svg";
 import { ReactComponent as Calendario } from "../Imagenes/svg/calendario/calendario.svg";
+import { ReactComponent as CalculadoraIcono } from "../Imagenes/svg/calculadora.svg";
+import Calculadora from "../Calculadora/Calculadora";
 import { EventoCalendario } from "../Calendario/tipos";
 import { escucharEventosUsuario } from "../Calendario/firebaseCalendario";
 import CrearEventoModal from "../Calendario/CrearEventoModal";
@@ -33,6 +35,7 @@ const Menu = ({ vista, setVista }: Props) => {
     const [notificacionesAbiertas, setNotificacionesAbiertas] = useState(false);
     const [calendarioAbierto, setCalendarioAbierto] = useState(false);
     const [eventosCalendario, setEventosCalendario] = useState<EventoCalendario[]>([]);
+    const [calculadoraAbierta, setCalculadoraAbierta] = useState(false);
     const [modalCrearEventoAbierto, setModalCrearEventoAbierto] = useState(false);
     const [notificaciones, setNotificaciones] = useState<NotificacionSistema[]>([]);
     const [menuAbierto, setMenuAbierto] = useState(false);
@@ -287,6 +290,23 @@ useEffect(() => {
 
         <div className="menu-user-area">
             <div className="menu-notificaciones-wrap" ref={notiRef}>
+                {/* Botón de calculadora */}
+                <button
+                    className={`menu-calculadora-btn ${
+                        calculadoraAbierta ? "activa" : ""
+                    }`}
+                    onClick={() =>
+                        setCalculadoraAbierta((prev) => !prev)
+                    }
+                >
+                    <CalculadoraIcono  className="menu-calculadora-icono" />
+                </button>
+                {calculadoraAbierta && (
+                    <div className="menu-calculadora-panel">
+                        <Calculadora />
+                    </div>
+                )}
+
                 {/* Botón de calendario */}
                 <button
                     className={`menu-calendario-btn ${calendarioAbierto ? "activa" : ""}`}

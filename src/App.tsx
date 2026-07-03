@@ -39,6 +39,7 @@ import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
 import DevolucionesMercancia from "./DevolucionesMercancia/DevolucionesMercancia";
 import Enrolado from "./Enrolado/Enrolado";
+import Calculadora from "./Calculadora/Calculadora";
 import Checador from "./checador/Checador";
 import Calendario from "./Calendario/Calendario";
 import MostrarTablas from "./Configuracion/Mostrar_tablas"; 
@@ -81,6 +82,7 @@ function AppLayout() {
         if (pathname.startsWith("/tienda")) return "tienda";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
         if (pathname.startsWith("/enrolado")) return "enrolado";
+        if (pathname.startsWith("/calculadora")) return "calculadora";
         if (pathname.startsWith("/asistencia")) return "asistencia";
         if (pathname.startsWith("/devoluciones")) return "devoluciones";
         if (pathname.startsWith("/calendario")) return "calendario";
@@ -130,6 +132,7 @@ function AppLayout() {
             perfil: "/perfil",
             home: "/home",
             mostrar_tablas: "/mostrar_tablas",
+            calculadora: "/calculadora",
             enrolado: "/enrolado"
         };
 
@@ -177,6 +180,7 @@ function AppLayout() {
                 <Route path="/perfil" element={<Perfil />} />
                 <Route path="/mostrar_tablas" element={<MostrarTablas />} />
                 <Route path="/solicitud_compra" element={<Solicitud_compra />} />
+                <Route path="/calculadora" element={<Calculadora />} />
                 <Route path="/enrolado" element={<Enrolado />} />
                 <Route path="/devoluciones" element={<DevolucionesMercancia />} />
             </Routes>
