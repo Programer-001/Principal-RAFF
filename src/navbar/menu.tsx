@@ -1,5 +1,6 @@
 ﻿import { signOut, onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "../firebase/config";
+import DraggableOriginal  from "react-draggable";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { ref, get, onValue } from "firebase/database";
 import { NotificacionSistema } from "../Notificaciones/tiposNotificaciones";
@@ -13,6 +14,7 @@ import { EventoCalendario } from "../Calendario/tipos";
 import { escucharEventosUsuario } from "../Calendario/firebaseCalendario";
 import CrearEventoModal from "../Calendario/CrearEventoModal";
 import { obtenerMenuPorPerfil } from "./menuConfig";
+
 import "../css/menu.css";
 
 type Props = {
@@ -36,6 +38,8 @@ const Menu = ({ vista, setVista }: Props) => {
     const [calendarioAbierto, setCalendarioAbierto] = useState(false);
     const [eventosCalendario, setEventosCalendario] = useState<EventoCalendario[]>([]);
     const [calculadoraAbierta, setCalculadoraAbierta] = useState(false);
+    const calculadoraRef = useRef<HTMLDivElement>(null);
+    const Draggable = DraggableOriginal as any;
     const [modalCrearEventoAbierto, setModalCrearEventoAbierto] = useState(false);
     const [notificaciones, setNotificaciones] = useState<NotificacionSistema[]>([]);
     const [menuAbierto, setMenuAbierto] = useState(false);
@@ -302,9 +306,18 @@ useEffect(() => {
                     <CalculadoraIcono  className="menu-calculadora-icono" />
                 </button>
                 {calculadoraAbierta && (
-                    <div className="menu-calculadora-panel">
-                        <Calculadora />
-                    </div>
+                    <Draggable
+                        nodeRef={calculadoraRef}
+                        handle=".calculadora-header"
+                        cancel=".btn-menu, button, input, select"
+                    >
+                        <div
+                            ref={calculadoraRef}
+                            className="menu-calculadora-panel"
+                        >
+                            <Calculadora />
+                        </div>
+                    </Draggable>
                 )}
 
                 {/* Botón de calendario */}
