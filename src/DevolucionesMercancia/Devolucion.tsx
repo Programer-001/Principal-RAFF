@@ -39,6 +39,8 @@ const Devolucion: React.FC<Props> = ({
                 vigencia=""
                 setVigencia={() => {}}
                 importe={importe}
+                mostrarVigencia={false}
+                titulo="📦 Devolución de Mercancía"
             />
 
             <div className="form-row">

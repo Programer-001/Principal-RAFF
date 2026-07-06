@@ -14,6 +14,8 @@ type Props = {
     vigencia: string;
     setVigencia: React.Dispatch<React.SetStateAction<string>>;
     importe: number;
+    mostrarVigencia?: boolean;
+    titulo?: string;
 };
 
 type OrigenProducto = "tienda" | "taller" | "otro";
@@ -32,6 +34,8 @@ const SaldoAFavor: React.FC<Props> = ({
     vigencia,
     setVigencia,
     importe,
+    mostrarVigencia = true,
+    titulo = "💳 Saldo a Favor",
 }) => {
     const [origen, setOrigen] = useState<OrigenProducto | "">("");
 
@@ -212,7 +216,7 @@ const SaldoAFavor: React.FC<Props> = ({
 
     return (
         <div className="saldo-favor-form">
-            <h3>💳 Saldo a Favor</h3>
+            <h3>{titulo}</h3>
 
             <div className="saldo-productos-box">
                 <h4>Productos</h4>
@@ -400,14 +404,16 @@ const SaldoAFavor: React.FC<Props> = ({
                 />
             </div>
 
-            <div className="form-row">
-                <label>Vigencia</label>
-                <input
-                    type="date"
-                    value={vigencia}
-                    onChange={(e) => setVigencia(e.target.value)}
-                />
-            </div>
+            {mostrarVigencia && (
+                <div className="form-row">
+                    <label>Vigencia</label>
+                    <input
+                        type="date"
+                        value={vigencia}
+                        onChange={(e) => setVigencia(e.target.value)}
+                    />
+                </div>
+            )}
 
             {modalOT && (
                 <div className="saldo-modal-fondo">

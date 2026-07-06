@@ -4,12 +4,13 @@ import "../css/Calculadora.css";
 
 import CalculadoraBasica from "./CalculadoraBasica";
 import ConvertidorLongitud from "./ConvertidorLongitud";
+import CalculadoraOhm from "./CalculadoraOhm";
 
 const Calculadora: React.FC = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   const [modo, setModo] = useState<
-    "calculadora" | "longitud"
+    "calculadora" | "longitud"| "ohm"
   >("calculadora");
 
   return (
@@ -54,6 +55,15 @@ const Calculadora: React.FC = () => {
             >
               📏 Longitud
             </button>
+            <button
+            className="menu-item"
+            onClick={() => {
+              setModo("ohm");
+              setMenuAbierto(false);
+            }}
+          >
+            ⚡ Ley de Ohm
+          </button>
           </div>
         )}
 
@@ -61,6 +71,7 @@ const Calculadora: React.FC = () => {
             {modo === "calculadora" && <CalculadoraBasica />}
 
             {modo === "longitud" && <ConvertidorLongitud />}
+            {modo === "ohm" && <CalculadoraOhm />}
             </div>
       </div>
     </div>

@@ -1,14 +1,15 @@
 // src/DevolucionesMercancia/CrearDevolucion.tsx
 //este archivo contiene el componente para crear un documento de devolución de mercancía, saldo a favor o garantía. Se puede seleccionar un cliente existente o capturar uno temporal. Se puede buscar clientes por nombre, razón social o RFC. Al guardar, se genera un folio único y se almacena en Firebase Realtime Database.
 import React, { useEffect, useState } from "react";
-import { get, ref } from "firebase/database";
+import { get, ref,runTransaction, set } from "firebase/database";
 import { db } from "../firebase/config";
 import { obtenerFechaLocal } from "../funciones/formato_fechas";
 
 import SaldoAFavor from "./SaldoAFavor";
 import Devolucion from "./Devolucion";
 import Garantia from "./Garantia";
-
+import { generarPDFDevolucion } from "../plantillas/plantilla_devolucion";
+import { formatearFechaMX } from "../funciones/formato_fechas";
 import "../css/DevolucionMercancia.css";
 
 type TipoFormulario = "devolucion" | "saldo" | "garantia";
@@ -128,86 +129,211 @@ const CrearDevolucion: React.FC = () => {
         return cliente?.nombre || cliente?.razonSocial || "";
     };
 
-    const guardar = () => {
+    // Guardar
+    const obtenerFolioSeguro = async () => {
+        const contadorRef = ref(db, "contadores/devolucion_mercancia");
+
+        const resultado = await runTransaction(contadorRef, (actual) => {
+            return (actual || 0) + 1;
+        });
+
+        if (!resultado.committed) {
+            throw new Error("No se pudo generar el folio.");
+        }
+
+        return String(resultado.snapshot.val()).padStart(6, "0");
+    };
+
+    const obtenerRutaFirebase = () => {
+        if (tipo === "saldo") {
+            return "Devolucion_de_mercancia/Saldos_a_favor";
+        }
+
+        if (tipo === "devolucion") {
+            return "Devolucion_de_mercancia/Devoluciones";
+        }
+
+        return "Devolucion_de_mercancia/Garantias";
+    };
+
+    const limpiarFormulario = () => {
+        setCliente(null);
+        setBuscar("");
+        setClientes([]);
+
+        setProductosSaldo([]);
+        setMotivoSaldo("");
+        setVigenciaSaldo("");
+
+        setProductosDevolucion([]);
+        setMotivoDevolucion("");
+        setMetodoPagoDevolucion("");
+        setFechaPagoDevolucion("");
+
+        cargarFolio();
+    };
+
+    const guardar = async () => {
         if (!cliente) {
             alert("Debes seleccionar o capturar un cliente.");
             return;
         }
 
-        if (!obtenerNombreCliente().trim()) {
+        const clienteNombre = obtenerNombreCliente();
+
+        if (!clienteNombre.trim()) {
             alert("Escribe el nombre del cliente.");
             return;
         }
 
-        if (tipo === "saldo") {
-            if (productosSaldo.length === 0) {
-                alert("Agrega al menos un producto al saldo a favor.");
-                return;
-            }
+        try {
+            const folioFinal = await obtenerFolioSeguro();
 
-            if (!motivoSaldo.trim()) {
-                alert("Escribe el motivo de la devolución.");
-                return;
-            }
-
-            if (importeSaldo <= 0) {
-                alert("El importe del saldo a favor debe ser mayor a 0.");
-                return;
-            }
-
-            const datosSaldoFavor = {
-                productos: productosSaldo,
-                motivo: motivoSaldo,
-                importe: importeSaldo,
-                vigencia: vigenciaSaldo,
+            let data: any = {
+                folio: folioFinal,
+                tipo,
+                fecha,
+                clienteId: cliente.id || null,
+                clienteNombre,
+                creadoEn: Date.now(),
             };
 
-            console.log("Saldo a favor:", datosSaldoFavor);
+            if (tipo === "saldo") {
+                if (productosSaldo.length === 0) {
+                    alert("Agrega al menos un producto al saldo a favor.");
+                    return;
+                }
+
+                if (!motivoSaldo.trim()) {
+                    alert("Escribe el motivo de la devolución.");
+                    return;
+                }
+
+                if (importeSaldo <= 0) {
+                    alert("El importe del saldo a favor debe ser mayor a 0.");
+                    return;
+                }
+
+                data = {
+                    ...data,
+                    productos: productosSaldo,
+                    motivo: motivoSaldo,
+                    importe: importeSaldo,
+                    vigencia: vigenciaSaldo,
+                };
+            }
+
+            if (tipo === "devolucion") {
+                if (productosDevolucion.length === 0) {
+                    alert("Agrega al menos un producto a la devolución.");
+                    return;
+                }
+
+                if (!motivoDevolucion.trim()) {
+                    alert("Escribe el motivo de la devolución.");
+                    return;
+                }
+
+                if (importeDevolucion <= 0) {
+                    alert("El importe de devolución debe ser mayor a 0.");
+                    return;
+                }
+
+                if (!metodoPagoDevolucion.trim()) {
+                    alert("Selecciona el método de pago.");
+                    return;
+                }
+
+                if (!fechaPagoDevolucion) {
+                    alert("Selecciona la fecha de pago.");
+                    return;
+                }
+
+                data = {
+                    ...data,
+                    productos: productosDevolucion,
+                    motivo: motivoDevolucion,
+                    importe: importeDevolucion,
+                    metodoPago: metodoPagoDevolucion,
+                    fechaAplicacion: fechaPagoDevolucion,
+                };
+            }
+
+            if (tipo === "garantia") {
+                alert("Garantías todavía está pendiente.");
+                return;
+            }
+
+            const ruta = obtenerRutaFirebase();
+
+            await set(
+                ref(db, `${ruta}/${folioFinal}`),
+                data
+            );
+
+            alert(`Documento guardado con folio ${folioFinal}`);
+
+            setFolio(String(Number(folioFinal) + 1).padStart(6, "0"));
+            limpiarFormulario();
+        } catch (error) {
+            console.error(error);
+            alert("Error al guardar el documento.");
         }
-
-        if (tipo === "devolucion") {
-            if (productosDevolucion.length === 0) {
-                alert("Agrega al menos un producto a la devolución.");
-                return;
-            }
-
-            if (!motivoDevolucion.trim()) {
-                alert("Escribe el motivo de la devolución.");
-                return;
-            }
-
-            if (importeDevolucion <= 0) {
-                alert("El importe de devolución debe ser mayor a 0.");
-                return;
-            }
-
-            if (!metodoPagoDevolucion.trim()) {
-                alert("Selecciona el método de pago.");
-                return;
-            }
-
-            if (!fechaPagoDevolucion) {
-                alert("Selecciona la fecha de pago.");
-                return;
-            }
-
-            const datosDevolucion = {
-                productos: productosDevolucion,
-                motivo: motivoDevolucion,
-                importe: importeDevolucion,
-                metodoPago: metodoPagoDevolucion,
-                fechaPago: fechaPagoDevolucion,
-            };
-
-            console.log("Devolución:", datosDevolucion);
-        }
-
-        alert("Guardar pendiente de conectar con Firebase.");
     };
 
-    const imprimir = () => {
-        // Pendiente: aquí irá la plantilla PDF
-    };
+const imprimir = async () => {
+    if (!cliente) {
+        alert("Debes seleccionar o capturar un cliente.");
+        return;
+    }
+
+    const clienteNombre = obtenerNombreCliente();
+
+    if (!clienteNombre.trim()) {
+        alert("Escribe el nombre del cliente.");
+        return;
+    }
+
+    if (tipo === "saldo") {
+        await generarPDFDevolucion({
+            tipo: "saldo",
+            folio,
+            fecha: formatearFechaMX(fecha),
+            clienteNombre,
+            productos: productosSaldo,
+            motivo: motivoSaldo,
+            importe: importeSaldo,
+            vigencia: vigenciaSaldo || "1 AÑO",
+        });
+    }
+
+    if (tipo === "devolucion") {
+        await generarPDFDevolucion({
+            tipo: "devolucion",
+            folio,
+            fecha: formatearFechaMX(fecha),
+            clienteNombre,
+            productos: productosDevolucion,
+            motivo: motivoDevolucion,
+            importe: importeDevolucion,
+            metodoPago: metodoPagoDevolucion,
+            fechaAplicacion: formatearFechaMX(fechaPagoDevolucion),
+        });
+    }
+
+    if (tipo === "garantia") {
+        await generarPDFDevolucion({
+            tipo: "garantia",
+            folio,
+            fecha: formatearFechaMX(fecha),
+            clienteNombre,
+            productos: [],
+            motivo: "",
+            importe: 0,
+            observaciones: "",
+        });
+    }
+};
 
     return (
         <div className="devolucion-crear">
@@ -389,7 +515,25 @@ const CrearDevolucion: React.FC = () => {
                     />
                 )}
 
-                {tipo === "garantia" && <Garantia />}
+                {tipo === "garantia" && (
+                    <Garantia
+                        productos={[]}
+                        setProductos={() => {}}
+                        motivo=""
+                        setMotivo={() => {}}
+                        estado="recibida"
+                        setEstado={() => {}}
+                        otRelacionada=""
+                        setOtRelacionada={() => {}}
+                        diagnostico=""
+                        setDiagnostico={() => {}}
+                        resolucion="pendiente"
+                        setResolucion={() => {}}
+                        observaciones=""
+                        setObservaciones={() => {}}
+                        importe={0}
+                    />
+                )}
             </div>
 
             <div className="btn-container">
@@ -397,7 +541,7 @@ const CrearDevolucion: React.FC = () => {
                     Guardar
                 </button>
 
-                <button type="button" className="btn btn-green" onClick={imprimir} disabled>
+                <button type="button" className="btn btn-green" onClick={imprimir}>
                     Imprimir
                 </button>
             </div>
