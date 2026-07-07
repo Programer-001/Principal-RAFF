@@ -159,7 +159,7 @@ const Personalizado: React.FC<PersonalizadoProps> = ({ onGuardar, data,setDirty 
     </div>
 
         {onGuardar && (
-          <button className="btn btn-green" onClick={guardar}>
+          <button className="btn btn-blue" onClick={guardar}>
             Agregar a OT
           </button>
         )}
