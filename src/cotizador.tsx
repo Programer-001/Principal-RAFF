@@ -13,6 +13,7 @@ import Resorte from "./cotizadores/Resorte";
 import Termopar from "./cotizadores/termopares";
 import Cuarzo from "./cotizadores/cuarzo";
 import MantenimientoReparacion from "./cotizadores/Mantenimiento_reparacion";
+import Personalizado from "./cotizadores/Personalizado";
 import { formatearMoneda } from "./funciones/formato_moneda";
 import {obtenerSiguienteCotizacion,obtenerSiguienteEnvio} from "./firebase/consecutivos";
 //import "./css/cotizador.css";
@@ -76,7 +77,7 @@ const Cotizador = () => {
   const [envio, setEnvio] = useState<"si" | "no">("no");
   const [itemEditando, setItemEditando] = useState<ItemCotizado | null>(null); // para el ticket
   const [cotizadorActivo, setCotizadorActivo] = useState<
-"tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" | "cuarzo" | "mantenimiento_reparacion"
+"tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" | "cuarzo" | "mantenimiento_reparacion"| "personalizado"
   >("tubular");
   const [factura, setFactura] = useState<number | "">("");
   const [fecha, setFecha] = useState("");
@@ -209,8 +210,7 @@ const Cotizador = () => {
 
   // 🔥 Cambio con confirmación
   const cambiarCotizador = (
-      nuevo: "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" | "cuarzo" | "mantenimiento_reparacion"
-  ) => {
+      nuevo: "tubular" | "banda" | "CartuchoB" | "CartuchoA" | "Resorte" | "termopar" | "cuarzo" | "mantenimiento_reparacion"|"personalizado") => {
     setItemEditando(null); // 🔥 clave
 
     if (formDirty) {
@@ -1100,6 +1100,7 @@ const Cotizador = () => {
             <option value="mantenimiento_reparacion">
                 Reparación
             </option>
+            <option value="personalizado">Personalizado</option>
         </select>
 
         {/* MENU */}
@@ -1158,6 +1159,12 @@ const Cotizador = () => {
             onClick={() => cambiarCotizador("mantenimiento_reparacion")}
             >
             Reparación
+            </div>
+            <div
+                className={`cotizador-tab ${cotizadorActivo === "personalizado" ? "active" : ""}`}
+                onClick={() => cambiarCotizador("personalizado")}
+            >
+                Personalizado
             </div>
         </div>
 
@@ -1226,6 +1233,13 @@ const Cotizador = () => {
                 setDirty={setFormDirty}
             />
             )}
+        {cotizadorActivo === "personalizado" && (
+            <Personalizado
+                data={itemEditando || undefined} 
+                onGuardar={guardarCotizacion}
+                setDirty={setFormDirty}
+            />
+        )}
       </div>
 
       {/* RESUMEN */}

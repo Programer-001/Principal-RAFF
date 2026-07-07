@@ -516,6 +516,7 @@ const GestionOT = () => {
             termopar: { titulo: "Termopar", items: [] },
             cuarzo: { titulo: "Cuarzo", items: [] },
             mantenimiento_reparacion: { titulo: "Mantenimiento y reparación", items: [] },
+            personalizado: { titulo: "Personalizado", items: [] },
         };
         trabajos.forEach((t: any) => {
             const tipo = (t.tipo || "").toLowerCase();
