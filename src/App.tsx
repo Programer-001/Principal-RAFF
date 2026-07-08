@@ -35,6 +35,7 @@ import ComisionesMostrador from "./Administracion/comisiones_mostrador";
 import PagosBanda from "./pagos_banda/PagosBanda";
 import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiales"
 import Tienda from "./Tienda/Tienda"
+import Taller from "./Taller/Taller";
 import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
 import DevolucionesMercancia from "./DevolucionesMercancia/DevolucionesMercancia";
@@ -80,6 +81,7 @@ function AppLayout() {
         if (pathname.startsWith("/visor_pedidos_especiales")) return "visor_pedidos_especiales";
         if (pathname.startsWith("/tienda_productos")) return "tienda_productos";
         if (pathname.startsWith("/tienda")) return "tienda";
+        if (pathname.startsWith("/taller")) return "taller";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
         if (pathname.startsWith("/enrolado")) return "enrolado";
         if (pathname.startsWith("/calculadora")) return "calculadora";
@@ -125,6 +127,7 @@ function AppLayout() {
             visor_pedidos_especiales: "/visor_pedidos_especiales",
             tienda_productos: "/tienda_productos",
             tienda: "/tienda",
+            taller: "/taller",
             gestion_tienda: "/gestion_tienda",
             asistencia: "/asistencia",
             calendario: "/calendario",
@@ -175,6 +178,7 @@ function AppLayout() {
                 <Route path="/tienda_productos" element={<TiendaProductos />} />
                 <Route path="/asistencia" element={<Checador />} />
                 <Route path="/tienda" element={<Tienda />} />
+                <Route path="/taller" element={<Taller />} />
                 <Route path="/gestion_tienda" element={<GestionTienda />} />
                 <Route path="/calendario" element={<Calendario />} />
                 <Route path="/perfil" element={<Perfil />} />

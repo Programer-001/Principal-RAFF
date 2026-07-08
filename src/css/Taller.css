@@ -1,0 +1,115 @@
+.taller-page {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.taller-page h1 {
+  margin-bottom: 20px;
+}
+
+.taller-tabs {
+  display: flex;
+  gap: 36px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #e5e7eb;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+
+.taller-tabs button {
+  background: transparent;
+  border: none;
+  padding: 14px 0;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 400;
+  color: #6b7280;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.taller-tabs button:hover {
+  color: #111827;
+}
+
+.taller-tabs .tab-activa {
+  color: #111827;
+  font-weight: 700;
+  border-left: 3px solid #111827;
+  padding-left: 10px;
+}
+
+.tabla-baja-page {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.tabla-baja-page h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.tabla-baja-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.tabla-baja-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.tabla-baja {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.tabla-baja th {
+  background: #f3f4f6;
+  font-weight: 700;
+  text-align: left;
+}
+
+.tabla-baja th,
+.tabla-baja td {
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+}
+
+.tabla-baja tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.tabla-baja input {
+  width: 100%;
+  min-width: 80px;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .taller-page {
+    margin: 10px auto;
+    padding: 12px;
+  }
+
+  .tabla-baja-page {
+    padding: 14px;
+  }
+
+  .taller-page h1 {
+    font-size: 26px;
+  }
+
+  .tabla-baja-page h2 {
+    font-size: 20px;
+  }
+}
