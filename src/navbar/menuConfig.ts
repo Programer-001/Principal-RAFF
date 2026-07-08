@@ -172,7 +172,6 @@ const MENUS_POR_ROL: MenuPorRol[] = [
         items: [
             MENU_BASE.enrolado,
             MENU_BASE.taller,
-
         ],
     },
 

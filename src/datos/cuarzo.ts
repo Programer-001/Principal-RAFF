@@ -59,5 +59,5 @@ export const calcularPrecioCuarzo = (
 ): number => {
     const precioProveedor = obtenerPrecioCuarzoProveedor(diametro, largo);
 
-    return precioProveedor * IVA * GANANCIA_CUARZO * cantidad;
+    return precioProveedor  * GANANCIA_CUARZO * cantidad;
 };
