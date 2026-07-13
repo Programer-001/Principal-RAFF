@@ -240,6 +240,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
                     <option value="TORNILLO 3/16">TORNILLO 3/16</option>
                     <option value="TORNILLO 3/8">TORNILLO 3/8</option>
                     <option value="TORNILLO 1/2">TORNILLO 1/2</option>
+                    <option value="TERMINAL OJILLO 1/4">TERMINAL OJILLO 1/4</option>
                     <option value="CAMBIO DE BULBO + TORNILLO 1/4">
                         CAMBIO DE BULBO + TORNILLO 1/4
                     </option>
