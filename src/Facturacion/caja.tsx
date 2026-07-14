@@ -176,27 +176,27 @@ const CorteCaja: React.FC = () => {
 
     // ------------------- TOTALES --------------------
     const totalEfectivo = pagos
-        .filter((p) => p.metodo === "efectivo")
+        .filter((p) => p.metodo === "efectivo"&& p.estatus)
         .reduce((a, b) => a + b.cantidad, 0);
 
     const totalCheque = pagos
-        .filter((p) => p.metodo === "cheque")
+        .filter((p) => p.metodo === "cheque"&& p.estatus)
         .reduce((a, b) => a + b.cantidad, 0);
 
     const totalCredito = pagos
-        .filter((p) => p.metodo === "tarjeta_credito")
+        .filter((p) => p.metodo === "tarjeta_credito" && p.estatus)
         .reduce((a, b) => a + b.cantidad, 0);
 
     const totalDebito = pagos
-        .filter((p) => p.metodo === "tarjeta_debito")
+        .filter((p) => p.metodo === "tarjeta_debito" && p.estatus)
         .reduce((a, b) => a + b.cantidad, 0);
 
     const totalTransferencia = pagos
-        .filter((p) => p.metodo === "transferencia")
+        .filter((p) => p.metodo === "transferencia" && p.estatus)
         .reduce((a, b) => a + b.cantidad, 0);
 
     const totalCreditoClientes = pagos
-        .filter((p) => p.metodo === "credito")
+        .filter((p) => p.metodo === "credito" && p.estatus)
         .reduce((a, b) => a + b.cantidad, 0);
 
     const totalGeneral =
