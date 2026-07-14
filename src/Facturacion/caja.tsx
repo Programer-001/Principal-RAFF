@@ -270,6 +270,34 @@ const CorteCaja: React.FC = () => {
                             Cancelar Factura
                         </button>
                     </div>
+                    {mostrarCancelar && (
+                        <div className="modal">
+                            <div className="modal-content">
+                                <h3>Cancelar Pago</h3>
+                                <p>Escribe el motivo de cancelación:</p>
+
+                                <textarea
+                                    className="textarea-cancelacion-caja"
+                                    value={motivoCancelacion}
+                                    onChange={(e) => setMotivoCancelacion(e.target.value)}
+                                />
+
+                                <div className="btn-container">
+                                    <button className="btn btn-red" onClick={confirmarCancelacion}>
+                                        Confirmar Cancelación
+                                    </button>
+
+                                    <button
+                                        className="btn btn-yellow"
+                                        onClick={() => setMostrarCancelar(false)}
+                                    >
+                                        Cerrar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             </div>
 
@@ -325,32 +353,7 @@ const CorteCaja: React.FC = () => {
                 </p>
             </div>
 
-            {mostrarCancelar && (
-                <div className="modal">
-                    <div className="modal-content">
-                        <h3>Cancelar Pago</h3>
-                        <p>Escribe el motivo de cancelación:</p>
 
-                        <textarea
-                            value={motivoCancelacion}
-                            onChange={(e) => setMotivoCancelacion(e.target.value)}
-                        />
-
-                        <div className="modal-actions">
-                            <button className="btn btn-red" onClick={confirmarCancelacion}>
-                                Confirmar Cancelación
-                            </button>
-
-                            <button
-                                className="btn btn-yellow"
-                                onClick={() => setMostrarCancelar(false)}
-                            >
-                                Cerrar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

@@ -85,6 +85,7 @@ export const bulboTornilloTermopar: BulboTornilloTermopar[] = [
     { tipo: "TORNILLO 3/8", precio: 300.0 },
     { tipo: "TORNILLO 1/2", precio: 300.0 },
     { tipo: "TERMINAL OJILLO 1/4", precio: 280.0 },
+    { tipo: "TERMINAL OJILLO 3/16", precio: 280.0 },
     { tipo: "CAMBIO DE BULBO + TORNILLO 1/4", precio: 350.0 },
     { tipo: "CAMBIO DE BULBO + TORNILLO 6MM", precio: 350.0 },
     { tipo: "CAMBIO DE BULBO + TORNILLO 3/16", precio: 350.0 },
