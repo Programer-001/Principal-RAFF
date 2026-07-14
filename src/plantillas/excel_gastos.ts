@@ -1,3 +1,5 @@
+//src/plantillas/excel_gastos.ts
+// Plantilla para generar un Excel con los gastos de un rango de fechas
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { getDatabase, ref, get } from "firebase/database";
@@ -126,7 +128,7 @@ export const generarExcelGastos = async (desde: string, hasta: string) => {
         ext: { width: 180, height: 100 },
     });
     sheet.getRow(3).height = 50;
-    // Título
+    // Tï¿½tulo
     sheet.mergeCells("A4:D4");
     const titulo = sheet.getCell("A4");
     titulo.value = `Gastos del ${desdeForm} al ${hastaForm}`;
@@ -134,7 +136,7 @@ export const generarExcelGastos = async (desde: string, hasta: string) => {
     titulo.alignment = { horizontal: "center", vertical: "middle" };
     sheet.getRow(4).height = 24;
 
-    // Fecha de generación
+    // Fecha de generaciï¿½n
     sheet.mergeCells("A5:D5");
     const generado = sheet.getCell("A5");
     generado.value = `Generado: ${new Date().toLocaleDateString("es-MX")} ${new Date().toLocaleTimeString("es-MX")}`;
@@ -199,7 +201,7 @@ export const generarExcelGastos = async (desde: string, hasta: string) => {
         filaActual++;
     });
 
-    // Renglón en blanco
+    // Renglï¿½n en blanco
     filaActual++;
 
     const totalGeneral = filtrados.reduce(

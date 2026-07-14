@@ -2,6 +2,7 @@
 import { getDatabase, ref, set, update, onValue } from "firebase/database";
 import { app } from "../firebase/config";
 import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
+import { generarPDFCorteCaja } from "../plantillas/plantilla_corte_caja";
 //import "../css/caja.css";
 interface Pago {
     id: string;
@@ -352,6 +353,14 @@ const CorteCaja: React.FC = () => {
                     Total: {formatearMoneda(totalGeneral)}
                 </p>
             </div>
+            <button
+                type="button"
+                onClick={() => generarPDFCorteCaja(fecha)}
+                className="btn btn-yellow"
+                title="Generar PDF del corte de caja"
+            >
+                🖨️ Imprimir Caja
+            </button>
 
 
         </div>
