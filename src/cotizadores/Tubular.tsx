@@ -252,7 +252,7 @@ const totalProductosExtras = productosExtras.reduce(
   let totalResistencia = Number(cantidadResistencias) *
 (Number(totalTubo) + precioBorne + precioDobleces + precioTornillo +  precioSoldadura ) +
       //precioSoldadura+ <-- LO QUITE POR MIENTRAS
-     totalDesoldarBase +
+    totalDesoldarBase +
     totalCable +
     totalDesoldartornillo +
     totalTapon +
@@ -1244,6 +1244,16 @@ const aplicarStock = (stock: any) => {
                           : "--"}
                       </span>
                     </p>
+                    {cantidadDesoldarBase > 0 && (
+                        <p className="detalle-calculo">
+                          <strong>Cantidad: </strong>
+                          <span>
+                            {cantidadDesoldarBase} ×{" "}
+                            {formatearMoneda(seleccionados["desoldar_base"]?.precio ?? 0)} ={" "}
+                            {formatearMoneda(totalDesoldarBase)}
+                          </span>
+                        </p>
+                      )}
 
                     <p>
                       <strong>Dobleces</strong>
@@ -1262,6 +1272,16 @@ const aplicarStock = (stock: any) => {
                           : "--"}
                       </span>
                     </p>
+                      {cantidadResistencias > 0 && (
+                        <p>
+                          <strong>Cálculo</strong>
+                          <span>
+                            {cantidadResistencias} ×{" "}
+                            {formatearMoneda(precioSoldadura)} ={" "}
+                            {formatearMoneda(cantidadResistencias * precioSoldadura)}
+                          </span>
+                        </p>
+                      )}
 
                     <p>
                       <strong>Soldar cable</strong>

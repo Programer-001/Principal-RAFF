@@ -40,6 +40,7 @@ import GestionTienda from "./Tienda/Gestion_Tienda"
 import TiendaProductos from "./Tienda/TiendaProductos"
 import DevolucionesMercancia from "./DevolucionesMercancia/DevolucionesMercancia";
 import Enrolado from "./Enrolado/Enrolado";
+import Tablas from "./Info_adicional/Tablas";
 import Calculadora from "./Calculadora/Calculadora";
 import Checador from "./checador/Checador";
 import Calendario from "./Calendario/Calendario";
@@ -84,6 +85,7 @@ function AppLayout() {
         if (pathname.startsWith("/taller")) return "taller";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
         if (pathname.startsWith("/enrolado")) return "enrolado";
+        if (pathname.startsWith("/tablas")) return "mostrar_tablas";
         if (pathname.startsWith("/calculadora")) return "calculadora";
         if (pathname.startsWith("/asistencia")) return "asistencia";
         if (pathname.startsWith("/devoluciones")) return "devoluciones";
@@ -136,7 +138,8 @@ function AppLayout() {
             home: "/home",
             mostrar_tablas: "/mostrar_tablas",
             calculadora: "/calculadora",
-            enrolado: "/enrolado"
+            enrolado: "/enrolado",
+            tablas: "/tablas"
         };
 
         navigate(mapa[v] || "/home");
@@ -186,6 +189,7 @@ function AppLayout() {
                 <Route path="/solicitud_compra" element={<Solicitud_compra />} />
                 <Route path="/calculadora" element={<Calculadora />} />
                 <Route path="/enrolado" element={<Enrolado />} />
+                <Route path="/tablas" element={<Tablas />} />
                 <Route path="/devoluciones" element={<DevolucionesMercancia />} />
             </Routes>
         </div>
