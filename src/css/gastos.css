@@ -69,6 +69,44 @@
     background: #243c96;
 }
 
+
+.gastos-acciones {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    min-width: 190px;
+}
+
+.gastos-btn-accion {
+    padding: 7px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.gastos-btn-cancelar {
+    background-color: #6b7280;
+    color: white;
+}
+
+.gastos-btn-cancelar:hover {
+    background-color: #4b5563;
+}
+
+.gastos-input-tabla {
+    min-width: 130px;
+    width: 100%;
+    padding: 7px 8px;
+    margin: 0;
+}
+
+.caja-table button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
     .gastos-form {
@@ -83,5 +121,17 @@
     .gastos-btn {
         width: 100%;
         max-width: 350px;
+    }
+        .gastos-acciones {
+        min-width: 150px;
+        flex-direction: column;
+    }
+
+    .gastos-btn-accion {
+        width: 100%;
+    }
+
+    .gastos-input-tabla {
+        min-width: 120px;
     }
 }

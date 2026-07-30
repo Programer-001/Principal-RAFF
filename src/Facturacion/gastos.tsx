@@ -1,7 +1,16 @@
-﻿//src/Facturacion/gastos.tsx
-// Componente para registrar gastos y entradas de dinero en caja
-import React, { useState, useEffect } from "react";
-import { getDatabase, ref, set, onValue, push } from "firebase/database";
+﻿// src/Facturacion/gastos.tsx
+// Componente para registrar, editar y eliminar gastos y entradas de dinero en caja
+
+import React, { useEffect, useState } from "react";
+import {
+    getDatabase,
+    ref,
+    set,
+    onValue,
+    push,
+    update,
+    remove,
+} from "firebase/database";
 import { app } from "../firebase/config";
 import {
     obtenerFechaLocal,
@@ -13,7 +22,7 @@ import "../css/gastos.css";
 
 interface MovimientoGasto {
     id: string;
-    tipo: "entrada" | "gasto"; // entrada = dinero agregado
+    tipo: "entrada" | "gasto";
     cantidad: number;
     descripcion: string;
     fecha: string;
@@ -23,222 +32,576 @@ interface MovimientoGasto {
 const Gastos: React.FC = () => {
     const db = getDatabase(app);
 
-    // Fecha del reporte (siempre hoy)
-    const fechaReporte =formatearFechaFirebase(obtenerFechaLocal());
+    // Fecha donde se guardan los movimientos registrados hoy
+    const fechaReporte = formatearFechaFirebase(obtenerFechaLocal());
 
-    // Fecha que el usuario selecciona para indicar
-    // cuándo ocurrió el gasto
-    const [fechaGasto, setFechaGasto] =useState(obtenerFechaLocal());
+    // Fecha seleccionada para indicar cuándo ocurrió el gasto
+    const [fechaGasto, setFechaGasto] = useState(obtenerFechaLocal());
 
     const [cantidadEntrada, setCantidadEntrada] = useState<number>(0);
     const [cantidadGasto, setCantidadGasto] = useState<number>(0);
     const [descripcion, setDescripcion] = useState("");
+
     const [movimientos, setMovimientos] = useState<MovimientoGasto[]>([]);
     const [fondo, setFondo] = useState(0);
 
-useEffect(() => {
-    const gastosRef = ref(db, `gastos/${fechaReporte}`);
+    // Movimiento que actualmente se está editando
+    const [movimientoEditandoId, setMovimientoEditandoId] = useState<
+        string | null
+    >(null);
 
-    const unsubscribe = onValue(gastosRef, (snapshot) => {
-        const data = snapshot.val();
+    // Valores temporales del movimiento en edición
+    const [edicionTipo, setEdicionTipo] = useState<"entrada" | "gasto">(
+        "gasto"
+    );
+    const [edicionCantidad, setEdicionCantidad] = useState<number>(0);
+    const [edicionDescripcion, setEdicionDescripcion] = useState("");
+    const [edicionFechaMovimiento, setEdicionFechaMovimiento] = useState("");
 
-        if (!data) {
-            setMovimientos([]);
-            setFondo(0);
+    useEffect(() => {
+        const gastosRef = ref(db, `gastos/${fechaReporte}`);
+
+        const unsubscribe = onValue(gastosRef, (snapshot) => {
+            const data = snapshot.val();
+
+            if (!data) {
+                setMovimientos([]);
+                setFondo(0);
+                return;
+            }
+
+            const lista = Object.values(data) as MovimientoGasto[];
+
+            lista.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+            setMovimientos(lista);
+
+            const total = lista.reduce((acc, mov) => {
+                if (mov.tipo === "entrada") {
+                    return acc + Number(mov.cantidad || 0);
+                }
+
+                if (mov.tipo === "gasto") {
+                    return acc - Number(mov.cantidad || 0);
+                }
+
+                return acc;
+            }, 0);
+
+            setFondo(total);
+        });
+
+        return () => unsubscribe();
+    }, [db, fechaReporte]);
+
+    const agregarEntrada = async () => {
+        if (cantidadEntrada <= 0) {
+            alert("Ingresa una cantidad válida");
             return;
         }
 
-        const lista = Object.values(data) as MovimientoGasto[];
+        const nuevoId = push(ref(db, `gastos/${fechaReporte}`)).key;
 
-        lista.sort((a, b) => a.fecha.localeCompare(b.fecha));
+        if (!nuevoId) {
+            alert("No se pudo generar el movimiento");
+            return;
+        }
 
-        setMovimientos(lista);
+        const nuevo: MovimientoGasto = {
+            id: nuevoId,
+            tipo: "entrada",
+            cantidad: cantidadEntrada,
+            descripcion: "Dinero agregado",
+            fecha: new Date().toLocaleTimeString(),
+            fechaMovimiento: obtenerFechaLocal(),
+        };
 
-        const total = lista.reduce((acc, mov) => {
-            if (mov.tipo === "entrada") return acc + mov.cantidad;
-            if (mov.tipo === "gasto") return acc - mov.cantidad;
-            return acc;
-        }, 0);
+        await set(ref(db, `gastos/${fechaReporte}/${nuevo.id}`), nuevo);
 
-        setFondo(total);
-    });
-
-    return () => unsubscribe();
-}, [db, fechaReporte]);
-
-const agregarEntrada = async () => {
-    if (cantidadEntrada <= 0) {
-        return alert("Ingresa una cantidad válida");
-    }
-
-    const nuevo = {
-        id: push(ref(db, `gastos/${fechaReporte}`)).key!,
-        tipo: "entrada" as const,
-        cantidad: cantidadEntrada,
-        descripcion: "Dinero agregado",
-        fecha: new Date().toLocaleTimeString(),
-        fechaMovimiento: obtenerFechaLocal(),
+        setCantidadEntrada(0);
     };
 
-    await set(ref(db, `gastos/${fechaReporte}/${nuevo.id}`), nuevo);
+    const agregarGasto = async () => {
+        if (!fechaGasto) {
+            alert("Selecciona una fecha");
+            return;
+        }
 
-    setCantidadEntrada(0);
-};
+        if (cantidadGasto <= 0) {
+            alert("Ingresa un gasto válido");
+            return;
+        }
 
-const agregarGasto = async () => {
-    if (!fechaGasto) {
-        return alert("Selecciona una fecha");
-    }
+        if (!descripcion.trim()) {
+            alert("Ingresa una descripción del gasto");
+            return;
+        }
 
-    if (cantidadGasto <= 0) {
-        return alert("Ingresa un gasto válido");
-    }
+        if (cantidadGasto > fondo) {
+            alert("❌ No puedes gastar más de lo disponible");
+            return;
+        }
 
-    if (!descripcion.trim()) {
-        return alert("Ingresa una descripción del gasto");
-    }
+        const nuevoId = push(ref(db, `gastos/${fechaReporte}`)).key;
 
-    if (cantidadGasto > fondo) {
-        return alert("❌ No puedes gastar más de lo disponible");
-    }
+        if (!nuevoId) {
+            alert("No se pudo generar el movimiento");
+            return;
+        }
 
-    const nuevo = {
-        id: push(ref(db, `gastos/${fechaReporte}`)).key!,
-        tipo: "gasto" as const,
-        cantidad: cantidadGasto,
-        descripcion,
-        fecha: new Date().toLocaleTimeString(),
-        fechaMovimiento: fechaGasto,
+        const nuevo: MovimientoGasto = {
+            id: nuevoId,
+            tipo: "gasto",
+            cantidad: cantidadGasto,
+            descripcion: descripcion.trim(),
+            fecha: new Date().toLocaleTimeString(),
+            fechaMovimiento: fechaGasto,
+        };
+
+        await set(ref(db, `gastos/${fechaReporte}/${nuevo.id}`), nuevo);
+
+        setCantidadGasto(0);
+        setDescripcion("");
+        setFechaGasto(obtenerFechaLocal());
     };
 
-    await set(ref(db, `gastos/${fechaReporte}/${nuevo.id}`), nuevo);
+    const iniciarEdicion = (movimiento: MovimientoGasto) => {
+        setMovimientoEditandoId(movimiento.id);
+        setEdicionTipo(movimiento.tipo);
+        setEdicionCantidad(movimiento.cantidad);
+        setEdicionDescripcion(movimiento.descripcion);
+        setEdicionFechaMovimiento(
+            movimiento.fechaMovimiento || obtenerFechaLocal()
+        );
+    };
 
-    setCantidadGasto(0);
-    setDescripcion("");
-};
+    const cancelarEdicion = () => {
+        setMovimientoEditandoId(null);
+        setEdicionTipo("gasto");
+        setEdicionCantidad(0);
+        setEdicionDescripcion("");
+        setEdicionFechaMovimiento("");
+    };
 
-        return (
-            <div className="gastos-container">
-                <h1 className="gastos-title">💸 Gastos del Día</h1>
+    const guardarEdicion = async (movimientoOriginal: MovimientoGasto) => {
+        if (edicionCantidad <= 0) {
+            alert("Ingresa una cantidad válida");
+            return;
+        }
 
-                {/* =========================
-                    INGRESAR DINERO
-                ========================= */}
-                <div className="gastos-form">
-                    <input
-                        type="number"
-                        placeholder="Cantidad para fondo"
-                        value={cantidadEntrada || ""}
-                        onChange={(e) =>
-                            setCantidadEntrada(parseFloat(e.target.value) || 0)
+        if (!edicionFechaMovimiento) {
+            alert("Selecciona una fecha");
+            return;
+        }
+
+        if (!edicionDescripcion.trim()) {
+            alert("Ingresa una descripción");
+            return;
+        }
+
+        /*
+         * Calculamos cuánto dinero habría disponible sin contar
+         * el movimiento que estamos editando.
+         */
+        const fondoSinMovimientoOriginal =
+            movimientoOriginal.tipo === "entrada"
+                ? fondo - movimientoOriginal.cantidad
+                : fondo + movimientoOriginal.cantidad;
+
+        /*
+         * Si el movimiento editado será un gasto, validamos que
+         * no supere el fondo disponible sin contar la fila original.
+         */
+        if (
+            edicionTipo === "gasto" &&
+            edicionCantidad > fondoSinMovimientoOriginal
+        ) {
+            alert(
+                `❌ El gasto no puede ser mayor al fondo disponible: ${formatearMoneda(
+                    fondoSinMovimientoOriginal
+                )}`
+            );
+            return;
+        }
+
+        try {
+            await update(
+                ref(db, `gastos/${fechaReporte}/${movimientoOriginal.id}`),
+                {
+                    tipo: edicionTipo,
+                    cantidad: edicionCantidad,
+                    descripcion: edicionDescripcion.trim(),
+                    fechaMovimiento: edicionFechaMovimiento,
+                }
+            );
+
+            cancelarEdicion();
+        } catch (error) {
+            console.error("Error al actualizar movimiento:", error);
+            alert("No se pudo actualizar el movimiento");
+        }
+    };
+
+    const eliminarMovimiento = async (movimiento: MovimientoGasto) => {
+        const tipoTexto =
+            movimiento.tipo === "entrada" ? "la entrada" : "el gasto";
+
+        const confirmar = window.confirm(
+            `¿Seguro que deseas eliminar ${tipoTexto} de ${formatearMoneda(
+                movimiento.cantidad
+            )}?\n\nEsta acción no se puede deshacer.`
+        );
+
+        if (!confirmar) return;
+
+        try {
+            await remove(
+                ref(db, `gastos/${fechaReporte}/${movimiento.id}`)
+            );
+
+            if (movimientoEditandoId === movimiento.id) {
+                cancelarEdicion();
+            }
+        } catch (error) {
+            console.error("Error al eliminar movimiento:", error);
+            alert("No se pudo eliminar el movimiento");
+        }
+    };
+
+    return (
+        <div className="gastos-container">
+            <h1 className="gastos-title">💸 Gastos del Día</h1>
+
+            {/* =========================
+                INGRESAR DINERO
+            ========================= */}
+            <div className="gastos-form">
+                <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Cantidad para fondo"
+                    value={cantidadEntrada || ""}
+                    onKeyDown={(e) => {
+                        if (["-", "+", "e", "E"].includes(e.key)) {
+                            e.preventDefault();
                         }
-                        className="gastos-input"
-                    />
+                    }}
+                    onChange={(e) =>
+                        setCantidadEntrada(
+                            Math.max(0, parseFloat(e.target.value) || 0)
+                        )
+                    }
+                    className="gastos-input"
+                />
 
-                    <button onClick={agregarEntrada} className="btn btn-green">
-                        ➕ Ingresar dinero
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onClick={agregarEntrada}
+                    className="btn btn-green"
+                >
+                    ➕ Ingresar dinero
+                </button>
+            </div>
 
-                <h2 className="gastos-fondo">
-                    Fondo disponible: {formatearMoneda(fondo)}
-                </h2>
+            <h2 className="gastos-fondo">
+                Fondo disponible: {formatearMoneda(fondo)}
+            </h2>
 
-                {/* =========================
-                    INGRESAR GASTOS
-                ========================= */}
-                {fondo > 0 && (
-                    <>
-                        <h3 className="gastos-subtitle">Ingresar gastos</h3>
+            {/* =========================
+                INGRESAR GASTOS
+            ========================= */}
+            {fondo > 0 && (
+                <>
+                    <h3 className="gastos-subtitle">Ingresar gastos</h3>
 
-                        <div className="gastos-form gastos-form-gasto">
-                            <input
-                                type="date"
-                                value={fechaGasto}
-                                max={obtenerFechaLocal()}
-                                onChange={(e) => setFechaGasto(e.target.value)}
-                                className="gastos-input"
-                            />
+                    <div className="gastos-form gastos-form-gasto">
+                        <input
+                            type="date"
+                            value={fechaGasto}
+                            max={obtenerFechaLocal()}
+                            onChange={(e) => setFechaGasto(e.target.value)}
+                            className="gastos-input"
+                        />
 
-                            <input
-                                type="number"
-                                placeholder="Cantidad"
-                                value={cantidadGasto || ""}
-                                onChange={(e) =>
-                                    setCantidadGasto(parseFloat(e.target.value) || 0)
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="Cantidad"
+                            value={cantidadGasto || ""}
+                            onKeyDown={(e) => {
+                                if (["-", "+", "e", "E"].includes(e.key)) {
+                                    e.preventDefault();
                                 }
-                                className="gastos-input"
-                            />
+                            }}
+                            onChange={(e) =>
+                                setCantidadGasto(
+                                    Math.max(
+                                        0,
+                                        parseFloat(e.target.value) || 0
+                                    )
+                                )
+                            }
+                            className="gastos-input"
+                        />
 
-                            <input
-                                type="text"
-                                placeholder="Descripción"
-                                value={descripcion}
-                                onChange={(e) => setDescripcion(e.target.value)}
-                                className="gastos-input"
-                            />
+                        <input
+                            type="text"
+                            placeholder="Descripción"
+                            value={descripcion}
+                            onChange={(e) => setDescripcion(e.target.value)}
+                            className="gastos-input"
+                        />
 
-                            <button onClick={agregarGasto} className="btn btn-red gastos-btn">
-                                ➖ Registrar gasto
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={agregarGasto}
+                            className="btn btn-red gastos-btn"
+                        >
+                            ➖ Registrar gasto
+                        </button>
+                    </div>
+                </>
+            )}
 
-                        <h3 className="gastos-subtitle">
-                            Movimientos del {formatearFechaMX(obtenerFechaLocal())}
-                        </h3>
+            {/* =========================
+                TABLA DE MOVIMIENTOS
+            ========================= */}
+            {movimientos.length > 0 && (
+                <>
+                    <h3 className="gastos-subtitle">
+                        Movimientos del{" "}
+                        {formatearFechaMX(obtenerFechaLocal())}
+                    </h3>
 
-                        <div className="gastos-table-wrap">
-                            <div className="gastos-table-scroll">
-                                <table className="caja-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Tipo</th>
-                                            <th>Cantidad</th>
-                                            <th>Descripción</th>
-                                            <th>Fecha Gasto</th>
-                                            <th>Hora Registro</th>
-                                        </tr>
-                                    </thead>
+                    <div className="gastos-table-wrap">
+                        <div className="gastos-table-scroll">
+                            <table className="caja-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Cantidad</th>
+                                        <th>Descripción</th>
+                                        <th>Fecha Gasto</th>
+                                        <th>Hora Registro</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
 
-                                    <tbody>
-                                        {movimientos.map((m) => (
-                                            <tr key={m.id}>
+                                <tbody>
+                                    {movimientos.map((movimiento) => {
+                                        const estaEditando =
+                                            movimientoEditandoId ===
+                                            movimiento.id;
+
+                                        return (
+                                            <tr key={movimiento.id}>
                                                 <td>
-                                                    {m.tipo === "entrada"
-                                                        ? "Entrada"
-                                                        : "Gasto"}
+                                                    {estaEditando ? (
+                                                        <select
+                                                            value={edicionTipo}
+                                                            onChange={(e) =>
+                                                                setEdicionTipo(
+                                                                    e.target
+                                                                        .value as
+                                                                        | "entrada"
+                                                                        | "gasto"
+                                                                )
+                                                            }
+                                                            className="gastos-input gastos-input-tabla"
+                                                        >
+                                                            <option value="entrada">
+                                                                Entrada
+                                                            </option>
+
+                                                            <option value="gasto">
+                                                                Gasto
+                                                            </option>
+                                                        </select>
+                                                    ) : movimiento.tipo ===
+                                                      "entrada" ? (
+                                                        "Entrada"
+                                                    ) : (
+                                                        "Gasto"
+                                                    )}
                                                 </td>
 
                                                 <td
                                                     style={{
-                                                        color:
-                                                            m.tipo === "gasto"
-                                                                ? "red"
-                                                                : "green",
+                                                        color: estaEditando
+                                                            ? undefined
+                                                            : movimiento.tipo ===
+                                                                "gasto"
+                                                              ? "red"
+                                                              : "green",
                                                     }}
                                                 >
-                                                    {formatearMoneda(m.cantidad)}
+                                                    {estaEditando ? (
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.01"
+                                                            value={
+                                                                edicionCantidad ||
+                                                                ""
+                                                            }
+                                                            onKeyDown={(e) => {
+                                                                if (
+                                                                    [
+                                                                        "-",
+                                                                        "+",
+                                                                        "e",
+                                                                        "E",
+                                                                    ].includes(
+                                                                        e.key
+                                                                    )
+                                                                ) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
+                                                            onChange={(e) =>
+                                                                setEdicionCantidad(
+                                                                    Math.max(
+                                                                        0,
+                                                                        parseFloat(
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                        ) || 0
+                                                                    )
+                                                                )
+                                                            }
+                                                            className="gastos-input gastos-input-tabla"
+                                                        />
+                                                    ) : (
+                                                        formatearMoneda(
+                                                            movimiento.cantidad
+                                                        )
+                                                    )}
                                                 </td>
-
-                                                <td>{m.descripcion}</td>
 
                                                 <td>
-                                                    {m.fechaMovimiento
-                                                        ? formatearFechaMX(m.fechaMovimiento)
-                                                        : "-"}
+                                                    {estaEditando ? (
+                                                        <input
+                                                            type="text"
+                                                            value={
+                                                                edicionDescripcion
+                                                            }
+                                                            onChange={(e) =>
+                                                                setEdicionDescripcion(
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
+                                                            className="gastos-input gastos-input-tabla"
+                                                        />
+                                                    ) : (
+                                                        movimiento.descripcion
+                                                    )}
                                                 </td>
 
-                                                <td>{m.fecha}</td>
+                                                <td>
+                                                    {estaEditando ? (
+                                                        <input
+                                                            type="date"
+                                                            value={
+                                                                edicionFechaMovimiento
+                                                            }
+                                                            max={obtenerFechaLocal()}
+                                                            onChange={(e) =>
+                                                                setEdicionFechaMovimiento(
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
+                                                            className="gastos-input gastos-input-tabla"
+                                                        />
+                                                    ) : movimiento.fechaMovimiento ? (
+                                                        formatearFechaMX(
+                                                            movimiento.fechaMovimiento
+                                                        )
+                                                    ) : (
+                                                        "-"
+                                                    )}
+                                                </td>
+
+                                                <td>{movimiento.fecha}</td>
+
+                                                <td>
+                                                    <div className="gastos-acciones">
+                                                        {estaEditando ? (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-green gastos-btn-accion"
+                                                                    onClick={() =>
+                                                                        guardarEdicion(
+                                                                            movimiento
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    💾 Guardar
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn gastos-btn-cancelar gastos-btn-accion"
+                                                                    onClick={
+                                                                        cancelarEdicion
+                                                                    }
+                                                                >
+                                                                    Cancelar
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-blue gastos-btn-accion"
+                                                                    onClick={() =>
+                                                                        iniciarEdicion(
+                                                                            movimiento
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        movimientoEditandoId !==
+                                                                        null
+                                                                    }
+                                                                >
+                                                                    ✏️ Editar
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-red gastos-btn-accion"
+                                                                    onClick={() =>
+                                                                        eliminarMovimiento(
+                                                                            movimiento
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        movimientoEditandoId !==
+                                                                        null
+                                                                    }
+                                                                >
+                                                                    🗑️ Eliminar
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
-                    </>
-                )}
-            </div>
-        );
+                    </div>
+                </>
+            )}
+        </div>
+    );
 };
 
 export default Gastos;

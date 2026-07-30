@@ -2,11 +2,16 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "svg2pdf.js";
 import { getDatabase, ref, get } from "firebase/database";
-import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
+import { formatearMoneda } from "../funciones/formato_moneda";
 import { app } from "../firebase/config";
 
-const convertirFecha = (f: string): string => {
-    const partes = f.split("-");
+const convertirFecha = (fecha: string): string => {
+    if (!fecha) return "-";
+
+    const partes = fecha.split("-");
+
+    if (partes.length !== 3) return fecha;
+
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
 };
 
@@ -18,7 +23,9 @@ const limpiarTextoPDF = (texto: string): string => {
         .replace(/�/g, "N");
 };
 
-const cargarSVGElemento = async (path: string): Promise<SVGSVGElement | null> => {
+const cargarSVGElemento = async (
+    path: string
+): Promise<SVGSVGElement | null> => {
     const response = await fetch(path);
     const svgText = await response.text();
 
@@ -28,7 +35,10 @@ const cargarSVGElemento = async (path: string): Promise<SVGSVGElement | null> =>
     return contenedor.querySelector("svg");
 };
 
-export const generarPDFGastos = async (desde: string, hasta: string) => {
+export const generarPDFGastos = async (
+    desde: string,
+    hasta: string
+) => {
     if (!desde || !hasta) {
         alert("Selecciona ambas fechas");
         return;
@@ -49,34 +59,65 @@ export const generarPDFGastos = async (desde: string, hasta: string) => {
     const data = snapshot.val();
     const gastos: any[] = [];
 
-    Object.keys(data).forEach((fechaNum) => {
-        Object.values(data[fechaNum]).forEach((g: any) => {
-            gastos.push({ ...g, fechaNum });
+    Object.keys(data).forEach((fechaRegistroNum) => {
+        const movimientosDia = data[fechaRegistroNum];
+
+        if (
+            !movimientosDia ||
+            typeof movimientosDia !== "object"
+        ) {
+            return;
+        }
+
+        Object.values(movimientosDia).forEach((g: any) => {
+            gastos.push({
+                ...g,
+                fechaRegistroNum,
+                fechaMovimiento: g.fechaMovimiento || "",
+            });
         });
     });
 
-    const [dD, dM, dY] = desdeForm.split("/").map(Number);
-    const [hD, hM, hY] = hastaForm.split("/").map(Number);
-
-    const desdeDate = new Date(dY, dM - 1, dD).getTime();
-    const hastaDate = new Date(hY, hM - 1, hD, 23, 59, 59).getTime();
+    const desdeDate = new Date(`${desde}T00:00:00`).getTime();
+    const hastaDate = new Date(`${hasta}T23:59:59`).getTime();
 
     const filtrados = gastos.filter((g) => {
-        const f = String(g.fechaNum || "");
-        if (f.length !== 8) return false;
+        if (g.tipo !== "gasto") return false;
 
-        const dia = Number(f.substring(0, 2));
-        const mes = Number(f.substring(2, 4)) - 1;
-        const anio = Number(f.substring(4, 8));
+        const fechaMovimiento = String(
+            g.fechaMovimiento || ""
+        );
 
-        const fechaReal = new Date(anio, mes, dia).getTime();
-        return fechaReal >= desdeDate && fechaReal <= hastaDate;
+        if (!fechaMovimiento) return false;
+
+        const fechaReal = new Date(
+            `${fechaMovimiento}T00:00:00`
+        ).getTime();
+
+        return (
+            fechaReal >= desdeDate &&
+            fechaReal <= hastaDate
+        );
     });
 
     if (filtrados.length === 0) {
         alert("No hay gastos en ese rango");
         return;
     }
+
+    filtrados.sort((a, b) => {
+        const comparacionFecha = String(
+            a.fechaMovimiento
+        ).localeCompare(String(b.fechaMovimiento));
+
+        if (comparacionFecha !== 0) {
+            return comparacionFecha;
+        }
+
+        return String(a.fecha || "").localeCompare(
+            String(b.fecha || "")
+        );
+    });
 
     const doc = new jsPDF();
     doc.setFont("helvetica", "normal");
@@ -87,7 +128,9 @@ export const generarPDFGastos = async (desde: string, hasta: string) => {
     const logoH = 30;
     const separacionTexto = 8;
 
-    const svgElement = await cargarSVGElemento("/svg/logo_negro.svg");
+    const svgElement = await cargarSVGElemento(
+        "/svg/logo_negro.svg"
+    );
 
     if (svgElement) {
         await doc.svg(svgElement, {
@@ -102,34 +145,43 @@ export const generarPDFGastos = async (desde: string, hasta: string) => {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text(`Gastos del ${desdeForm} al ${hastaForm}`, textoX, 16);
+    doc.text(
+        `Gastos del ${desdeForm} al ${hastaForm}`,
+        textoX,
+        16
+    );
 
     const now = new Date();
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(
-        `Generado: ${now.toLocaleDateString("es-MX")} ${now.toLocaleTimeString("es-MX")}`,
+        `Generado: ${now.toLocaleDateString(
+            "es-MX"
+        )} ${now.toLocaleTimeString("es-MX")}`,
         textoX,
         23
     );
 
-    const posY = 32;
-
-    const tabla = filtrados.map((g) => {
-        const f = String(g.fechaNum || "");
-        const fecha = `${f.substring(0, 2)}/${f.substring(2, 4)}/${f.substring(4, 8)}`;
-
-        return [
-            limpiarTextoPDF(fecha),
-            limpiarTextoPDF(g.descripcion || ""),
-            limpiarTextoPDF(g.tipo || ""),
-            formatearMoneda(Number(g.cantidad)),
-        ];
-    });
+    const tabla = filtrados.map((g) => [
+        limpiarTextoPDF(
+            convertirFecha(g.fechaMovimiento)
+        ),
+        limpiarTextoPDF(g.descripcion || ""),
+        "Gasto",
+        formatearMoneda(Number(g.cantidad || 0)),
+    ]);
 
     autoTable(doc, {
-        startY: posY,
-        head: [["Fecha", "Descripcion", "Tipo", "Cantidad"]],
+        startY: 32,
+        head: [
+            [
+                "Fecha movimiento",
+                "Descripcion",
+                "Tipo",
+                "Cantidad",
+            ],
+        ],
         body: tabla,
         theme: "grid",
         styles: {
@@ -147,33 +199,36 @@ export const generarPDFGastos = async (desde: string, hasta: string) => {
             fontSize: 11,
         },
         columnStyles: {
-            0: { cellWidth: 30 },
-            1: { cellWidth: 90 },
+            0: { cellWidth: 38 },
+            1: { cellWidth: 82 },
             2: { cellWidth: 30 },
-            3: { cellWidth: 30, halign: "right" },
+            3: {
+                cellWidth: 30,
+                halign: "right",
+            },
         },
     });
 
-    const totalEntradas = filtrados
-        .filter((g) => g.tipo === "entrada")
-        .reduce((acc, g) => acc + Number(g.cantidad || 0), 0);
+    const totalGastos = filtrados.reduce(
+        (acc, g) =>
+            acc + Math.abs(Number(g.cantidad || 0)),
+        0
+    );
 
-    const totalGastos = filtrados
-        .filter((g) => g.tipo === "gasto")
-        .reduce((acc, g) => acc + Math.abs(Number(g.cantidad || 0)), 0);
-
-    const fondoFinal = totalEntradas - totalGastos;
-
-
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    const finalY =
+        (doc as any).lastAutoTable.finalY + 10;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(
-        `Gastos totales: ${formatearMoneda(totalGastos)}`,
+        `Gastos totales: ${formatearMoneda(
+            totalGastos
+        )}`,
         14,
         finalY + 7
     );
 
-    doc.save(`Gastos_${desdeForm}_a_${hastaForm}.pdf`);
+    doc.save(
+        `Gastos_${desdeForm.replace("/", "_")}_a_${hastaForm.replace("/", "_")}.pdf`
+    );
 };
