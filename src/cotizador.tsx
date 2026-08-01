@@ -1183,6 +1183,7 @@ const Cotizador = () => {
             data={itemEditando || undefined}
             onGuardar={guardarCotizacion}
             setDirty={setFormDirty}
+            perfil={asesor || undefined}
           />
         )}
         {cotizadorActivo === "CartuchoB" && (

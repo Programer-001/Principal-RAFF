@@ -22,43 +22,43 @@ interface Props {
 }
 
 const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
-  const [diametro, setDiametro] = useState<TipoResistencia | "">("");
-  const [longitud, setLongitud] = useState<number>(0); //Longitud
-  //const [soldarCable, setSoldarCable] = useState("");
-  //const [cableParaSoldar, setCableParaSoldar] = useState("");
-  const [tipoPlaca, setTipoPlaca] = useState("");
-  const [precioPlaca, setPrecioPlaca] = useState(0);
-  const [cantidadPlaca, setCantidadPlaca] = useState(0);
-  const [desoldarTornillo, setDesoldarTornillo] = useState(false);
-  const [termoposoBase, setTermoposoBase] = useState(false);
-  const [cambiarTornillo, setCambiarTornillo] = useState(false);
-  const totalPlaca = tipoPlaca ? precioPlaca * cantidadPlaca : 0;
-  const [puentes, setPuentes] = useState(false);
-  const [longitudCable, setLongitudCable] = useState(0);
-  const [cantidadCable, setCantidadCable] = useState(0);
-  const [cantidadDesoldar, setCantidadDesoldar] = useState(0);
-  const [cantidadBarrenos, setCantidadBarrenos] = useState(0);
-  const [servicioExpress, setServicioExpress] = useState(false);
-  const [cantidadPuentes, setCantidadPuentes] = useState(0);
-  const [cantidadTermoposo, setCantidadTermoposo] = useState(0);
-  const [cantidadTapon, setCantidadTapon] = useState(0);
-  const [cantidadResistencias, setCantidadResistencias] = useState(0);
-  const [cantidadDesoldarBase, setCantidadDesoldarBase] = useState(0);
-  const [cantidadSellos, setCantidadSellos] = useState(0);
-  const [voltaje, setVoltaje] = useState<number>(0);
-    const [potencia, setPotencia] = useState<number>(0);
-    const [maxWatts, setMaxWatts] = useState(!!data?.datos?.maxWatts);
-    const [sacarWatts, setSacarWatts] = useState(!!data?.datos?.sacarWatts);
-    const [muestra, setMuestra] = useState(data?.datos?.muestra || "");
-    const [mostrarDetalle, setMostrarDetalle] = useState(false);
-    const [aleta, setAleta] = useState(false);
-    const [datosAdicionales, setDatosAdicionales] = useState("");
-    const [extrasActivos, setExtrasActivos] = useState(false);
+const [diametro, setDiametro] = useState<TipoResistencia | "">("");
+const [longitud, setLongitud] = useState<number>(0); //Longitud
+//const [soldarCable, setSoldarCable] = useState("");
+//const [cableParaSoldar, setCableParaSoldar] = useState("");
+const [tipoPlaca, setTipoPlaca] = useState("");
+const [precioPlaca, setPrecioPlaca] = useState(0);
+const [cantidadPlaca, setCantidadPlaca] = useState(0);
+const [desoldarTornillo, setDesoldarTornillo] = useState(false);
+const [termoposoBase, setTermoposoBase] = useState(false);
+const [cambiarTornillo, setCambiarTornillo] = useState(false);
+const totalPlaca = tipoPlaca ? precioPlaca * cantidadPlaca : 0;
+const [puentes, setPuentes] = useState(false);
+const [longitudCable, setLongitudCable] = useState(0);
+const [cantidadCable, setCantidadCable] = useState(0);
+const [cantidadDesoldar, setCantidadDesoldar] = useState(0);
+const [cantidadBarrenos, setCantidadBarrenos] = useState(0);
+const [servicioExpress, setServicioExpress] = useState(false);
+const [cantidadPuentes, setCantidadPuentes] = useState(0);
+const [cantidadTermoposo, setCantidadTermoposo] = useState(0);
+const [cantidadTapon, setCantidadTapon] = useState(0);
+const [cantidadResistencias, setCantidadResistencias] = useState(0);
+const [cantidadDesoldarBase, setCantidadDesoldarBase] = useState(0);
+const [cantidadSellos, setCantidadSellos] = useState(0);
+const [voltaje, setVoltaje] = useState<number>(0);
+const [potencia, setPotencia] = useState<number>(0);
+const [maxWatts, setMaxWatts] = useState(!!data?.datos?.maxWatts);
+const [sacarWatts, setSacarWatts] = useState(!!data?.datos?.sacarWatts);
+const [muestra, setMuestra] = useState(data?.datos?.muestra || "");
+const [mostrarDetalle, setMostrarDetalle] = useState(false);
+const [aleta, setAleta] = useState(false);
+const [datosAdicionales, setDatosAdicionales] = useState("");
+const [extrasActivos, setExtrasActivos] = useState(false);
 const [productosExtras, setProductosExtras] = useState<ProductoExtra[]>([]);
-    const esAdministracion = perfil?.area === "Administración";
-  //-------------------------------------------------------------------------------->>
-  const [catalogos, setCatalogos] = useState<any>({});
-  const [seleccionados, setSeleccionados] = useState<any>({});
+const esAdministracion = perfil?.area === "Administración";
+//-------------------------------------------------------------------------------->>
+const [catalogos, setCatalogos] = useState<any>({});
+const [seleccionados, setSeleccionados] = useState<any>({});
   useEffect(() => {
     const rutas = [
       "tornillo",

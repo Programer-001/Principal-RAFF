@@ -10,9 +10,14 @@ interface Props {
   data?: ItemCotizado;
   onGuardar: (item: ItemCotizado) => void;
   setDirty: React.Dispatch<React.SetStateAction<boolean>>;
+      perfil?: {
+        area?: string;
+        puesto?: string;
+        username?: string;
+    };
 }
 
-const Banda = ({ data, onGuardar, setDirty }: Props) => {
+const Banda = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const [diametro, setDiametro] = useState<number>(0);
   const [ancho, setAncho] = useState<number>(0);
   const [precio, setPrecio] = useState<number>(0);
@@ -62,6 +67,9 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
     const [longitudTiraCm, setLongitudTiraCm] = useState<number>(0);
     //Datos adicionales
     const [datosAdicionales, setDatosAdicionales] = useState("");
+    // verificar si es un asesor para mostrar el campo de datos adicionales
+    const esAdministracion = perfil?.area === "Administración";
+    const [mostrarDetalle, setMostrarDetalle] = useState(false);
 
 
   useEffect(() => {
@@ -108,11 +116,14 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
         }
     }, [voltaje]);
 
+    
+// Calcular precio de la banda con respecto a la tabla de precios y las opciones seleccionadas
+  let precioBase = 0;
   const calcularTotalBanda = () => {
     let resultado = 0;
 
     let diametroPulgadas = diametro / 2.54;
-    const anchoPulgadas = ancho / 2.54;
+    let anchoPulgadas = ancho / 2.54;
       //import { tipoCable, termopar, tira } from "../datos/tipoCable";
       //aqui saca el tipo TIRA
       if (selector === 5) {
@@ -133,6 +144,7 @@ const Banda = ({ data, onGuardar, setDirty }: Props) => {
           if (selector === 3) diametroPulgadas = diametroPulgadas / Math.PI;
 
           resultado = calcularPrecio(diametroPulgadas, anchoPulgadas) ?? 0;
+          precioBase = resultado; // ← guardas el valor para mostrarlo
           // Semicurva +10%
           if (selector === 2) {
             resultado *= 1.10;
@@ -280,6 +292,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
     .trim();
 
   return (
+    <>
     <div className="form-container">
       <h1>Banda</h1>
 
@@ -733,6 +746,89 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
         {data ? "ACTUALIZAR" : "AGREGAR"}
       </button>
     </div>
+     {/* -------------------------------------------------------VARIABLES CUADRO----------------------------------------------------->> */}
+          {esAdministracion && (
+            <>
+            <div style={{ marginBottom: 10 }}>
+                      <label style={{ cursor: "pointer", fontWeight: "bold" }}>
+                          <input
+                              type="checkbox"
+                              checked={mostrarDetalle}
+                              onChange={(e) => setMostrarDetalle(e.target.checked)}
+                              style={{ marginRight: 8 }}
+                          />
+                          Mostrar detalle técnico
+                      </label>
+                  </div>
+                  {mostrarDetalle && (
+                    <div
+                      style={{
+                        border: "1px solid #ccc",
+                        borderRadius: 8,
+                        padding: 12,
+                        marginTop: 15,
+                        background: "#f8f8f8",
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      <h3>Variables de Banda</h3>
+
+                      <p><strong>Cantidad:</strong> {cantidad}</p>
+                      <p><strong>Tipo:</strong> {tipoBandaTexto}</p>
+                      <p><strong>Diámetro:</strong> {diametro}</p>
+                      <p><strong>Diámetro en pulgadas:</strong> {diametro/2.54}</p>
+                      <p><strong>Ancho:</strong> {ancho}</p>
+                      <p><strong>Ancho en pulgadas:</strong> {ancho/2.54}</p>
+                      <p><strong>Voltaje:</strong> {voltaje}</p>
+                      <p><strong>Potencia:</strong> {potencia}</p>
+                      <p><strong>Precio base: </strong>{formatearMoneda(precioBase)}</p>
+
+                      <hr />
+
+                      <p><strong>Barril y Cincho:</strong> {barrilCincho ? "+300" : "0"}</p>
+                      <p><strong>Stuck:</strong> {stuck ? "+80" : "0"}</p>
+                      <p><strong>Caja:</strong> {caja ? "+70" : "0"}</p>
+
+                      <p>
+                        <strong>Barrenos:</strong>{" "}
+                        {barrenos ? `${numBarrenos} × 30 = ${numBarrenos * 30}` : "0"}
+                      </p>
+
+                      <p>
+                        <strong>Cables:</strong>{" "}
+                        {usarCables
+                          ? `${tipoCableSeleccionado} - ${cantidadCables} cable(s) de ${longitudCm} cm`
+                          : "No"}
+                      </p>
+
+                      <p>
+                        <strong>Termopar:</strong>{" "}
+                        {usarTermopar
+                          ? `${tipoTermoparSeleccionado} - ${longitudTermoparCm} cm`
+                          : "No"}
+                      </p>
+
+                      <hr />
+
+                      <p><strong>Fabricar 440:</strong> {fabricar440 ? "Sí (+10%)" : "No"}</p>
+                      <p><strong>Trifásica:</strong> {trifasica ? "Sí (+20%)" : "No"}</p>
+                      <p><strong>Express:</strong> {express ? "Sí (+30%)" : "No"}</p>
+                      <p><strong>Excedente:</strong> {excedente ? "Sí (+25%)" : "No"}</p>
+
+                      <hr />
+
+                      <p><strong>Precio calculado:</strong> {formatearMoneda(precioCalculado)}</p>
+                      <p><strong>Total + IVA:</strong> {formatearMoneda(precioCalculado * 1.16)}</p>
+                    </div>
+                  )}
+            
+            
+            
+            
+            
+            </>
+          )}
+    </>
   );
 };
 

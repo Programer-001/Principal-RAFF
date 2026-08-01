@@ -2,15 +2,7 @@
 // Componente para registrar, editar y eliminar gastos y entradas de dinero en caja
 
 import React, { useEffect, useState } from "react";
-import {
-    getDatabase,
-    ref,
-    set,
-    onValue,
-    push,
-    update,
-    remove,
-} from "firebase/database";
+import { getDatabase,ref,set,onValue,push,update,remove} from "firebase/database";
 import { app } from "../firebase/config";
 import {
     obtenerFechaLocal,
