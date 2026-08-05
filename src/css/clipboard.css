@@ -1,0 +1,75 @@
+/*src/css/clipboard.css*/
+/* src/css/clipboard.css */
+
+/*
+  Este contenedor incluye:
+  - el SVG del clipboard
+  - la hoja blanca con la tabla
+*/
+
+
+/*
+  Clipboard ilustrativo del lado izquierdo.
+  Queda encima de una parte de la hoja.
+*/
+.clipboard-svg {
+  position: absolute;
+
+  top: 0px;
+  left: 0;
+
+  width: 900px;
+  height: auto;
+
+  display: block;
+
+  /*
+    Debe quedar encima de la hoja para que el clip
+    y la tabla rosa se vean al frente.
+  */
+  z-index: 1;
+
+  pointer-events: none;
+  user-select: none;
+
+  --clipboard-board-color: #a75d5a;
+  --clipboard-clip-color: #e7e7e7;
+  --clipboard-border-color: #3f4850;
+  --clipboard-hole-color: #ffffff;
+}
+
+.clipboard-board {
+  fill: var(--clipboard-board-color);
+  stroke: var(--clipboard-border-color);
+  stroke-width: 8;
+  stroke-linejoin: round;
+}
+
+.clipboard-clip {
+  fill: var(--clipboard-clip-color);
+  stroke: var(--clipboard-border-color);
+  stroke-width: 8;
+  stroke-linejoin: round;
+}
+
+.clipboard-hole {
+  fill: var(--clipboard-hole-color);
+}
+
+/*
+  Colores opcionales.
+*/
+.clipboard-rosa {
+  --clipboard-board-color: #df9996;
+  --clipboard-clip-color: #e7e7e7;
+}
+
+.clipboard-verde {
+  --clipboard-board-color: #81c784;
+  --clipboard-clip-color: #eeeeee;
+}
+
+.clipboard-azul {
+  --clipboard-board-color: #8ab4e8;
+  --clipboard-clip-color: #e7e7e7;
+}

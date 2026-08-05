@@ -1,0 +1,52 @@
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="48 14 704 1010"
+    class="clipboard-svg clipboard-verde"
+>
+    <defs>
+        <mask id="clipMask">
+            <!-- Lo blanco se conserva -->
+            <rect width="800" height="1200" fill="white" />
+
+            <!-- Lo negro se recorta -->
+            <circle
+                cx="400"
+                cy="72"
+                r="23"
+                fill="black"
+            />
+        </mask>
+    </defs>
+
+    <path
+        class="clipboard-board"
+        d="M91 124
+           H709
+           C731 124 744 140 744 162
+           V982
+           C744 1004 731 1016 709 1016
+           H91
+           C69 1016 56 1004 56 982
+           V162
+           C56 140 69 124 91 124Z"
+    />
+
+    <path
+        class="clipboard-clip"
+        mask="url(#clipMask)"
+        d="M197 84
+           H340
+           C344 84 347 81 347 77
+           C347 46 371 22 400 22
+           C429 22 453 46 453 77
+           C453 81 456 84 460 84
+           H603
+           C613 84 620 91 620 101
+           V194
+           C620 204 613 211 603 211
+           H197
+           C187 211 180 204 180 194
+           V101
+           C180 91 187 84 197 84Z"
+    />
+</svg>
