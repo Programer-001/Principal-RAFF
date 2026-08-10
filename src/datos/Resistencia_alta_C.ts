@@ -182,6 +182,11 @@ export const calcularCartuchoAltaProveedor = (datos: {
 
     const incrementoMilimetrico =
         datos.tipo === "milimetros" ? precioBase * 0.1 : 0;
+  // Excedente de longitud del cartucho. Cada cm adicional cuesta $1.70      
+    const LIMITE_TABLA_CM = 55.88;
+    const excedenteLongitud = datos.longitudCm > LIMITE_TABLA_CM
+        ? (datos.longitudCm - LIMITE_TABLA_CM) * 1.7
+        : 0;
 
     const excedenteCable =
         datos.cableCm > 25 ? (datos.cableCm - 25) * 1.5 : 0;
@@ -191,6 +196,7 @@ export const calcularCartuchoAltaProveedor = (datos: {
     const subtotal =
         precioBase +
         incrementoMilimetrico +
+        excedenteLongitud +
         excedenteCable +
         terminal;
 
@@ -205,6 +211,7 @@ export const calcularCartuchoAltaProveedor = (datos: {
         longitudComercialPulgadas: longitudComercial.pulgadas,
         precioBase,
         incrementoMilimetrico,
+        excedenteLongitud,
         excedenteCable,
         terminal,
         subtotal,

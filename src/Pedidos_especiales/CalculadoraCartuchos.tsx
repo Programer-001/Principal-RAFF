@@ -19,7 +19,9 @@ const CalculadoraCartuchos: React.FC = () => {
     const [cableCm, setCableCm] = useState(25);
     const [terminal90, setTerminal90] = useState(false);
     const [descuento30, setDescuento30] = useState(false);
-    const [resultado, setResultado] = useState<any>(null);
+    const [resultado, setResultado] = useState<ReturnType<
+        typeof calcularCartuchoAltaProveedor
+    > | null>(null);
 
     const calcular = () => {
         const r = calcularCartuchoAltaProveedor({
@@ -42,6 +44,7 @@ const CalculadoraCartuchos: React.FC = () => {
 
                 <div className="form-row">
                     <label>Tipo</label>
+
                     <div className="radio-group">
                         <label>
                             <input
@@ -66,6 +69,7 @@ const CalculadoraCartuchos: React.FC = () => {
                 {tipo === "pulgadas" ? (
                     <div className="form-row">
                         <label>Diámetro</label>
+
                         <select
                             value={diametro}
                             onChange={(e) => setDiametro(e.target.value)}
@@ -80,6 +84,7 @@ const CalculadoraCartuchos: React.FC = () => {
                 ) : (
                     <div className="form-row">
                         <label>Diámetro mm</label>
+
                         <input
                             type="number"
                             min={0}
@@ -91,21 +96,27 @@ const CalculadoraCartuchos: React.FC = () => {
 
                 <div className="form-row">
                     <label>Longitud del cartucho cm</label>
+
                     <input
                         type="number"
                         min={0}
                         value={longitudCm || ""}
-                        onChange={(e) => setLongitudCm(Number(e.target.value))}
+                        onChange={(e) =>
+                            setLongitudCm(Number(e.target.value))
+                        }
                     />
                 </div>
 
                 <div className="form-row">
                     <label>Longitud del cable cm</label>
+
                     <input
                         type="number"
                         min={0}
                         value={cableCm || ""}
-                        onChange={(e) => setCableCm(Number(e.target.value))}
+                        onChange={(e) =>
+                            setCableCm(Number(e.target.value))
+                        }
                     />
                 </div>
 
@@ -114,7 +125,9 @@ const CalculadoraCartuchos: React.FC = () => {
                         <input
                             type="checkbox"
                             checked={terminal90}
-                            onChange={(e) => setTerminal90(e.target.checked)}
+                            onChange={(e) =>
+                                setTerminal90(e.target.checked)
+                            }
                         />
                         Terminal de 90°
                     </label>
@@ -125,13 +138,18 @@ const CalculadoraCartuchos: React.FC = () => {
                         <input
                             type="checkbox"
                             checked={descuento30}
-                            onChange={(e) => setDescuento30(e.target.checked)}
+                            onChange={(e) =>
+                                setDescuento30(e.target.checked)
+                            }
                         />
                         Aplicar descuento 30%
                     </label>
                 </div>
 
-                <button className="btn btn-blue" onClick={calcular}>
+                <button
+                    className="btn btn-blue"
+                    onClick={calcular}
+                >
                     Calcular
                 </button>
             </div>
@@ -167,6 +185,11 @@ const CalculadoraCartuchos: React.FC = () => {
                     </p>
 
                     <p>
+                        <strong>Excedente de cartucho ($1.70/cm):</strong>{" "}
+                        {formatoMoneda(resultado.excedenteLongitud)}
+                    </p>
+
+                    <p>
                         <strong>Excedente Cable:</strong>{" "}
                         {formatoMoneda(resultado.excedenteCable)}
                     </p>
@@ -183,7 +206,9 @@ const CalculadoraCartuchos: React.FC = () => {
 
                     <hr />
 
-                    <h2>Total: {formatoMoneda(resultado.total)}</h2>
+                    <h2>
+                        Total: {formatoMoneda(resultado.total)}
+                    </h2>
                 </div>
             )}
         </div>
