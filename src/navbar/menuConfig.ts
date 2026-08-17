@@ -148,6 +148,7 @@ const MENUS_POR_ROL: MenuPorRol[] = [
         area: "Administración",
         puesto: "Gerente Administrativo",
         items: [
+            MENU_BASE.cotizador,
             MENU_BASE.consultaot,
             MENU_BASE.clientes,
             MENU_BASE.compras,
