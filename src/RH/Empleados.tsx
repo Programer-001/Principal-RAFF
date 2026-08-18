@@ -30,9 +30,13 @@ interface Empleado {
     estado?: string;
     cp?: string;
     puedeChecarCelular?: boolean;
+    comision?: {
+        tipo: "independiente" | "grupal";
+        porcentaje: number;
+    };
 }
 
-const estadoInicial = {
+const estadoInicial: Empleado = {
     id: "",
     nombre: "",
     celular: "",
@@ -55,6 +59,7 @@ const estadoInicial = {
     estado: "",
     cp: "",
     puedeChecarCelular: false,
+    comision: undefined,
 };
 
 const puestos = [
@@ -73,12 +78,15 @@ const areas = ["Mostrador", "Administración", "Almacén", "Producción"];
 
 const Empleados: React.FC = () => {
     const [empleados, setEmpleados] = useState<Empleado[]>([]);
-    const [nuevoEmpleado, setNuevoEmpleado] = useState(estadoInicial);
+    const [nuevoEmpleado, setNuevoEmpleado] = useState<Empleado>(estadoInicial);
     const [modoEdicion, setModoEdicion] = useState(false);
     const [modoNuevo, setModoNuevo] = useState(false);
     const [idEditando, setIdEditando] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [busqueda, setBusqueda] = useState("");
+    const [modalComisionAbierto, setModalComisionAbierto] = useState(false);
+    const [tipoComisionTemp, setTipoComisionTemp] = useState<"independiente" | "grupal">("independiente");
+    const [porcentajeComisionTemp, setPorcentajeComisionTemp] = useState<number>(1);
 
     useEffect(() => {
         const empleadosRef = ref(db, "RH/Empleados");
@@ -159,6 +167,7 @@ const Empleados: React.FC = () => {
             cp: empleado.cp || "",
             fechaNacimiento: empleado.fechaNacimiento || "",
             puedeChecarCelular:empleado.puedeChecarCelular ?? false,
+            comision: empleado.comision,
         });
 
         setModoEdicion(false);
@@ -225,6 +234,7 @@ const crearLoginSiFalta = async () => {
         salario: Number(nuevoEmpleado.salario || 0),
         diasdevacaciones: Number(nuevoEmpleado.diasdevacaciones || 0),
         puedeChecarCelular: nuevoEmpleado.puedeChecarCelular ?? false,
+        comision: nuevoEmpleado.comision ?? null,
         uid: uidFinal,
 
         fechaIngreso: nuevoEmpleado.fechaIngreso || "",
@@ -242,7 +252,7 @@ const crearLoginSiFalta = async () => {
     const agregarEmpleado = async () => {
         const requiereLogin =
             //nuevoEmpleado.email.trim() !== "" ||
-            nuevoEmpleado.password.trim() !== "";
+            (nuevoEmpleado.password || "").trim() !== "";
 
         if (
             !nuevoEmpleado.id ||
@@ -309,7 +319,7 @@ const crearLoginSiFalta = async () => {
 
         const requiereLogin =
             //nuevoEmpleado.email.trim() !== "" ||
-            nuevoEmpleado.password.trim() !== "";
+            (nuevoEmpleado.password || "").trim() !== "";
 
         if (!nuevoEmpleado.nombre || !nuevoEmpleado.puesto || !nuevoEmpleado.area) {
             alert("Completa nombre, área y puesto");
@@ -392,6 +402,62 @@ const crearLoginSiFalta = async () => {
     };
 
     const hayEmpleadoAbierto = modoNuevo || idEditando;
+    // =============================
+    // COMISIONES
+    // =============================
+
+    const abrirModalComision = () => {
+        // Si ya tiene comisión, cargamos sus datos actuales
+        if (nuevoEmpleado.comision) {
+            setTipoComisionTemp(nuevoEmpleado.comision.tipo);
+
+            // Ejemplo:
+            // Firebase 0.002 -> pantalla 0.2
+            // Firebase 0.01  -> pantalla 1
+            setPorcentajeComisionTemp(
+                nuevoEmpleado.comision.porcentaje * 100
+            );
+        } else {
+            // Valores iniciales para una comisión nueva
+            setTipoComisionTemp("independiente");
+            setPorcentajeComisionTemp(1);
+        }
+
+        setModalComisionAbierto(true);
+    };
+
+    const cancelarModalComision = () => {
+        setModalComisionAbierto(false);
+    };
+
+    const guardarComision = () => {
+        if (porcentajeComisionTemp <= 0) {
+            alert("El porcentaje debe ser mayor a 0");
+            return;
+        }
+
+        setNuevoEmpleado({
+            ...nuevoEmpleado,
+            comision: {
+                tipo: tipoComisionTemp,
+
+                // Lo que escribimos en pantalla se convierte:
+                // 1%    -> 0.01
+                // 0.2%  -> 0.002
+                // 0.02% -> 0.0002
+                porcentaje: porcentajeComisionTemp / 100,
+            },
+        });
+
+        setModalComisionAbierto(false);
+    };
+
+    const quitarComision = () => {
+        setNuevoEmpleado({
+            ...nuevoEmpleado,
+            comision: undefined,
+        });
+    };
 
     return (
         <div className="empleados-page">
@@ -707,7 +773,60 @@ const crearLoginSiFalta = async () => {
                                         </p>
                                     )}
                                 </div>
+                                {/* COMISIONES */}
+                                <div className="campo">
+                                    <label className="campo-label">
+                                        Aplica comisiones
+                                    </label>
 
+                                    {modoNuevo || modoEdicion ? (
+                                        <label className="empleado-check-activo">
+                                            <input
+                                                type="checkbox"
+                                                checked={Boolean(nuevoEmpleado.comision)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        abrirModalComision();
+                                                    } else {
+                                                        quitarComision();
+                                                    }
+                                                }}
+                                            />
+
+                                            {nuevoEmpleado.comision ? (
+                                                <span>
+                                                    {nuevoEmpleado.comision.tipo === "grupal"
+                                                        ? "Grupal"
+                                                        : "Independiente"}{" "}
+                                                    {(
+                                                        nuevoEmpleado.comision.porcentaje * 100
+                                                    ).toLocaleString("es-MX", {
+                                                        maximumFractionDigits: 4,
+                                                    })}
+                                                    %
+                                                </span>
+                                            ) : (
+                                                <span>No aplica</span>
+                                            )}
+                                        </label>
+                                    ) : (
+                                        <p>
+                                            {nuevoEmpleado.comision
+                                                ? `${
+                                                      nuevoEmpleado.comision.tipo === "grupal"
+                                                          ? "Grupal"
+                                                          : "Independiente"
+                                                  } ${(
+                                                      nuevoEmpleado.comision.porcentaje * 100
+                                                  ).toLocaleString("es-MX", {
+                                                      maximumFractionDigits: 4,
+                                                  })}%`
+                                                : "No aplica"}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* UID */}
                                 <Campo
                                     label="UID"
                                     value={nuevoEmpleado.uid}
@@ -791,6 +910,79 @@ const crearLoginSiFalta = async () => {
                     </div>
                 </aside>
             </div>
+
+            {modalComisionAbierto && (
+                <div className="comision-modal-overlay">
+                    <div className="comision-modal">
+                        <h3>Configurar comisión</h3>
+
+                        <div className="campo">
+                            <label className="campo-label">Tipo</label>
+
+                            <select
+                                value={tipoComisionTemp}
+                                onChange={(e) =>
+                                    setTipoComisionTemp(
+                                        e.target.value as "independiente" | "grupal"
+                                    )
+                                }
+                            >
+                                <option value="independiente">
+                                    Independiente
+                                </option>
+
+                                <option value="grupal">
+                                    Grupal
+                                </option>
+                            </select>
+                        </div>
+
+                        <div className="campo">
+                            <label className="campo-label">
+                                Porcentaje
+                            </label>
+
+                            <div className="comision-porcentaje-input">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={porcentajeComisionTemp}
+                                    onChange={(e) =>
+                                        setPorcentajeComisionTemp(
+                                            Number(e.target.value)
+                                        )
+                                    }
+                                />
+
+                                <span>%</span>
+                            </div>
+
+                            <small>
+                                Ejemplo: 1 = 1%, 0.2 = 0.2%
+                            </small>
+                        </div>
+
+                        <div className="comision-modal-actions">
+                            <button
+                                type="button"
+                                className="btn btn-purple"
+                                onClick={cancelarModalComision}
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-green"
+                                onClick={guardarComision}
+                            >
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

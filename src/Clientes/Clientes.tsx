@@ -1180,23 +1180,17 @@ const generarCatalogoClientes = async () => {
                   BOTÓN CONSTANCIA FISCAL
                   SOLO SE MUESTRA AL CREAR CLIENTE NUEVO
               ========================================== */}
-              {modoNuevo && modoEditar && (
-                <button
-                  type="button"
-                  className="btn btn-blue"
-                  onClick={() => {
-                    setArchivoConstancia(null);
-                    setDatosConstancia(null);
-                    setRegimenConstanciaSeleccionado("");
-                    setModalConstancia(true);
-                  }}
-                  style={{
-                    marginLeft: 10,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  📄 Cargar Constancia Fiscal
-                </button>
+              {modoEditar && (
+                  <button
+                      type="button"
+                      className="btn btn-blue"
+                      onClick={() => {
+                          setArchivoConstancia(null);
+                          setModalConstancia(true);
+                      }}
+                  >
+                      📄 {modoNuevo ? "Cargar Constancia Fiscal" : "Actualizar desde Constancia"}
+                  </button>
               )}
             </div>
 

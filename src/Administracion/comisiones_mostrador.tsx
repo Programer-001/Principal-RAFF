@@ -23,6 +23,10 @@ interface EmpleadoRH {
     salario?: number;
     username?: string;
     nombre?: string;
+    comision?: {
+    tipo: "independiente" | "grupal";
+    porcentaje: number;
+    };
 }
 
 interface AjusteEmpleado {
@@ -34,7 +38,7 @@ interface AjusteEmpleado {
 const ComisionesMostrador: React.FC = () => {
     const [fechaInicio, setFechaInicio] = useState("");
     const [fechaFin, setFechaFin] = useState("");
-    const [porcentaje, setPorcentaje] = useState<number>(0.2); // 0.2%
+    //const [porcentaje, setPorcentaje] = useState<number>(0.2); // 0.2%
     const [ventasRango, setVentasRango] = useState<CorteCajaItem[]>([]);
     const [empleados, setEmpleados] = useState<EmpleadoRH[]>([]);
     const [loadingVentas, setLoadingVentas] = useState(false);
@@ -132,6 +136,7 @@ const ComisionesMostrador: React.FC = () => {
                 salario: Number(data[key].salario || 0),
                 username: data[key].username || "",
                 nombre: data[key].nombre || "",
+                comision: data[key].comision || null,
             }));
 
             const filtrados = lista.filter(
@@ -257,10 +262,7 @@ const ComisionesMostrador: React.FC = () => {
         return totalConIva / 1.16;
     }, [totalConIva]);
 
-    const comisionBaseGeneral = useMemo(() => {
-        // porcentaje capturado como 0.2 = 0.2%
-        return subtotalSinIva * (Number(porcentaje || 0) / 100);
-    }, [subtotalSinIva, porcentaje]);
+
 
     // =========================
     // CÁLCULO POR EMPLEADO
@@ -269,26 +271,35 @@ const ComisionesMostrador: React.FC = () => {
         return Number(salarioMensual || 0) / 4;
     };
 
-    const obtenerComisionEmpleado = (empleadoId: string) => {
-        const ajuste = ajustes[empleadoId];
+    const obtenerComisionEmpleado = (empleado: EmpleadoRH) => {
+        const ajuste = ajustes[empleado.id];
 
-        if (!ajuste) return comisionBaseGeneral;
+        const porcentaje = Number(
+            empleado.comision?.porcentaje || 0
+        );
+
+        const comisionBase = subtotalSinIva * porcentaje;
+
+        if (!ajuste) return comisionBase;
         if (ajuste.cancelada) return 0;
 
         if (ajuste.modificada) {
-            return (comisionBaseGeneral / 5) * Number(ajuste.diasLaborados || 0);
+            return (
+                (comisionBase / 5) *
+                Number(ajuste.diasLaborados || 0)
+            );
         }
 
-        return comisionBaseGeneral;
+        return comisionBase;
     };
 
     const totalNominaComisiones = useMemo(() => {
         return empleados.reduce((acc, emp) => {
             const salarioSemanal = obtenerSalarioSemanal(Number(emp.salario || 0));
-            const comision = obtenerComisionEmpleado(emp.id);
+            const comision = obtenerComisionEmpleado(emp);
             return acc + salarioSemanal + comision;
         }, 0);
-    }, [empleados, ajustes, comisionBaseGeneral]);
+    }, [empleados, ajustes, subtotalSinIva]);
 
     // =========================
     // MODAL
@@ -390,19 +401,7 @@ const ComisionesMostrador: React.FC = () => {
                     />
                 </div>
 
-                <div>
-                    <label><strong>Porcentaje de comision</strong></label>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={porcentaje}
-                            onChange={(e) => setPorcentaje(Number(e.target.value))}
-                            style={{ width: "100%" }}
-                        />
-                        <p style={{ margin: 0 }}>%</p>
-                    </div>
-                </div>
+
 
                 <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={cargarVentas} className="btn btn-blue">
@@ -432,11 +431,6 @@ const ComisionesMostrador: React.FC = () => {
                 <div className="card-resumen" style={cardStyle}>
                     <strong>Subtotal sin IVA</strong>
                     <p style={valorStyle}>{formatearMoneda(subtotalSinIva)}</p>
-                </div>
-
-                <div className="card-resumen" style={cardStyle}>
-                    <strong>Comision base</strong>
-                    <p style={valorStyle}>{formatearMoneda(comisionBaseGeneral)}</p>
                 </div>
 
                 <div className="card-resumen" style={cardStyle}>
@@ -540,7 +534,7 @@ const ComisionesMostrador: React.FC = () => {
                                 const salarioSemanal = obtenerSalarioSemanal(
                                     Number(emp.salario || 0)
                                 );
-                                const comision = obtenerComisionEmpleado(emp.id);
+                                const comision = obtenerComisionEmpleado(emp);
                                 const total = salarioSemanal + comision;
                                 const ajuste = ajustes[emp.id];
 

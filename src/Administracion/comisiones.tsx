@@ -12,6 +12,10 @@ type Empleado = {
     activo?: boolean;
     area?: string;
     puesto?: string;
+    comision?: {
+        tipo: "independiente" | "grupal";
+        porcentaje: number;
+    };
     [key: string]: any;
 };
 
@@ -49,7 +53,6 @@ type FilaComision = {
     fechaFin: string;
 };
 
-const COMISION_PORCENTAJE = 0.01; // 1%
 /* Aquí puedes ajustar los tipos y descripciones según lo que manejen en tu sistema, 
 en firebase el tipo: tubular, banda, cartuchoB, cartuchoA, resorte, termopar, etc. */
 const TIPOS_DISPONIBLES = [
@@ -271,27 +274,54 @@ const Comisiones = () => {
         return filasFiltradas.reduce((acc, item) => acc + item.cantidad, 0);
     }, [filasFiltradas]);
 
+    const buscarEmpleadoPorOperador = (operador: string) => {
+        const operadorNormalizado = normalizarTexto(operador);
+
+        return trabajadores.find((emp) => {
+            const username = normalizarTexto(emp.username);
+            const nombre = normalizarTexto(emp.nombre);
+
+            return (
+                (username && username === operadorNormalizado) ||
+                (nombre && nombre === operadorNormalizado)
+            );
+        });
+    };
+
+    // Independiente = porcentaje sobre lo trabajado por esa persona.
     const resumenPorTrabajador = useMemo(() => {
         const mapa = new Map<
             string,
             {
                 operador: string;
+                area: string;
                 cantidad: number;
                 total: number;
                 partidas: number;
+                porcentaje: number;
                 comision: number;
             }
         >();
 
         filasFiltradas.forEach((fila) => {
-            const key = fila.operador || "--";
+            const empleado = buscarEmpleadoPorOperador(fila.operador);
+
+            // Si no tiene comisión o su comisión es grupal, no entra
+            // en la tabla de independientes.
+            if (!empleado?.comision) return;
+            if (empleado.comision.tipo !== "independiente") return;
+            if (Number(empleado.comision.porcentaje || 0) <= 0) return;
+
+            const key = String(empleado.id || empleado.username || fila.operador);
 
             if (!mapa.has(key)) {
                 mapa.set(key, {
-                    operador: key,
+                    operador: String(empleado.username || empleado.nombre || fila.operador || "--"),
+                    area: String(empleado.area || "Sin área"),
                     cantidad: 0,
                     total: 0,
                     partidas: 0,
+                    porcentaje: Number(empleado.comision.porcentaje || 0),
                     comision: 0,
                 });
             }
@@ -300,30 +330,60 @@ const Comisiones = () => {
             actual.cantidad += fila.cantidad;
             actual.total += fila.total;
             actual.partidas += 1;
-            actual.comision = actual.total * COMISION_PORCENTAJE;
+            actual.comision = actual.total * actual.porcentaje;
         });
 
         return Array.from(mapa.values()).sort((a, b) =>
             a.operador.localeCompare(b.operador, "es-MX", { sensitivity: "base" })
         );
-    }, [filasFiltradas]);
+    }, [filasFiltradas, trabajadores]);
 
-    const supervisoresProduccion = useMemo(() => {
-        return trabajadores.filter((emp) => {
-            const area = normalizarTexto(emp.area);
-            const puesto = normalizarTexto(emp.puesto);
-
-            return area === "produccion" && puesto === "supervisor";
-        });
+    // Grupal = porcentaje individual del empleado aplicado al total general.
+    const trabajadoresGrupales = useMemo(() => {
+        return trabajadores
+            .filter(
+                (emp) =>
+                    emp.comision?.tipo === "grupal" &&
+                    Number(emp.comision?.porcentaje || 0) > 0
+            )
+            .sort((a, b) =>
+                String(a.username || a.nombre || "").localeCompare(
+                    String(b.username || b.nombre || ""),
+                    "es-MX",
+                    { sensitivity: "base" }
+                )
+            );
     }, [trabajadores]);
 
-    const empleadosAlmacen = useMemo(() => {
-        return trabajadores.filter((emp) => {
-            const area = normalizarTexto(emp.area);
+    // Solo mostramos áreas que realmente tengan una comisión configurada.
+    const areasConComision = useMemo(() => {
+        const areas = new Set<string>();
 
-            return area === "almacen";
+        resumenPorTrabajador.forEach((item) => {
+            areas.add(item.area || "Sin área");
         });
-    }, [trabajadores]);
+
+        trabajadoresGrupales.forEach((emp) => {
+            areas.add(String(emp.area || "Sin área"));
+        });
+
+        return Array.from(areas).sort((a, b) => {
+            const areaA = normalizarTexto(a);
+            const areaB = normalizarTexto(b);
+
+            // Producción siempre primero
+            if (areaA === "produccion" && areaB !== "produccion") return -1;
+            if (areaB === "produccion" && areaA !== "produccion") return 1;
+
+            // Almacén siempre al final
+            if (areaA === "almacen" && areaB !== "almacen") return 1;
+            if (areaB === "almacen" && areaA !== "almacen") return -1;
+
+            return a.localeCompare(b, "es-MX", {
+                sensitivity: "base",
+            });
+        });
+    }, [resumenPorTrabajador, trabajadoresGrupales]);
 
     const dinero = (valor: number) =>
         valor.toLocaleString("es-MX", {
@@ -444,15 +504,29 @@ const Comisiones = () => {
                     <div><strong>Partidas:</strong> {filasFiltradas.length}</div>
                     <div><strong>Cantidad total:</strong> {totalCantidad}</div>
                     <div><strong>Total:</strong> {dinero(totalGeneral)}</div>
-                    {supervisoresProduccion.map((emp) => (
-                        <div key={emp.id}>
-                            <strong>
-                                Comisión del Supervisor ({emp.username || emp.nombre}):
-                            </strong>{" "}
-                            {dinero(totalGeneral * 0.0125)}
-                        </div>
-                    ))}
-                    <div><strong>Total para jose:</strong> {dinero(totalGeneral*0.002)}</div>
+                    {/* comision del supervisor */}
+                    {trabajadores
+                        .filter((emp) => {
+                            const area = normalizarTexto(emp.area);
+                            const puesto = normalizarTexto(emp.puesto);
+
+                            return (
+                                area === "produccion" &&
+                                puesto === "supervisor" &&
+                                emp.comision
+                            );
+                        })
+                        .map((emp) => (
+                            <div key={emp.id}>
+                                <strong>
+                                    Comisión del Supervisor ({emp.username || emp.nombre}):
+                                </strong>{" "}
+                                {dinero(
+                                    totalGeneral *
+                                    Number(emp.comision?.porcentaje || 0)
+                                )}
+                            </div>
+                        ))}
                 </div>
 
                 <div className="comisiones-table-wrap">
@@ -502,91 +576,153 @@ const Comisiones = () => {
                 </div>
             </div>
 
-            {/* RESUMEN POR TRABAJADOR */}
-            <div className="comisiones-card">
-                <h3 className="comisiones-card-title">Resumen por trabajador del taller</h3>
+            {/* COMISIONES POR ÁREA Y TIPO */}
+            {areasConComision.map((area) => {
+                const independientesArea = resumenPorTrabajador.filter(
+                    (item) => normalizarTexto(item.area) === normalizarTexto(area)
+                );
 
-                <div className="comisiones-table-wrap">
-                    <table className="comisiones-table comisiones-resumen-table">
-                        <thead>
-                            <tr>
-                                <th>Trabajador</th>
-                                <th>Cantidad</th>
-                                <th>Partidas</th>
-                                <th>Total trabajado</th>
-                                <th>Comisión</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {resumenPorTrabajador.length === 0 ? (
-                                <tr>
-                                    <td className="td-center" colSpan={5}>
-                                        No hay resumen para mostrar.
-                                    </td>
-                                </tr>
-                            ) : (
-                                <>
-                                    {resumenPorTrabajador.map((item) => (
-                                        <tr key={item.operador}>
-                                            <td>{item.operador}</td>
-                                            <td className="td-number">{item.cantidad}</td>
-                                            <td className="td-number">{item.partidas}</td>
-                                            <td className="td-number">{dinero(item.total)}</td>
-                                            <td className="td-number">{dinero(item.comision)}</td>
-                                        </tr>
-                                    ))}
+                const grupalesArea = trabajadoresGrupales.filter(
+                    (emp) => normalizarTexto(emp.area) === normalizarTexto(area)
+                );
 
-                                    <tr className="comisiones-total-row">
-                                        <td><strong>Total general</strong></td>
-                                        <td className="td-number">
-                                            <strong>{resumenPorTrabajador.reduce((acc, x) => acc + x.cantidad, 0)}</strong>
-                                        </td>
-                                        <td className="td-number">
-                                            <strong>{resumenPorTrabajador.reduce((acc, x) => acc + x.partidas, 0)}</strong>
-                                        </td>
-                                        <td className="td-number">
-                                            <strong>{dinero(resumenPorTrabajador.reduce((acc, x) => acc + x.total, 0))}</strong>
-                                        </td>
-                                        <td className="td-number">
-                                            <strong>{dinero(resumenPorTrabajador.reduce((acc, x) => acc + x.comision, 0))}</strong>
-                                        </td>
-                                    </tr>
-                                </>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {/* COMISIONES ALMACEN */}
-            <div className="comisiones-card">
-                <h3 className="comisiones-card-title">
-                    Comisión almacén
-                </h3>
+                if (independientesArea.length === 0 && grupalesArea.length === 0) {
+                    return null;
+                }
 
-                <div className="comisiones-table-wrap">
-                    <table className="comisiones-table">
-                        <thead>
-                            <tr>
-                                <th>Empleado</th>
-                                <th>Área</th>
-                                <th>Comisión</th>
-                            </tr>
-                        </thead>
+                return (
+                    <React.Fragment key={area}>
+                        {/* INDEPENDIENTES DEL ÁREA */}
+                        {independientesArea.length > 0 && (
+                            <div className="comisiones-card">
+                                <h3 className="comisiones-card-title">
+                                    {area} - Comisión independiente
+                                </h3>
 
-                        <tbody>
-                            {empleadosAlmacen.map((emp) => (
-                                <tr key={emp.id}>
-                                    <td>{emp.username || emp.nombre}</td>
-                                    <td>{emp.area}</td>
-                                    <td className="td-number">
-                                        {dinero(totalGeneral * 0.0015)}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                <div className="comisiones-table-wrap">
+                                    <table className="comisiones-table comisiones-resumen-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Trabajador</th>
+                                                <th className="td-number">Cantidad</th>
+                                                <th className="td-number">Partidas</th>
+                                                <th className="td-number">Porcentaje</th>
+                                                <th className="td-number">Comisión</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {independientesArea.map((item) => (
+                                                <tr key={`${area}-${item.operador}`}>
+                                                    <td>{item.operador}</td>
+                                                    <td className="td-number">{item.cantidad}</td>
+                                                    <td className="td-number">{item.partidas}</td>
+                                                    <td className="td-number">
+                                                        {(item.porcentaje * 100).toLocaleString("es-MX", {
+                                                            maximumFractionDigits: 4,
+                                                        })}
+                                                        %
+                                                    </td>
+                                                    <td className="td-number">{dinero(item.comision)}</td>
+                                                </tr>
+                                            ))}
+
+                                            <tr className="comisiones-total-row">
+                                                <td><strong>Total</strong></td>
+
+                                                <td className="td-number">
+                                                    <strong>
+                                                        {independientesArea.reduce(
+                                                            (acc, x) => acc + x.cantidad,
+                                                            0
+                                                        )}
+                                                    </strong>
+                                                </td>
+
+                                                <td className="td-number">
+                                                    <strong>
+                                                        {independientesArea.reduce(
+                                                            (acc, x) => acc + x.partidas,
+                                                            0
+                                                        )}
+                                                    </strong>
+                                                </td>
+
+                                                <td />
+
+                                                <td className="td-number">
+                                                    <strong>
+                                                        {dinero(
+                                                            independientesArea.reduce(
+                                                                (acc, x) => acc + x.comision,
+                                                                0
+                                                            )
+                                                        )}
+                                                    </strong>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* GRUPALES DEL ÁREA */}
+                        {grupalesArea.length > 0 && (
+                            <div className="comisiones-card">
+                                <h3 className="comisiones-card-title">
+                                    {area} - Comisión grupal
+                                </h3>
+
+                                <div className="comisiones-table-wrap">
+                                    <table className="comisiones-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Empleado</th>
+                                                <th>Área</th>
+                                                <th className="td-number">Porcentaje</th>
+                                                <th className="td-number">Comisión</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {grupalesArea.map((emp) => {
+                                                const porcentaje = Number(
+                                                    emp.comision?.porcentaje || 0
+                                                );
+                                                const comision = totalGeneral * porcentaje;
+
+                                                return (
+                                                    <tr key={emp.id || emp.username || emp.nombre}>
+                                                        <td>
+                                                            {emp.username || emp.nombre || "--"}
+                                                        </td>
+                                                        <td>{emp.area || "--"}</td>
+                                                        <td className="td-number">
+                                                            {(porcentaje * 100).toLocaleString(
+                                                                "es-MX",
+                                                                {
+                                                                    maximumFractionDigits: 4,
+                                                                }
+                                                            )}
+                                                            %
+                                                        </td>
+                                                        <td className="td-number">
+                                                            {dinero(comision)}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </React.Fragment>
+                );
+            })}
 
         </div>
     );

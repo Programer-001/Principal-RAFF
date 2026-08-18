@@ -102,7 +102,7 @@ const [diametroMm, setDiametroMm] = useState("");
     const convertidorcable = (cableCm: number): number => {
         // Excedente después de 25 cm
         if (cableCm > 25) {
-            return (cableCm - 25) * 1.5;
+            return (cableCm - 25) * 1.7;
         }
         return 0;
     };

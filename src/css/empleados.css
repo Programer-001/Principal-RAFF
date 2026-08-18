@@ -237,6 +237,72 @@
     font-size: 12px;
 }
 
+/* =========================
+   MODAL COMISIONES
+========================= */
+
+.comision-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgb(0 0 0 / 45%);
+}
+
+.comision-modal {
+    width: 100%;
+    max-width: 450px;
+
+    padding: 24px;
+
+    background: #fff;
+    border-radius: 12px;
+
+    box-shadow: 0 12px 35px rgb(0 0 0 / 20%);
+}
+
+.comision-modal h3 {
+    margin: 0 0 20px;
+}
+
+.comision-modal select,
+.comision-modal input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.comision-porcentaje-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.comision-porcentaje-input span {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.comision-modal small {
+    display: block;
+    margin-top: 6px;
+
+    color: #666;
+}
+
+.comision-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+
+    margin-top: 24px;
+}
+
 @media (max-width: 980px) {
     .empleados-layout {
         grid-template-columns: 1fr;
