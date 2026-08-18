@@ -11,6 +11,7 @@ import Cotizador from "./cotizador";
 import BuscarClientes from "./Clientes/Clientes";
 import Envios from "./Envios/Envios";
 import Menu from "./navbar/menu";
+import PermisosMenu from "./navbar/PermisosMenu";
 import GestionOT from "./GestionOT";
 import Orden_compra from "./OrdenCompra/Orden_Compra";
 import Productos_editor from "./Productos/Productos";
@@ -84,6 +85,7 @@ function AppLayout() {
         if (pathname.startsWith("/tienda")) return "tienda";
         if (pathname.startsWith("/taller")) return "taller";
         if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
+        if (pathname.startsWith("/menu_personalizado")) return "menu_personalizado";
         if (pathname.startsWith("/enrolado")) return "enrolado";
         if (pathname.startsWith("/tablas")) return "mostrar_tablas";
         if (pathname.startsWith("/calculadora")) return "calculadora";
@@ -139,7 +141,8 @@ function AppLayout() {
             mostrar_tablas: "/mostrar_tablas",
             calculadora: "/calculadora",
             enrolado: "/enrolado",
-            tablas: "/tablas"
+            tablas: "/tablas",
+            menu_personalizado:"/menu_personalizado"
         };
 
         navigate(mapa[v] || "/home");
@@ -191,6 +194,7 @@ function AppLayout() {
                 <Route path="/enrolado" element={<Enrolado />} />
                 <Route path="/tablas" element={<Tablas />} />
                 <Route path="/devoluciones" element={<DevolucionesMercancia />} />
+                <Route path="/menu_personalizado" element={<PermisosMenu />} />
             </Routes>
         </div>
     );

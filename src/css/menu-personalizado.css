@@ -1,0 +1,421 @@
+/*src/css/menu-personalizado.css*/
+.permisos-menu-page {
+    padding: 25px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.permisos-menu-page h2 {
+    margin-bottom: 20px;
+}
+
+.permisos-menu-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.permisos-menu-card select,
+.permisos-menu-card input[type="text"] {
+    width: 100%;
+    max-width: 450px;
+    padding: 9px;
+    margin-top: 8px;
+}
+
+.datos-empleado-menu {
+    display: flex;
+    gap: 25px;
+    margin-top: 15px;
+}
+
+.constructor-menu {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.lista-paginas {
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+.pagina-disponible {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 8px 10px;
+
+    border-bottom: 1px solid #eee;
+}
+
+.pagina-disponible button {
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+}
+
+.crear-submenu {
+    display: flex;
+    gap: 10px;
+}
+
+.crear-submenu input {
+    flex: 1;
+}
+
+.submenu-paginas {
+    margin-bottom: 15px;
+}
+
+.submenu-paginas > div {
+    display: flex;
+    justify-content: space-between;
+
+    padding: 7px;
+
+    border-bottom: 1px solid #eee;
+}
+
+/* =========================================
+   VISTA PREVIA
+========================================= */
+
+.menu-preview {
+    min-height: 90px;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+
+    gap: 10px;
+
+    padding: 20px;
+
+    background: #222;
+    border-radius: 10px;
+}
+
+.menu-preview-item {
+    position: relative;
+
+    min-width: 130px;
+
+    background: white;
+    border-radius: 6px;
+
+    padding: 12px 14px;
+
+    cursor: grab;
+
+    user-select: none;
+}
+
+.menu-preview-item:active {
+    cursor: grabbing;
+}
+
+.menu-preview-item > span {
+    font-weight: 600;
+}
+
+.acciones-preview {
+    display: flex;
+    gap: 4px;
+
+    margin-top: 10px;
+}
+
+.acciones-preview button {
+    cursor: pointer;
+    padding: 3px 8px;
+}
+
+.submenu-preview {
+    margin-top: 8px;
+
+    border-top: 1px solid #ddd;
+
+    padding-top: 7px;
+}
+
+.submenu-preview div {
+    padding: 4px 0;
+
+    font-size: 13px;
+}
+
+.menu-vacio {
+    color: white;
+    padding: 15px;
+}
+
+.acciones-guardar-menu {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-bottom: 30px;
+}
+
+.acciones-guardar-menu button {
+    padding: 10px 22px;
+
+    cursor: pointer;
+
+    font-size: 15px;
+}
+
+/* =========================================
+   MODAL ADMINISTRAR PLANTILLAS
+========================================= */
+
+.modal-plantillas-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 25px;
+
+    background: rgb(0 0 0 / 55%);
+}
+
+.modal-plantillas {
+    width: min(1200px, 96vw);
+    height: min(820px, 92vh);
+
+    display: flex;
+    flex-direction: column;
+
+    background: #fff;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+}
+
+.modal-plantillas-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 18px 22px;
+
+    border-bottom: 1px solid #ddd;
+}
+
+.modal-plantillas-header h2 {
+    margin: 0;
+}
+
+.modal-plantillas-header button {
+    border: none;
+    background: transparent;
+
+    font-size: 22px;
+
+    cursor: pointer;
+}
+
+.modal-plantillas-contenido {
+    flex: 1;
+    min-height: 0;
+
+    display: grid;
+    grid-template-columns: 300px 1fr;
+}
+
+.lista-plantillas-admin {
+    padding: 20px;
+
+    overflow-y: auto;
+
+    border-right: 1px solid #ddd;
+}
+
+.plantilla-admin {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    margin-bottom: 8px;
+    padding: 12px;
+
+    background: #fff;
+
+    border: 1px solid #ddd;
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    text-align: left;
+}
+
+.plantilla-admin:hover {
+    background: #f5f5f5;
+}
+
+.plantilla-admin.activa {
+    background: #f0f0f0;
+
+    border: 2px solid #333;
+}
+
+.plantilla-admin span {
+    margin-top: 3px;
+
+    font-size: 13px;
+}
+
+.btn-nueva-plantilla {
+    width: 100%;
+
+    margin-top: 15px;
+    padding: 11px;
+
+    cursor: pointer;
+}
+
+.editor-plantilla-admin {
+    padding: 25px;
+
+    overflow-y: auto;
+}
+
+.campo-plantilla {
+    margin-bottom: 15px;
+}
+
+.campo-plantilla label {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-weight: 600;
+}
+
+.campo-plantilla input {
+    width: 100%;
+    max-width: 500px;
+
+    padding: 8px;
+
+    box-sizing: border-box;
+}
+
+.opciones-plantilla-admin {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(190px, 1fr)
+        );
+
+    gap: 8px;
+
+    margin-top: 12px;
+}
+
+.opcion-agregar-plantilla {
+    padding: 9px;
+
+    text-align: left;
+
+    border: 1px solid #ddd;
+    border-radius: 6px;
+
+    background: #fff;
+
+    cursor: pointer;
+}
+
+.opcion-agregar-plantilla:hover:not(:disabled) {
+    background: #f5f5f5;
+}
+
+.opcion-agregar-plantilla:disabled {
+    opacity: 0.55;
+
+    cursor: default;
+}
+
+.submenu-editor-plantilla {
+    margin-top: 15px;
+    padding: 15px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.submenu-editor-plantilla h4 {
+    margin-top: 0;
+}
+
+.submenu-editor-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 6px 0;
+
+    border-bottom: 1px solid #eee;
+}
+
+.submenu-editor-item button {
+    cursor: pointer;
+}
+
+.submenu-editor-plantilla select {
+    width: 100%;
+    max-width: 400px;
+
+    margin-top: 12px;
+    padding: 7px;
+}
+
+.modal-plantillas-footer {
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 15px 22px;
+
+    border-top: 1px solid #ddd;
+}
+
+.modal-plantillas-footer button {
+    padding: 9px 18px;
+
+    cursor: pointer;
+}
+
+
+@media (max-width: 850px) {
+    .constructor-menu {
+        grid-template-columns: 1fr;
+    }
+
+    .datos-empleado-menu {
+        flex-direction: column;
+        gap: 5px;
+    }
+        .modal-plantillas-contenido {
+        grid-template-columns: 1fr;
+    }
+
+    .lista-plantillas-admin {
+        max-height: 220px;
+
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+}

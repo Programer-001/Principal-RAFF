@@ -1,4 +1,5 @@
-﻿export type MenuItem = {
+﻿//src/navbar/menuConfig.ts
+export type MenuItem = {
     key: string;
     label: string;
     children?: MenuItem[];
@@ -11,6 +12,88 @@ type MenuPorRol = {
 };
 
 const MENU_BASE: Record<string, MenuItem> = {
+    home: { key: "home", label: "Inicio" },
+    cotizador: { key: "cotizador", label: "Cotizador" },
+    consultaot: { key: "consultaot", label: "Consulta OT" },
+    clientes: { key: "clientes", label: "Clientes" },
+    envios: { key: "envios", label: "Envíos" },
+    compras: { key: "compras", label: "Orden de compras" },
+    productos: { key: "productos", label: "Productos" },
+    //almacen
+    gestion: { key: "gestionproduccion", label: "Gestion de produccion" },
+    inventario_almacen: { key: "invalmacen", label: "Inventario de almacen" },
+    compras_solicitud: { key: "solicitud_compra", label: "Solicitud de compra" },
+    //tienda
+    tienda: { key: "tienda", label: "Tienda" },
+    Gestion_tienda: { key: "gestion_tienda", label: "Consulta de ticket" },
+    //checador
+    checador: { key: "asistencia", label: "Asistencias" },
+    //Enrolado
+    enrolado: { key: "enrolado", label: "Enrolado de tubo" },
+    //devoluciones
+    devoluciones: { key: "devoluciones", label: "Devoluciones de mercancía" },
+    //taller
+    taller: { key: "taller", label: "Taller" },
+    //tablas
+    tablas:{key:"tablas", label:"Tablas"},
+
+    //submenus
+    rh: {
+        key: "rh",
+        label: "Recursos Humanos",
+        children: [
+            { key: "empleados", label: "Empleados" },
+            { key: "permisos", label: "Permisos" },
+        ],
+    },
+    facturacion: {
+        key: "facturacion",
+        label: "Sistema de caja",
+        children: [
+            { key: "caja", label: "Caja" },
+            { key: "mostrarcaja", label: "Corte de caja" },
+            { key: "cajacorteporfecha", label: "Factura Extemporanea" },
+            { key: "cortedia", label: "Corte del día" },
+            { key: "gastos", label: "Gastos" },
+            { key: "consultagastos", label: "Consulta de gastos" },
+            { key: "modificarpago", label: "Modificar pago" },
+            { key: "modificarcaja", label: "Gestión de Facturas" },
+            { key: "contardinero", label: "Contador de dinero" },
+        ],
+    },
+
+    produccion: {
+        key: "produccion",
+        label: "Produccion", 
+        children: [
+            { key: "gestionproduccion", label: "Operacion" },
+            { key: "invalmacen", label: "Almacen" },
+            { key: "solicitud_compra", label: "Solicitud de compra" },
+        ],
+    },
+
+    contabilidad: {
+        key: "contabilidad",
+        label: "Contabilidad",
+        children: [
+            { key: "lefor", label: "Etiquetas para LEFOR" },
+        ],
+    },
+
+    administracion: {
+        key: "administracion",
+        label: "Administracion",
+        children: [
+            { key: "comisiones", label: "Comisiones Produccion" },
+            { key: "comisionesmostrador", label: "Comisiones mostrador" },
+            { key: "proveedores", label: "Proveedores" },
+            { key: "pago_banda", label: "Pago de banda" },
+            { key:"visor_pedidos_especiales", label: "Pedidos especiales"},
+            { key:"mostrar_tablas", label: "Tablas de cotizador"}
+        ],
+    },
+};
+export const CATALOGO_MENU: Record<string, MenuItem> = {
     home: { key: "home", label: "Inicio" },
     cotizador: { key: "cotizador", label: "Cotizador" },
     consultaot: { key: "consultaot", label: "Consulta OT" },
