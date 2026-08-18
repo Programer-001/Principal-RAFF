@@ -70,3 +70,111 @@ este formulario se utiliza para agregar o editar empleados, y también para busc
   display: flex;
   gap: 10px;
 }
+
+/* =========================================================
+   MODAL / VENTANA EMERGENTE/ CONSTANCIA DE SITUACION FISCAL
+========================================================= */
+
+.modal-fondo {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  background: rgba(0, 0, 0, 0.55);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 20px;
+  box-sizing: border-box;
+
+  z-index: 99999;
+
+  overflow-y: auto;
+}
+
+
+/* =========================================================
+   CONTENIDO DEL MODAL
+========================================================= */
+
+.modal-contenido {
+  position: relative;
+
+  width: 100%;
+  max-width: 750px;
+
+  max-height: 90vh;
+
+  background: white;
+
+  border-radius: 12px;
+
+  padding: 25px;
+
+  box-sizing: border-box;
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.30);
+
+  overflow-y: auto;
+
+  margin: auto;
+}
+
+
+/* =========================================================
+   TITULO DEL MODAL
+========================================================= */
+
+.modal-contenido h2 {
+  margin-top: 0;
+}
+
+
+/* =========================================================
+   BOTONES DEL MODAL
+========================================================= */
+
+.modal-contenido .botones {
+  display: flex;
+  gap: 10px;
+
+  margin-top: 20px;
+
+  flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   RESPONSIVE MODAL
+========================================================= */
+
+@media (max-width: 650px) {
+
+  .modal-fondo {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
+  .modal-contenido {
+    margin-top: 20px;
+
+    max-height: calc(100vh - 40px);
+
+    padding: 18px;
+  }
+
+  .modal-contenido .botones {
+    flex-direction: column;
+  }
+
+  .modal-contenido .botones button {
+    width: 100%;
+  }
+}
