@@ -119,7 +119,7 @@ const BuscarClientes: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-
+  const [indiceClientes, setIndiceClientes] = useState<Cliente[]>([]);
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [modoEditar, setModoEditar] = useState(false);
   const [enviosCliente, setEnviosCliente] = useState<Envio[]>([]);
@@ -151,30 +151,66 @@ const BuscarClientes: React.FC = () => {
           "cp",
       ]);
 
-  // 🔎 BUSCAR CLIENTES
-  const buscarClientes = async (texto: string) => {
-    const snap = await get(ref(db, "Clientes"));
-      const data = snap.val() || {};
+// ==================================================
+// CARGAR ÍNDICE DE CLIENTES UNA SOLA VEZ
+// ==================================================
+useEffect(() => {
+    const cargarIndiceClientes = async () => {
+        try {
+            const snap = await get(ref(db, "ClientesBusqueda"));
+            const data = snap.val() || {};
 
-    const lista = Object.keys(data).map((id) => ({
-      id,
-      ...data[id],
-    }));
+            const lista: Cliente[] = Object.keys(data).map((id) => ({
+                id,
+                nombre: data[id]?.nombre || "",
+                razonSocial: data[id]?.razonSocial || "",
+                rfc: data[id]?.rfc || "",
+            }));
 
-    const textoBusqueda = texto.toLowerCase();
+            setIndiceClientes(lista);
+        } catch (error) {
+            console.error("Error cargando índice de clientes:", error);
+        }
+    };
 
-    return lista.filter((c: any) => {
-      const nombre = (c.nombre || "").toLowerCase();
-      const razon = (c.razonSocial || "").toLowerCase();
-      const rfc = (c.rfc || "").toLowerCase();
+    cargarIndiceClientes();
+}, [db]);
 
-      return (
-        nombre.includes(textoBusqueda) ||
-        razon.includes(textoBusqueda) ||
-        rfc.includes(textoBusqueda)
-      );
+
+// ==================================================
+// NORMALIZAR
+// ==================================================
+const normalizar = (valor: string) => {
+    return (valor || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+};
+
+
+// ==================================================
+// BUSCAR CLIENTES EN MEMORIA
+// ==================================================
+const buscarClientes = (texto: string) => {
+    const textoBusqueda = normalizar(texto);
+
+    if (!textoBusqueda) {
+        return [];
+    }
+
+    return indiceClientes.filter((c) => {
+        const nombre = normalizar(c.nombre || "");
+        const razon = normalizar(c.razonSocial || "");
+        const rfc = normalizar(c.rfc || "");
+
+        return (
+            nombre.includes(textoBusqueda) ||
+            razon.includes(textoBusqueda) ||
+            rfc.includes(textoBusqueda)
+        );
     });
-  };
+};
 
 const agregarClienteCatalogo = (
     cliente: Cliente
@@ -238,20 +274,18 @@ const generarCatalogoClientes = async () => {
 };
 
   // 🔎 BUSCAR AL ESCRIBIR
-  useEffect(() => {
+useEffect(() => {
     if (search.trim() === "") {
-      setClientes([]);
-      setPage(1);
-      return;
+        setClientes([]);
+        setPage(1);
+        return;
     }
-    const timeout = setTimeout(async () => {
-      const resultados = await buscarClientes(search.trim());
-      setClientes(resultados);
-      setPage(1);
-    }, 300);
 
-    return () => clearTimeout(timeout);
-  }, [search]);
+    const resultados = buscarClientes(search);
+
+    setClientes(resultados);
+    setPage(1);
+}, [search, indiceClientes]);
     //COTIZADOR->CLIENTE
     useEffect(() => {
         const abrirClienteDirecto = async () => {
@@ -968,8 +1002,16 @@ const generarCatalogoClientes = async () => {
             return;
         }
 
-        const newRef = push(ref(db, "Clientes"));
-        await set(newRef, datos);
+      const newRef = push(ref(db, "Clientes"));
+
+      await set(newRef, datos);
+
+      // 🔎 ÍNDICE LIGERO PARA BÚSQUEDA
+      await set(ref(db, `ClientesBusqueda/${newRef.key}`), {
+          nombre: datos.nombre || "",
+          razonSocial: datos.razonSocial || "",
+          rfc: datos.rfc || "",
+      });
 
         alert("Cliente creado");
         setModoNuevo(false);
@@ -986,7 +1028,11 @@ const generarCatalogoClientes = async () => {
             delete datos.credito;
         }
 
-        await update(ref(db, `Clientes/${id}`), datos);
+        await update(ref(db, `ClientesBusqueda/${id}`), {
+            nombre: datos.nombre || "",
+            razonSocial: datos.razonSocial || "",
+            rfc: datos.rfc || "",
+        });
 
         alert("Cliente actualizado");
 
@@ -1014,7 +1060,7 @@ const generarCatalogoClientes = async () => {
 
     if (!confirmacion) return;
 
-    await remove(ref(db, `Clientes/${cliente.id}`));
+  await remove(ref(db, `ClientesBusqueda/${cliente.id}`));
 
     setClientes(clientes.filter((c) => c.id !== cliente.id));
 
@@ -1047,6 +1093,34 @@ const generarCatalogoClientes = async () => {
         selectedCliente.municipio || ""
       }, ${selectedCliente.estado || ""}`
     : "";
+
+   // ==================================================
+// CARGAR FICHA COMPLETA DEL CLIENTE
+// ==================================================
+const cargarClienteCompleto = async (id: string) => {
+    try {
+        const snap = await get(ref(db, `Clientes/${id}`));
+
+        if (!snap.exists()) {
+            alert("Cliente no encontrado");
+            return;
+        }
+
+        const data = snap.val();
+
+        setSelectedCliente({
+            id,
+            ...data,
+        });
+
+        setModoEditar(false);
+
+        cargarEnviosCliente(id);
+    } catch (error) {
+        console.error("Error cargando cliente:", error);
+        alert("No se pudo cargar la información del cliente");
+    }
+};
 
 
   return (
@@ -1124,16 +1198,12 @@ const generarCatalogoClientes = async () => {
                     <td>{c.rfc}</td>
 
                     <td>
-                      <button
-                        className="btn btn-blue"
-                        onClick={() => {
-                          setSelectedCliente(c);
-                          setModoEditar(false);
-                          cargarEnviosCliente(c.id);
-                        }}
-                      >
-                        Ver ficha
-                      </button>
+<button
+    className="btn btn-blue"
+    onClick={() => cargarClienteCompleto(c.id)}
+>
+    Ver ficha
+</button>
                     </td>
                   </tr>
                 ))}
