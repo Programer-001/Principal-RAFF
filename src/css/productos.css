@@ -5,7 +5,7 @@
 .productos-page {
     min-height: 100vh;
     padding: 24px;
-    background: #f5f6f8;
+    background: #ffffff;
     color: #202124;
     box-sizing: border-box;
 }
@@ -199,46 +199,95 @@
     background: #fff;
     border: 1px solid #e0e3e7;
     border-radius: 12px;
-    overflow: hidden;
+
+    /*
+        MUY IMPORTANTE:
+        ningún overflow aquí porque bloquea sticky
+    */
+    overflow: visible;
+
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
 }
 
 .productos-tabla-scroll {
     width: 100%;
-    overflow-x: auto;
+
+    /*
+        MUY IMPORTANTE:
+        NO usar overflow-x: auto aquí.
+        Sticky necesita poder tomar el scroll de la página.
+    */
+    overflow: visible;
 }
 
 .productos-tabla {
     width: 100%;
-    border-collapse: collapse;
+
+    /*
+        separate funciona mejor con sticky
+        que collapse
+    */
+    border-collapse: separate;
+    border-spacing: 0;
+
     font-size: 14px;
 }
+
+/* =========================================================
+   ENCABEZADO FIJO
+========================================================= */
 
 .productos-tabla thead {
     background: #f1f3f6;
 }
 
-.productos-tabla th {
+.productos-tabla thead th {
+    position: sticky;
+
+    /*
+        Se pega hasta arriba.
+        Si después tu navbar lo tapa,
+        aquí podemos poner 60px, 70px, etc.
+    */
+    top: 0;
+
+    z-index: 100;
+
     padding: 12px 14px;
+
+    background: #f1f3f6;
     color: #43474e;
+
     font-weight: 700;
     text-align: left;
-    border-bottom: 1px solid #dfe3e8;
     white-space: nowrap;
+
+    border-bottom: 1px solid #dfe3e8;
+
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
 }
+
+/* =========================================================
+   CUERPO TABLA
+========================================================= */
 
 .productos-tabla td {
     padding: 11px 14px;
+
     border-bottom: 1px solid #edf0f3;
+
     vertical-align: middle;
+
+    background: #fff;
 }
 
 .productos-tabla tbody tr {
     cursor: pointer;
+
     transition: background 0.12s ease;
 }
 
-.productos-tabla tbody tr:hover {
+.productos-tabla tbody tr:hover td {
     background: #f6f9fd;
 }
 
@@ -246,13 +295,19 @@
     border-bottom: 0;
 }
 
+/* =========================================================
+   COLUMNAS
+========================================================= */
+
 .productos-nombre-tabla {
     min-width: 280px;
+
     font-weight: 600;
 }
 
 .productos-ordenable {
     cursor: pointer;
+
     user-select: none;
 }
 
@@ -262,20 +317,27 @@
 
 .productos-col-acciones {
     width: 110px;
+
     text-align: center !important;
 }
 
 .productos-acciones-tabla {
     display: flex;
+
     justify-content: center;
+
     gap: 6px;
 }
 
-.producto-deshabilitado {
+/* =========================================================
+   PRODUCTO DESHABILITADO
+========================================================= */
+
+.producto-deshabilitado td {
     background: #fff3f3;
+
     opacity: 0.72;
 }
-
 /* =========================================================
    BOTONES PEQUEÑOS
 ========================================================= */
@@ -971,6 +1033,267 @@
     color: #555b63;
     font-size: 10px;
     overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   CONFIGURACIÓN GENERAL PRODUCTOS
+========================================================= */
+
+.productos-config-general {
+    margin-bottom: 18px;
+    border: 1px solid #dfe3e8;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.productos-config-general-summary {
+    min-height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    transition: background 0.15s ease;
+}
+
+.productos-config-general-summary::-webkit-details-marker {
+    display: none;
+}
+
+.productos-config-general-summary:hover {
+    background: #f7f9fc;
+}
+
+.productos-config-general-summary > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.productos-config-general-summary strong {
+    color: #30343b;
+    font-size: 15px;
+}
+
+.productos-config-general-summary span {
+    color: #737981;
+    font-size: 12px;
+}
+
+.productos-config-flecha {
+    flex-shrink: 0;
+    color: #636971 !important;
+    font-size: 18px !important;
+    transition: transform 0.2s ease;
+}
+
+.productos-config-general[open] .productos-config-flecha {
+    transform: rotate(180deg);
+}
+
+.productos-config-general-body {
+    padding: 18px;
+    border-top: 1px solid #e4e7eb;
+    background: #fafbfd;
+}
+
+/* =========================================================
+   AVISO CONFIGURACIÓN GENERAL
+========================================================= */
+
+.productos-config-general-aviso {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px solid #cfe0f7;
+    border-radius: 8px;
+    background: #f1f7ff;
+}
+
+.productos-config-general-aviso strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #175db8;
+    font-size: 13px;
+}
+
+.productos-config-general-aviso p {
+    margin: 0;
+    color: #606771;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+/* =========================================================
+   FOOTER CONFIG GENERAL
+========================================================= */
+
+.productos-config-general-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1px solid #e1e5ea;
+}
+
+.productos-config-guardado-info {
+    color: #777d85;
+    font-size: 11px;
+}
+
+/* =========================================================
+   GENERAL / PARTICULAR DENTRO DEL PRODUCTO
+========================================================= */
+
+.productos-tipo-config {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.productos-tipo-config-card {
+    position: relative;
+    min-height: 82px;
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 14px;
+    border: 1px solid #dce1e7;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.productos-tipo-config-card:hover {
+    border-color: #b9c8dc;
+    background: #fafcff;
+}
+
+.productos-tipo-config-card.activo {
+    border-color: #8bb8f7;
+    background: #f0f6ff;
+    box-shadow: 0 0 0 1px rgba(23, 105, 224, 0.06);
+}
+
+.productos-tipo-config-card input {
+    width: 17px;
+    height: 17px;
+    margin-top: 2px;
+    accent-color: #1769e0;
+    cursor: pointer;
+}
+
+.productos-tipo-config-card > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.productos-tipo-config-card strong {
+    color: #363b42;
+    font-size: 13px;
+}
+
+.productos-tipo-config-card.activo strong {
+    color: #175db8;
+}
+
+.productos-tipo-config-card span {
+    color: #777d85;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+/* =========================================================
+   MENSAJE USA CONFIG GENERAL
+========================================================= */
+
+.productos-config-producto-general {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 13px 15px;
+    border: 1px solid #cfe0f7;
+    border-radius: 8px;
+    background: #f1f7ff;
+}
+
+.productos-config-producto-general span {
+    color: #175db8;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.productos-config-producto-general small {
+    color: #737981;
+    font-size: 11px;
+}
+/* =========================================================
+   BOTONES CONFIGURACIÓN GENERAL
+========================================================= */
+
+.productos-config-botones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.productos-config-botones .productos-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
+}
+
+@media (max-width: 800px) {
+    .productos-config-botones {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .productos-config-botones .productos-btn {
+        width: 100%;
+    }
+}
+/* =========================================================
+   RESPONSIVE CONFIGURACIÓN
+========================================================= */
+
+@media (max-width: 800px) {
+    .productos-config-general-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .productos-config-general-footer .productos-btn {
+        width: 100%;
+    }
+
+    .productos-tipo-config {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .productos-config-general-summary {
+        padding: 12px;
+    }
+
+    .productos-config-general-body {
+        padding: 12px;
+    }
 }
 
 /* =========================================================

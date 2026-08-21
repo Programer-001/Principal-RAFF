@@ -42,6 +42,7 @@ import TiendaProductos from "./Tienda/TiendaProductos"
 import DevolucionesMercancia from "./DevolucionesMercancia/DevolucionesMercancia";
 import Enrolado from "./Enrolado/Enrolado";
 import Tablas from "./Info_adicional/Tablas";
+import Paqueterias from "./Administracion/Paqueterias";
 import Calculadora from "./Calculadora/Calculadora";
 import Checador from "./checador/Checador";
 import Calendario from "./Calendario/Calendario";
@@ -91,6 +92,7 @@ function AppLayout() {
         if (pathname.startsWith("/calculadora")) return "calculadora";
         if (pathname.startsWith("/asistencia")) return "asistencia";
         if (pathname.startsWith("/devoluciones")) return "devoluciones";
+        if (pathname.startsWith("/paqueterias")) return "paqueterias";
         if (pathname.startsWith("/calendario")) return "calendario";
         if (pathname.startsWith("/mostrar_tablas")) return "mostrar_tablas";
         if (pathname.startsWith("/perfil")) return "perfil";
@@ -142,7 +144,8 @@ function AppLayout() {
             calculadora: "/calculadora",
             enrolado: "/enrolado",
             tablas: "/tablas",
-            menu_personalizado:"/menu_personalizado"
+            menu_personalizado:"/menu_personalizado",
+            paqueterias: "/paqueterias"
         };
 
         navigate(mapa[v] || "/home");
@@ -195,6 +198,7 @@ function AppLayout() {
                 <Route path="/tablas" element={<Tablas />} />
                 <Route path="/devoluciones" element={<DevolucionesMercancia />} />
                 <Route path="/menu_personalizado" element={<PermisosMenu />} />
+                <Route path="/paqueterias" element={<Paqueterias />} />
             </Routes>
         </div>
     );

@@ -1,6 +1,6 @@
 // src/Envios.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { paqueterias } from "../datos/paqueterias";
+//import { paqueterias } from "../datos/paqueterias";
 import { useLocation } from "react-router-dom";
 import {
   getDatabase,
@@ -155,7 +155,9 @@ const Envios: React.FC = () => {
 
   const [notas, setNotas] = useState("");
   const [paqueteria, setPaqueteria] = useState("");
+  const [paqueterias, setPaqueterias] = useState<string[]>([]);
   const [guia, setGuia] = useState("");
+
     const [enviado, setEnviado] = useState(false);
 
     const [convenio, setConvenio] = useState(false);
@@ -267,6 +269,34 @@ const Envios: React.FC = () => {
 
     setClientes(resultados);
   };
+
+  // ==================================================
+// CARGAR PAQUETERÍAS DESDE FIREBASE
+// ==================================================
+useEffect(() => {
+  const cargarPaqueterias = async () => {
+    try {
+      const snapshot = await get(ref(db, "paqueterias"));
+
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+
+        const lista = Array.isArray(data)
+          ? data.filter(Boolean)
+          : Object.values(data).filter(Boolean);
+
+        setPaqueterias(lista as string[]);
+      } else {
+        setPaqueterias([]);
+      }
+    } catch (error) {
+      console.error("Error cargando paqueterías:", error);
+      setPaqueterias([]);
+    }
+  };
+
+  cargarPaqueterias();
+}, [db]);
 
   // ==================================================
   // BUSCAR AUTOMÁTICAMENTE AL ESCRIBIR
