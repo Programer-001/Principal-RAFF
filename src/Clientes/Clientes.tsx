@@ -1,13 +1,9 @@
 //src/Cientes/Clientess.tsx
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getDatabase, ref, get, update, remove,push, set } from "firebase/database";
+import { getDatabase, ref, get, update, remove,push, set, query, orderByChild,startAt,endAt, onValue } from "firebase/database";
 import * as pdfjsLib from "pdfjs-dist";
-import {
-    plantillaCatalogoClientes,
-    CAMPOS_CATALOGO_CLIENTES,
-    CampoCatalogoCliente,
-} from "../plantillas/plantillaCatalogoClientes";
+import { plantillaCatalogoClientes, CAMPOS_CATALOGO_CLIENTES,CampoCatalogoCliente} from "../plantillas/plantillaCatalogoClientes";
 import { app } from "../firebase/config";
 import "../css/formulario.css";
 
@@ -78,10 +74,110 @@ interface DatosConstanciaFiscal {
 
 const ITEMS_PER_PAGE = 20;
 
+const CLIENTES_DB_NAME = "RAFFClientesDB";
+const CLIENTES_DB_VERSION = 1;
+const CLIENTES_STORE = "ClientesBusqueda";
+const CLIENTES_VERSION_KEY = "ClientesBusquedaVersion";
+
+const abrirClientesDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(CLIENTES_DB_NAME, CLIENTES_DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+
+      if (!db.objectStoreNames.contains(CLIENTES_STORE)) {
+        db.createObjectStore(CLIENTES_STORE, { keyPath: "id" });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const leerClientesBusquedaLocal = async (): Promise<Cliente[]> => {
+  const db = await abrirClientesDB();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CLIENTES_STORE, "readonly");
+    const store = tx.objectStore(CLIENTES_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () => resolve((request.result || []) as Cliente[]);
+    request.onerror = () => reject(request.error);
+
+    tx.oncomplete = () => db.close();
+  });
+};
+
+const reemplazarClientesBusquedaLocal = async (clientes: Cliente[]) => {
+  const db = await abrirClientesDB();
+
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(CLIENTES_STORE, "readwrite");
+    const store = tx.objectStore(CLIENTES_STORE);
+
+    store.clear();
+
+    clientes.forEach((cliente) => {
+      store.put(cliente);
+    });
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+  });
+};
+
+const guardarClienteBusquedaLocal = async (cliente: Cliente) => {
+  const db = await abrirClientesDB();
+
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(CLIENTES_STORE, "readwrite");
+    tx.objectStore(CLIENTES_STORE).put(cliente);
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+  });
+};
+
+const eliminarClienteBusquedaLocal = async (id: string) => {
+  const db = await abrirClientesDB();
+
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(CLIENTES_STORE, "readwrite");
+    tx.objectStore(CLIENTES_STORE).delete(id);
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+  });
+};
+
 const BuscarClientes: React.FC = () => {
-  const db = getDatabase(app);
+    const db = getDatabase(app);
   //PARA EDICION DESDE COTIZADOR -> VARIABLES
-  const location = useLocation();
+    const location = useLocation();
     const navigate = useNavigate();
     const state = location.state as any;
     const vieneDeCotizador = state?.modo === "editarDesdeCotizador";
@@ -120,6 +216,7 @@ const BuscarClientes: React.FC = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [indiceClientes, setIndiceClientes] = useState<Cliente[]>([]);
+
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [modoEditar, setModoEditar] = useState(false);
   const [enviosCliente, setEnviosCliente] = useState<Envio[]>([]);
@@ -151,68 +248,122 @@ const BuscarClientes: React.FC = () => {
           "cp",
       ]);
 
-// ==================================================
-// CARGAR ÍNDICE DE CLIENTES UNA SOLA VEZ
-// ==================================================
-useEffect(() => {
-    const cargarIndiceClientes = async () => {
-        try {
-            const snap = await get(ref(db, "ClientesBusqueda"));
-            const data = snap.val() || {};
+  // 🔎 BUSCAR CLIENTES
+  const normalizar = (valor: string) => {
+    return (valor || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  };
 
-            const lista: Cliente[] = Object.keys(data).map((id) => ({
-                id,
-                nombre: data[id]?.nombre || "",
-                razonSocial: data[id]?.razonSocial || "",
-                rfc: data[id]?.rfc || "",
-            }));
+  const convertirSnapshotClientesBusqueda = (data: any): Cliente[] => {
+    return Object.keys(data || {}).map((id) => ({
+      id,
+      nombre: data[id]?.nombre || "",
+      razonSocial: data[id]?.razonSocial || "",
+      rfc: data[id]?.rfc || "",
+    }));
+  };
 
-            setIndiceClientes(lista);
-        } catch (error) {
-            console.error("Error cargando índice de clientes:", error);
+  const descargarClientesBusqueda = async () => {
+    const snap = await get(ref(db, "ClientesBusqueda"));
+    const lista = convertirSnapshotClientesBusqueda(snap.val() || {});
+
+    await reemplazarClientesBusquedaLocal(lista);
+    setIndiceClientes(lista);
+
+    return lista;
+  };
+
+  useEffect(() => {
+    let activo = true;
+    let unsubscribeVersion: (() => void) | undefined;
+
+    const iniciarClientesBusqueda = async () => {
+      try {
+        const locales = await leerClientesBusquedaLocal();
+
+        if (!activo) return;
+
+        if (locales.length > 0) {
+          setIndiceClientes(locales);
         }
+
+        const versionSnap = await get(ref(db, "ClientesBusquedaVersion"));
+        const versionFirebase = versionSnap.exists()
+          ? String(versionSnap.val())
+          : "";
+        const versionLocal = localStorage.getItem(CLIENTES_VERSION_KEY) || "";
+
+        if (locales.length === 0 || (versionFirebase && versionFirebase !== versionLocal)) {
+          await descargarClientesBusqueda();
+
+          if (versionFirebase) {
+            localStorage.setItem(CLIENTES_VERSION_KEY, versionFirebase);
+          }
+        }
+
+        unsubscribeVersion = onValue(
+          ref(db, "ClientesBusquedaVersion"),
+          async (snapshot) => {
+            const nuevaVersion = snapshot.exists()
+              ? String(snapshot.val())
+              : "";
+
+            if (!nuevaVersion || !activo) return;
+
+            const versionGuardada =
+              localStorage.getItem(CLIENTES_VERSION_KEY) || "";
+
+            if (nuevaVersion === versionGuardada) return;
+
+            try {
+              await descargarClientesBusqueda();
+
+              if (activo) {
+                localStorage.setItem(CLIENTES_VERSION_KEY, nuevaVersion);
+              }
+            } catch (error) {
+              console.error("Error actualizando índice de clientes:", error);
+            }
+          }
+        );
+      } catch (error) {
+        console.error("Error cargando índice de clientes:", error);
+      }
     };
 
-    cargarIndiceClientes();
-}, [db]);
+    iniciarClientesBusqueda();
 
+    return () => {
+      activo = false;
 
-// ==================================================
-// NORMALIZAR
-// ==================================================
-const normalizar = (valor: string) => {
-    return (valor || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
-};
+      if (unsubscribeVersion) {
+        unsubscribeVersion();
+      }
+    };
+  }, []);
 
-
-// ==================================================
-// BUSCAR CLIENTES EN MEMORIA
-// ==================================================
-const buscarClientes = (texto: string) => {
+  const buscarClientes = (texto: string) => {
     const textoBusqueda = normalizar(texto);
 
-    if (!textoBusqueda) {
-        return [];
-    }
+    if (!textoBusqueda) return [];
 
     return indiceClientes.filter((c) => {
-        const nombre = normalizar(c.nombre || "");
-        const razon = normalizar(c.razonSocial || "");
-        const rfc = normalizar(c.rfc || "");
+      const nombre = normalizar(c.nombre || "");
+      const razon = normalizar(c.razonSocial || "");
+      const rfc = normalizar(c.rfc || "");
 
-        return (
-            nombre.includes(textoBusqueda) ||
-            razon.includes(textoBusqueda) ||
-            rfc.includes(textoBusqueda)
-        );
+      return (
+        nombre.includes(textoBusqueda) ||
+        razon.includes(textoBusqueda) ||
+        rfc.includes(textoBusqueda)
+      );
     });
-};
+  };
 
-const agregarClienteCatalogo = (
+const agregarClienteCatalogo = async (
     cliente: Cliente
 ) => {
     const yaExiste =
@@ -222,9 +373,18 @@ const agregarClienteCatalogo = (
 
     if (yaExiste) return;
 
+    const snap = await get(ref(db, `Clientes/${cliente.id}`));
+
+    if (!snap.exists()) return;
+
+    const clienteCompleto: Cliente = {
+        id: cliente.id,
+        ...snap.val(),
+    };
+
     setClientesSeleccionadosCatalogo([
         ...clientesSeleccionadosCatalogo,
-        cliente,
+        clienteCompleto,
     ]);
 };
 
@@ -274,18 +434,17 @@ const generarCatalogoClientes = async () => {
 };
 
   // 🔎 BUSCAR AL ESCRIBIR
-useEffect(() => {
+  useEffect(() => {
     if (search.trim() === "") {
-        setClientes([]);
-        setPage(1);
-        return;
+      setClientes([]);
+      setPage(1);
+      return;
     }
 
-    const resultados = buscarClientes(search);
-
+    const resultados = buscarClientes(search.trim());
     setClientes(resultados);
     setPage(1);
-}, [search, indiceClientes]);
+  }, [search, indiceClientes]);
     //COTIZADOR->CLIENTE
     useEffect(() => {
         const abrirClienteDirecto = async () => {
@@ -971,6 +1130,30 @@ useEffect(() => {
         setRegimenConstanciaSeleccionado("");
     };
 
+    const cargarClienteCompleto = async (id: string) => {
+        try {
+            const snap = await get(ref(db, `Clientes/${id}`));
+
+            if (!snap.exists()) {
+                alert("Cliente no encontrado");
+                return;
+            }
+
+            const data = snap.val();
+
+            setSelectedCliente({
+                id,
+                ...data,
+            });
+
+            setModoEditar(false);
+            cargarEnviosCliente(id);
+        } catch (error) {
+            console.error("Error cargando cliente:", error);
+            alert("No se pudo cargar la información del cliente");
+        }
+    };
+
     // 💾 GUARDAR CLIENTE
     const guardarClienteNuevo = async () => {
         if (!selectedCliente) return;
@@ -981,19 +1164,14 @@ useEffect(() => {
             delete datos.credito;
         }
 
-        const snap = await get(ref(db, "Clientes"));
-        const data = snap.val() || {};
-
         const limpiar = (v: string) => (v || "").toLowerCase().trim();
 
-        const existeDuplicado = Object.keys(data).some((key) => {
-            const c = data[key] || {};
-
+        const existeDuplicado = indiceClientes.some((c) => {
             return (
                 (selectedCliente.rfc &&
-                    limpiar(c.rfc) === limpiar(selectedCliente.rfc)) ||
+                    limpiar(c.rfc || "") === limpiar(selectedCliente.rfc)) ||
                 (selectedCliente.razonSocial &&
-                    limpiar(c.razonSocial) === limpiar(selectedCliente.razonSocial))
+                    limpiar(c.razonSocial || "") === limpiar(selectedCliente.razonSocial))
             );
         });
 
@@ -1002,16 +1180,28 @@ useEffect(() => {
             return;
         }
 
-      const newRef = push(ref(db, "Clientes"));
+        const newRef = push(ref(db, "Clientes"));
+        await set(newRef, datos);
 
-      await set(newRef, datos);
+        const clienteBusqueda: Cliente = {
+            id: newRef.key || "",
+            nombre: datos.nombre || "",
+            razonSocial: datos.razonSocial || "",
+            rfc: datos.rfc || "",
+        };
 
-      // 🔎 ÍNDICE LIGERO PARA BÚSQUEDA
-      await set(ref(db, `ClientesBusqueda/${newRef.key}`), {
-          nombre: datos.nombre || "",
-          razonSocial: datos.razonSocial || "",
-          rfc: datos.rfc || "",
-      });
+        await set(ref(db, `ClientesBusqueda/${newRef.key}`), {
+            nombre: clienteBusqueda.nombre,
+            razonSocial: clienteBusqueda.razonSocial,
+            rfc: clienteBusqueda.rfc,
+        });
+
+        await guardarClienteBusquedaLocal(clienteBusqueda);
+        setIndiceClientes((actual) => [...actual, clienteBusqueda]);
+
+        const nuevaVersion = Date.now();
+        localStorage.setItem(CLIENTES_VERSION_KEY, String(nuevaVersion));
+        await set(ref(db, "ClientesBusquedaVersion"), nuevaVersion);
 
         alert("Cliente creado");
         setModoNuevo(false);
@@ -1028,11 +1218,29 @@ useEffect(() => {
             delete datos.credito;
         }
 
-        await update(ref(db, `ClientesBusqueda/${id}`), {
+        await update(ref(db, `Clientes/${id}`), datos);
+
+        const clienteBusqueda: Cliente = {
+            id,
             nombre: datos.nombre || "",
             razonSocial: datos.razonSocial || "",
             rfc: datos.rfc || "",
+        };
+
+        await update(ref(db, `ClientesBusqueda/${id}`), {
+            nombre: clienteBusqueda.nombre,
+            razonSocial: clienteBusqueda.razonSocial,
+            rfc: clienteBusqueda.rfc,
         });
+
+        await guardarClienteBusquedaLocal(clienteBusqueda);
+        setIndiceClientes((actual) =>
+            actual.map((c) => (c.id === id ? clienteBusqueda : c))
+        );
+
+        const nuevaVersion = Date.now();
+        localStorage.setItem(CLIENTES_VERSION_KEY, String(nuevaVersion));
+        await set(ref(db, "ClientesBusquedaVersion"), nuevaVersion);
 
         alert("Cliente actualizado");
 
@@ -1060,9 +1268,20 @@ useEffect(() => {
 
     if (!confirmacion) return;
 
-  await remove(ref(db, `ClientesBusqueda/${cliente.id}`));
+    await remove(ref(db, `Clientes/${cliente.id}`));
+    await remove(ref(db, `ClientesBusqueda/${cliente.id}`));
+
+    await eliminarClienteBusquedaLocal(cliente.id);
+
+    setIndiceClientes((actual) =>
+      actual.filter((c) => c.id !== cliente.id)
+    );
 
     setClientes(clientes.filter((c) => c.id !== cliente.id));
+
+    const nuevaVersion = Date.now();
+    localStorage.setItem(CLIENTES_VERSION_KEY, String(nuevaVersion));
+    await set(ref(db, "ClientesBusquedaVersion"), nuevaVersion);
 
     if (selectedCliente?.id === cliente.id) {
       setSelectedCliente(null);
@@ -1093,34 +1312,6 @@ useEffect(() => {
         selectedCliente.municipio || ""
       }, ${selectedCliente.estado || ""}`
     : "";
-
-   // ==================================================
-// CARGAR FICHA COMPLETA DEL CLIENTE
-// ==================================================
-const cargarClienteCompleto = async (id: string) => {
-    try {
-        const snap = await get(ref(db, `Clientes/${id}`));
-
-        if (!snap.exists()) {
-            alert("Cliente no encontrado");
-            return;
-        }
-
-        const data = snap.val();
-
-        setSelectedCliente({
-            id,
-            ...data,
-        });
-
-        setModoEditar(false);
-
-        cargarEnviosCliente(id);
-    } catch (error) {
-        console.error("Error cargando cliente:", error);
-        alert("No se pudo cargar la información del cliente");
-    }
-};
 
 
   return (
@@ -1198,12 +1389,12 @@ const cargarClienteCompleto = async (id: string) => {
                     <td>{c.rfc}</td>
 
                     <td>
-<button
-    className="btn btn-blue"
-    onClick={() => cargarClienteCompleto(c.id)}
->
-    Ver ficha
-</button>
+                      <button
+                        className="btn btn-blue"
+                        onClick={() => cargarClienteCompleto(c.id)}
+                      >
+                        Ver ficha
+                      </button>
                     </td>
                   </tr>
                 ))}
