@@ -1,7 +1,7 @@
 ﻿// src/cotizador.tsx
 import React, { useState, useEffect } from "react";
 //firebase
-import { getDatabase, ref, get, set } from "firebase/database";
+import { getDatabase, ref, get, set, onValue } from "firebase/database";
 import { app, auth, db } from "./firebase/config";
 // 🔹 Componentes
 import { useLocation, useNavigate } from "react-router-dom";
@@ -48,6 +48,76 @@ interface Cliente {
   };
 }
 
+interface ClienteBusqueda {
+  id: string;
+  nombre?: string;
+  razonSocial?: string;
+  rfc?: string;
+}
+
+const CLIENTES_DB_NAME = "RAFFClientesDB";
+const CLIENTES_DB_VERSION = 1;
+const CLIENTES_STORE = "ClientesBusqueda";
+const CLIENTES_VERSION_KEY = "ClientesBusquedaVersion";
+
+const abrirClientesDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(CLIENTES_DB_NAME, CLIENTES_DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+
+      if (!db.objectStoreNames.contains(CLIENTES_STORE)) {
+        db.createObjectStore(CLIENTES_STORE, { keyPath: "id" });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const leerClientesBusquedaLocal = async (): Promise<ClienteBusqueda[]> => {
+  const db = await abrirClientesDB();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CLIENTES_STORE, "readonly");
+    const store = tx.objectStore(CLIENTES_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () =>
+      resolve((request.result || []) as ClienteBusqueda[]);
+    request.onerror = () => reject(request.error);
+
+    tx.oncomplete = () => db.close();
+  });
+};
+
+const reemplazarClientesBusquedaLocal = async (clientes: ClienteBusqueda[]) => {
+  const db = await abrirClientesDB();
+
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(CLIENTES_STORE, "readwrite");
+    const store = tx.objectStore(CLIENTES_STORE);
+
+    store.clear();
+
+    clientes.forEach((cliente) => {
+      store.put(cliente);
+    });
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+  });
+};
+
 export interface ItemCotizado {
   id: string;
   tipo: string;
@@ -74,6 +144,7 @@ const Cotizador = () => {
   const [asesor, setAsesor] = useState<AsesorSnapshot | null>(null);
   const [buscar, setBuscar] = useState("");
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [indiceClientes, setIndiceClientes] = useState<ClienteBusqueda[]>([]);
   const [envio, setEnvio] = useState<"si" | "no">("no");
   const [itemEditando, setItemEditando] = useState<ItemCotizado | null>(null); // para el ticket
   const [cotizadorActivo, setCotizadorActivo] = useState<
@@ -95,68 +166,129 @@ const Cotizador = () => {
   const location = useLocation();
   const DRAFT_KEY = "cotizador_historial";
   // 🔹 Buscar clientes
-    const buscarClientes = async (texto: string) => {
-        const snapshot = await get(ref(db, "Clientes"));
+    const normalizar = (valor: string) => {
+        return (valor || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    };
 
-        if (!snapshot.exists()) {
-            setClientes([]);
-            return;
-        }
-
-        const data = snapshot.val();
-
-        const lista: Cliente[] = Object.keys(data).map((id) => ({
+    const convertirSnapshotClientesBusqueda = (data: any): ClienteBusqueda[] => {
+        return Object.keys(data || {}).map((id) => ({
             id,
-            nombre: data[id].nombre || "",
-            razonSocial: data[id].razonSocial || "",
-            rfc: data[id].rfc || "",
-            telefono: data[id].telefono || "",
-            email: data[id].email || "",
-
-            direccion: data[id].direccion || "",
-            numeroExterior: data[id].numeroExterior || "",
-            numeroInterior: data[id].numeroInterior || "",
-            colonia: data[id].colonia || "",
-            municipio: data[id].municipio || "",
-            estado: data[id].estado || "",
-            cp: data[id].cp || "",
-
-            empresa: data[id].empresa || "",
-            giro: data[id].giro || "",
-            regimenFiscal: data[id].regimenFiscal || "",
-            notas: data[id].notas || "",
-
-            credito: data[id].credito || {
-                activo: false,
-                dias: 0,
-                limite: 0,
-            },
-
-            descuento: data[id].descuentoDefault ?? 0,
-
-            busqueda:
-                data[id].busqueda ||
-                `${data[id].nombre || ""} ${data[id].razonSocial || ""} ${data[id].rfc || ""}`.toUpperCase(),
+            nombre: data[id]?.nombre || "",
+            razonSocial: data[id]?.razonSocial || "",
+            rfc: data[id]?.rfc || "",
         }));
+    };
 
-        const textoBusqueda = texto.toLowerCase().trim();
+    const descargarClientesBusqueda = async () => {
+        const snap = await get(ref(db, "ClientesBusqueda"));
+        const lista = convertirSnapshotClientesBusqueda(snap.val() || {});
 
-        const filtrados = lista.filter((c) => {
-            const nombre = (c.nombre || "").toLowerCase();
-            const razon = (c.razonSocial || "").toLowerCase();
-            const rfc = (c.rfc || "").toLowerCase();
-            const busqueda = (c.busqueda || "").toLowerCase();
+        await reemplazarClientesBusquedaLocal(lista);
+        setIndiceClientes(lista);
+
+        return lista;
+    };
+
+    useEffect(() => {
+        let activo = true;
+        let unsubscribeVersion: (() => void) | undefined;
+
+        const iniciarClientesBusqueda = async () => {
+            try {
+                const locales = await leerClientesBusquedaLocal();
+
+                if (!activo) return;
+
+                if (locales.length > 0) {
+                    setIndiceClientes(locales);
+                }
+
+                const versionSnap = await get(ref(db, "ClientesBusquedaVersion"));
+                const versionFirebase = versionSnap.exists()
+                    ? String(versionSnap.val())
+                    : "";
+                const versionLocal = localStorage.getItem(CLIENTES_VERSION_KEY) || "";
+
+                if (
+                    locales.length === 0 ||
+                    (versionFirebase && versionFirebase !== versionLocal)
+                ) {
+                    await descargarClientesBusqueda();
+
+                    if (versionFirebase) {
+                        localStorage.setItem(CLIENTES_VERSION_KEY, versionFirebase);
+                    }
+                }
+
+                unsubscribeVersion = onValue(
+                    ref(db, "ClientesBusquedaVersion"),
+                    async (snapshot) => {
+                        const nuevaVersion = snapshot.exists()
+                            ? String(snapshot.val())
+                            : "";
+
+                        if (!nuevaVersion || !activo) return;
+
+                        const versionGuardada =
+                            localStorage.getItem(CLIENTES_VERSION_KEY) || "";
+
+                        if (nuevaVersion === versionGuardada) return;
+
+                        try {
+                            await descargarClientesBusqueda();
+
+                            if (activo) {
+                                localStorage.setItem(
+                                    CLIENTES_VERSION_KEY,
+                                    nuevaVersion
+                                );
+                            }
+                        } catch (error) {
+                            console.error(
+                                "Error actualizando índice de clientes:",
+                                error
+                            );
+                        }
+                    }
+                );
+            } catch (error) {
+                console.error("Error cargando índice de clientes:", error);
+            }
+        };
+
+        iniciarClientesBusqueda();
+
+        return () => {
+            activo = false;
+
+            if (unsubscribeVersion) {
+                unsubscribeVersion();
+            }
+        };
+    }, []);
+
+    const buscarClientes = (texto: string) => {
+        const textoBusqueda = normalizar(texto);
+
+        if (!textoBusqueda) return [];
+
+        return indiceClientes.filter((c) => {
+            const nombre = normalizar(c.nombre || "");
+            const razon = normalizar(c.razonSocial || "");
+            const rfc = normalizar(c.rfc || "");
 
             return (
                 nombre.includes(textoBusqueda) ||
                 razon.includes(textoBusqueda) ||
-                rfc.includes(textoBusqueda) ||
-                busqueda.includes(textoBusqueda)
+                rfc.includes(textoBusqueda)
             );
         });
-
-        setClientes(filtrados);
     };
+
     useEffect(() => {
         if (cliente) return;
 
@@ -165,12 +297,60 @@ const Cotizador = () => {
             return;
         }
 
-        const timeout = setTimeout(() => {
-            buscarClientes(buscar);
-        }, 300);
+        const resultados = buscarClientes(buscar.trim());
+        setClientes(resultados);
+    }, [buscar, cliente, indiceClientes]);
 
-        return () => clearTimeout(timeout);
-    }, [buscar, cliente]);
+    const seleccionarCliente = async (id?: string) => {
+        if (!id) return;
+
+        try {
+            const snapshot = await get(ref(db, `Clientes/${id}`));
+
+            if (!snapshot.exists()) {
+                alert("Cliente no encontrado");
+                return;
+            }
+
+            const data = snapshot.val();
+
+            setCliente({
+                id,
+                nombre: data.nombre || "",
+                razonSocial: data.razonSocial || "",
+                rfc: data.rfc || "",
+                telefono: data.telefono || "",
+                email: data.email || "",
+                direccion: data.direccion || "",
+                numeroExterior: data.numeroExterior || "",
+                numeroInterior: data.numeroInterior || "",
+                colonia: data.colonia || "",
+                municipio: data.municipio || "",
+                estado: data.estado || "",
+                cp: data.cp || "",
+                empresa: data.empresa || "",
+                giro: data.giro || "",
+                regimenFiscal: data.regimenFiscal || "",
+                notas: data.notas || "",
+                descuento: data.descuentoDefault ?? 0,
+                credito: data.credito || {
+                    activo: false,
+                    dias: 0,
+                    limite: 0,
+                },
+                busqueda:
+                    data.busqueda ||
+                    `${data.nombre || ""} ${data.razonSocial || ""} ${data.rfc || ""}`.toUpperCase(),
+            });
+
+            setClientes([]);
+            setBuscar("");
+            setEnvio("no");
+        } catch (error) {
+            console.error("Error cargando cliente:", error);
+            alert("No se pudo cargar la información del cliente");
+        }
+    };
 
   // 🔹 Guardar cotización
   const guardarCotizacion = (item: ItemCotizado) => {
@@ -735,12 +915,7 @@ const Cotizador = () => {
                                         <td>{c.rfc || "--"}</td>
                                         <td>
                                             <button
-                                                onClick={() => {
-                                                    setCliente(c);
-                                                    setClientes([]);
-                                                    setBuscar("");
-                                                    setEnvio("no");
-                                                }}
+                                                onClick={() => seleccionarCliente(c.id)}
                                             >
                                                 Seleccionar
                                             </button>

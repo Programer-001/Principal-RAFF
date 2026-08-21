@@ -35,6 +35,13 @@ interface Cliente {
   [key: string]: any;
 }
 
+interface ClienteBusqueda {
+  id: string;
+  nombre?: string;
+  razonSocial?: string;
+  rfc?: string;
+}
+
 interface Envio {
     folio: string;
     fecha: string;
@@ -74,11 +81,72 @@ const normalizar = (texto: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
+// ==================================================
+// INDEXEDDB - CLIENTES BUSQUEDA
+// ==================================================
+const DB_NAME = "RAFF_CLIENTES_DB";
+const DB_VERSION = 1;
+const STORE_NAME = "clientesBusqueda";
+const CACHE_KEY = "indice";
+
+const abrirDBClientes = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const leerIndiceClientesLocal = async (): Promise<ClienteBusqueda[] | null> => {
+  try {
+    const db = await abrirDBClientes();
+
+    return await new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, "readonly");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(CACHE_KEY);
+
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error("Error leyendo índice local:", error);
+    return null;
+  }
+};
+
+const guardarIndiceClientesLocal = async (clientes: ClienteBusqueda[]) => {
+  try {
+    const db = await abrirDBClientes();
+
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+
+      store.put(clientes, CACHE_KEY);
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  } catch (error) {
+    console.error("Error guardando índice local:", error);
+  }
+};
+
 const Envios: React.FC = () => {
   const db = getDatabase(app);
 
   const [buscar, setBuscar] = useState("");
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [indiceClientes, setIndiceClientes] = useState<ClienteBusqueda[]>([]);
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [ultimosEnvios, setUltimosEnvios] = useState<Envio[]>([]);
   const [envioSeleccionado, setEnvioSeleccionado] = useState<Envio | null>(
@@ -132,23 +200,116 @@ const Envios: React.FC = () => {
       setFormaPagoEnvio("");
   };
 
+  // ==================================================
+  // CARGAR INDICE DE CLIENTES
+  // IndexedDB primero, Firebase después
+  // ==================================================
+  useEffect(() => {
+    let activo = true;
+
+    const cargarIndiceClientes = async () => {
+      try {
+        const indiceLocal = await leerIndiceClientesLocal();
+
+        if (activo && indiceLocal && indiceLocal.length > 0) {
+          setIndiceClientes(indiceLocal);
+        }
+
+        const snap = await get(ref(db, "ClientesBusqueda"));
+        const data = snap.val() || {};
+
+        const lista: ClienteBusqueda[] = Object.keys(data).map((id) => ({
+          id,
+          nombre: data[id]?.nombre || "",
+          razonSocial: data[id]?.razonSocial || "",
+          rfc: data[id]?.rfc || "",
+        }));
+
+        if (activo) {
+          setIndiceClientes(lista);
+        }
+
+        await guardarIndiceClientesLocal(lista);
+      } catch (error) {
+        console.error("Error cargando índice de clientes:", error);
+      }
+    };
+
+    cargarIndiceClientes();
+
+    return () => {
+      activo = false;
+    };
+  }, [db]);
+
   // 🔎 BUSCAR CLIENTES
-  const buscarClientes = async () => {
-    const snap = await get(ref(db, "Clientes"));
-    const data = snap.val() || {};
-    const lista = Object.keys(data).map((id) => ({ id, ...data[id] }));
-    const textoBusqueda = buscar.toLowerCase();
-    const resultados = lista.filter((c: any) => {
-      const nombre = (c.nombre || "").toLowerCase();
-      const razon = (c.razonSocial || "").toLowerCase();
-      const rfc = (c.rfc || "").toLowerCase();
-      return (
-        nombre.includes(textoBusqueda) ||
-        razon.includes(textoBusqueda) ||
-        rfc.includes(textoBusqueda)
-      );
-    });
+  const buscarClientes = () => {
+    const textoBusqueda = normalizar(buscar.trim());
+
+    if (!textoBusqueda) {
+      setClientes([]);
+      return;
+    }
+
+    const resultados: Cliente[] = indiceClientes
+      .filter((c) => {
+        const nombre = normalizar(c.nombre || "");
+        const razon = normalizar(c.razonSocial || "");
+        const rfc = normalizar(c.rfc || "");
+
+        return (
+          nombre.includes(textoBusqueda) ||
+          razon.includes(textoBusqueda) ||
+          rfc.includes(textoBusqueda)
+        );
+      })
+      .map((c) => ({ ...c }));
+
     setClientes(resultados);
+  };
+
+  // ==================================================
+  // BUSCAR AUTOMÁTICAMENTE AL ESCRIBIR
+  // ==================================================
+  useEffect(() => {
+    if (cliente) return;
+
+    if (buscar.trim() === "") {
+      setClientes([]);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      buscarClientes();
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [buscar, cliente, indiceClientes]);
+
+  // ==================================================
+  // CARGAR CLIENTE COMPLETO
+  // ==================================================
+  const cargarClienteCompleto = async (id: string) => {
+    try {
+      const snap = await get(ref(db, `Clientes/${id}`));
+
+      if (!snap.exists()) {
+        alert("Cliente no encontrado");
+        return;
+      }
+
+      const data = snap.val();
+
+      setCliente({
+        id,
+        ...data,
+      });
+
+      setClientes([]);
+    } catch (error) {
+      console.error("Error cargando cliente:", error);
+      alert("No se pudo cargar la información del cliente");
+    }
   };
 
   // 🔄 Cargar últimos envíos
@@ -502,9 +663,6 @@ const Envios: React.FC = () => {
             onChange={(e) => setBuscar(e.target.value)}
             className="search-input"
           />
-          <button onClick={buscarClientes} className="btn btn-blue">
-            Buscar
-          </button>
           {!cliente && (
             <button
               className="btn btn-blue"
@@ -548,8 +706,9 @@ const Envios: React.FC = () => {
                     <button
                       className="btn btn-blue"
                       onClick={() => {
-                        setCliente(c);
-                        setClientes([]);
+                        if (c.id) {
+                          cargarClienteCompleto(c.id);
+                        }
                       }}
                     >
                       Seleccionar
