@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
+import { getStorage } from "firebase/storage";
 
 // ✅ Tu configuración de Firebase
 const firebaseConfig = {
@@ -26,3 +27,6 @@ export const auth = getAuth(app);
 
 // 🔹 Functions
 export const functions = getFunctions(app, "us-central1");
+
+// 🔹 Storage
+export const storage = getStorage(app);

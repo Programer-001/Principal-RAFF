@@ -14,4 +14,7 @@ export const paqueterias = [
   "Kora Express",
   "Altos Pack",
   "Fletes Oriente",
+  "Manzanillo Express",
+  "Redpack",
+  "UPS",
 ];
