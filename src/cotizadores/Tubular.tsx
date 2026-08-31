@@ -9,6 +9,10 @@ import {obtenerDescuento, descuentosTubular} from "../datos/PrecioTipoResistenci
 import ProductosExtras, {ProductoExtra} from "./ProductosExtras";
 import { ItemCotizado } from "../cotizador";
 import { FiCopy } from "react-icons/fi";
+import ConfiguracionTubular, {
+  ConfiguracionTubularDatos,
+  TipoConfiguracionTubular,
+} from "../funciones/configuracion_tubular";
 
 interface Props {
     data?: ItemCotizado;
@@ -59,6 +63,15 @@ const esAdministracion = perfil?.area === "Administración";
 //-------------------------------------------------------------------------------->>
 const [catalogos, setCatalogos] = useState<any>({});
 const [seleccionados, setSeleccionados] = useState<any>({});
+
+// Configuración técnica opcional para Brida / Placa / Lámina / Tapón macho.
+// No modifica precios; solo complementa la descripción y permite volver a editarla.
+const [mostrarConfiguracionTubular, setMostrarConfiguracionTubular] = useState(false);
+const [tipoConfiguracionTubularActivo, setTipoConfiguracionTubularActivo] =
+  useState<TipoConfiguracionTubular | "">("");
+const [configuracionesTubular, setConfiguracionesTubular] = useState<
+  Partial<Record<TipoConfiguracionTubular, ConfiguracionTubularDatos>>
+>({});
   useEffect(() => {
     const rutas = [
       "tornillo",
@@ -215,6 +228,36 @@ const totalTubo =
     tipoTapon !== "NO" && tipoTapon !== ""
       ? (Number(cantidadTapon) || 0) * (Number(precioTapon) || 0)
             : 0;
+
+  const tipoPlacaConfigurable: TipoConfiguracionTubular | "" =
+    tipoPlaca === "Brida" ||
+    tipoPlaca === "Placa" ||
+    tipoPlaca === "Lamina"
+      ? (tipoPlaca as TipoConfiguracionTubular)
+      : "";
+
+  const abrirConfiguracionTubular = (tipo: TipoConfiguracionTubular) => {
+    if (cantidadResistencias <= 0) {
+      alert("Primero indica el número de resistencias.");
+      return;
+    }
+
+    const cantidadMontajes =
+      tipo === "Tapón macho" ? cantidadTapon : cantidadPlaca;
+
+    if (cantidadMontajes <= 0) {
+      alert(`Primero indica la cantidad de ${tipo}.`);
+      return;
+    }
+
+    setTipoConfiguracionTubularActivo(tipo);
+    setMostrarConfiguracionTubular(true);
+  };
+
+  const cantidadConfiguracionActiva =
+    tipoConfiguracionTubularActivo === "Tapón macho"
+      ? cantidadTapon
+      : cantidadPlaca;
     //caclula desoldar base con cantidad
 
     //Calcular aletada por metros
@@ -304,6 +347,10 @@ const totalProductosExtras = productosExtras.reduce(
       setSacarWatts(false);
       setExtrasActivos(false);
       setProductosExtras([]);
+
+      setMostrarConfiguracionTubular(false);
+      setTipoConfiguracionTubularActivo("");
+      setConfiguracionesTubular({});
   };
 
   /*
@@ -330,6 +377,68 @@ const totalProductosExtras = productosExtras.reduce(
     if (!valor || valor === "NO") return "";
     return ` / ${label}: ${valor}${cantidad ? ` (${cantidad})` : ""}`;
   };
+
+  const formatearConfiguracionTubular = (
+    configuracion?: ConfiguracionTubularDatos
+  ) => {
+    if (!configuracion) return "";
+
+    return configuracion.filas
+      .map((fila, index) => {
+        const partes: string[] = [];
+
+        partes.push(
+          `${fila.resistencias} ${
+            fila.resistencias === 1 ? "RESISTENCIA" : "RESISTENCIAS"
+          }`
+        );
+
+        if (fila.potencia) partes.push(`${fila.potencia}W`);
+        if (fila.voltaje) partes.push(`${fila.voltaje}V`);
+
+        (fila.conceptos || [])
+          .filter((concepto) => concepto.trim() !== "")
+          .forEach((concepto) => partes.push(concepto.trim().toUpperCase()));
+
+        return `${configuracion.tipo.toUpperCase()} ${index + 1}: ${partes.join(
+          " - "
+        )}`;
+      })
+      .join("\n");
+  };
+
+  const configuracionTapon = configuracionesTubular["Tapón macho"];
+  const configuracionPlacaActual = tipoPlacaConfigurable
+    ? configuracionesTubular[tipoPlacaConfigurable]
+    : undefined;
+
+  const textoConfiguracionTapon =
+    configuracionTapon &&
+    configuracionTapon.cantidad === cantidadTapon
+      ? formatearConfiguracionTubular(configuracionTapon)
+      : "";
+
+  const textoConfiguracionPlaca =
+    configuracionPlacaActual &&
+    configuracionPlacaActual.cantidad === cantidadPlaca
+      ? formatearConfiguracionTubular(configuracionPlacaActual)
+      : "";
+
+  const bloquesConfiguracionTubular = [
+    textoConfiguracionTapon
+      ? `CONFIGURACIÓN DE TAPÓN MACHO\n${textoConfiguracionTapon}`
+      : "",
+    textoConfiguracionPlaca && tipoPlacaConfigurable
+      ? `CONFIGURACIÓN DE ${
+          tipoPlacaConfigurable === "Lamina"
+            ? "LÁMINA"
+            : tipoPlacaConfigurable.toUpperCase()
+        }\n${textoConfiguracionPlaca}`
+      : "",
+  ].filter(Boolean);
+
+  const descripcionConfiguracionTubular =
+    bloquesConfiguracionTubular.join("\n\n");
 
     const descripcion = `
   ${cantidadResistencias || 0} RESISTENCIA ${diametro || ""} DE ${longitud || 0
@@ -493,6 +602,16 @@ const totalProductosExtras = productosExtras.reduce(
         // 🔹 productos extras
         setExtrasActivos(!!d.extrasActivos);
         setProductosExtras(d.productosExtras || []);
+
+        if (d.configuracionesTubular) {
+          setConfiguracionesTubular(d.configuracionesTubular);
+        } else if (d.configuracionTubular?.tipo) {
+          setConfiguracionesTubular({
+            [d.configuracionTubular.tipo]: d.configuracionTubular,
+          });
+        } else {
+          setConfiguracionesTubular({});
+        }
 
     }
   }, [data]);
@@ -819,15 +938,30 @@ const aplicarStock = (stock: any) => {
           </div>
 
           {tipoTapon !== "NO" && tipoTapon !== "" && (
-            <div className="form-row">
-              <label>Cantidad de tapones</label>
-              <input
-                type="number"
-                min={0}
-                value={cantidadTapon === 0 ? "" : cantidadTapon}
-                onChange={(e) => setCantidadTapon(Number(e.target.value))}
-              />
-            </div>
+            <>
+              <div className="form-row">
+                <label>Cantidad de tapones</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={cantidadTapon === 0 ? "" : cantidadTapon}
+                  onChange={(e) => setCantidadTapon(Number(e.target.value))}
+                />
+              </div>
+
+              {cantidadTapon > 0 && (
+                <div className="form-row">
+                  <label>Configuración</label>
+                  <button
+                    type="button"
+                    className="btn btn-blue"
+                    onClick={() => abrirConfiguracionTubular("Tapón macho")}
+                  >
+                    ⚙ Configurar Tapón macho
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Barrenos */}
@@ -884,10 +1018,11 @@ const aplicarStock = (stock: any) => {
             </div>
           )}
 
-          {/* Placa / Base / Brida */}
+          {/* Placa / Base / Brida / Lámina */}
           <div className="form-row">
-            <label>Placa / Base / Brida</label>
+            <label>Placa / Base / Brida / Lámina</label>
             <select
+              value={tipoPlaca}
               onChange={(e) => {
                 setTipoPlaca(e.target.value);
                 setPrecioPlaca(0);
@@ -898,6 +1033,7 @@ const aplicarStock = (stock: any) => {
               <option value="Placa">Placa</option>
               <option value="Base">Base</option>
               <option value="Brida">Brida</option>
+              <option value="Lamina">Lámina</option>
             </select>
           </div>
 
@@ -907,6 +1043,8 @@ const aplicarStock = (stock: any) => {
                 <label>Precio ({tipoPlaca})</label>
                 <input
                   type="number"
+                  min={0}
+                  value={precioPlaca === 0 ? "" : precioPlaca}
                   onChange={(e) => setPrecioPlaca(Number(e.target.value))}
                 />
               </div>
@@ -915,9 +1053,24 @@ const aplicarStock = (stock: any) => {
                 <label>Cantidad ({tipoPlaca})</label>
                 <input
                   type="number"
+                  min={0}
+                  value={cantidadPlaca === 0 ? "" : cantidadPlaca}
                   onChange={(e) => setCantidadPlaca(Number(e.target.value))}
                 />
               </div>
+
+              {tipoPlacaConfigurable && cantidadPlaca > 0 && (
+                <div className="form-row">
+                  <label>Configuración</label>
+                  <button
+                    type="button"
+                    className="btn btn-blue"
+                    onClick={() => abrirConfiguracionTubular(tipoPlacaConfigurable)}
+                  >
+                    ⚙ Configurar {tipoPlaca === "Lamina" ? "Lámina" : tipoPlaca}
+                  </button>
+                </div>
+              )}
             </>
           )}
 
@@ -1047,7 +1200,13 @@ const aplicarStock = (stock: any) => {
                 <button
                   type="button"
                   title="Copiar descripción"
-                  onClick={() => navigator.clipboard.writeText(descripcion)}
+                  onClick={() =>
+                    navigator.clipboard.writeText(
+                      descripcionConfiguracionTubular
+                        ? `${descripcion}\n\n${descripcionConfiguracionTubular}`
+                        : descripcion
+                    )
+                  }
                   style={{
                     border: "none",
                     background: "transparent",
@@ -1062,6 +1221,20 @@ const aplicarStock = (stock: any) => {
               </div>
 
               <p className="descripcion-texto">{descripcion}</p>
+
+              {descripcionConfiguracionTubular && (
+                <div
+                  style={{
+                    marginTop: "16px",
+                    paddingTop: "12px",
+                    borderTop: "1px solid #ccc",
+                    fontWeight: "bold",
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {descripcionConfiguracionTubular}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1110,6 +1283,7 @@ const aplicarStock = (stock: any) => {
                               tipoPlaca,
                               cantidadPlaca,
                               precioPlaca,
+                              configuracionesTubular,
                               totalPuentes,
                               //sellos
                               cantidadSellos,
@@ -1372,6 +1546,32 @@ const aplicarStock = (stock: any) => {
               </>
           )}
           {/* --------------------------------------------FIN DE CUADRO VARIABLES------------------------------------------------------------------>> */}
+
+      <ConfiguracionTubular
+        abierto={mostrarConfiguracionTubular}
+        tipo={tipoConfiguracionTubularActivo}
+        cantidadMontajes={cantidadConfiguracionActiva}
+        cantidadResistencias={cantidadResistencias}
+        potenciaGeneral={potencia}
+        voltajeGeneral={voltaje}
+        configuracionActual={
+          tipoConfiguracionTubularActivo
+            ? configuracionesTubular[tipoConfiguracionTubularActivo] || null
+            : null
+        }
+        onGuardar={(configuracion) => {
+          setConfiguracionesTubular((prev) => ({
+            ...prev,
+            [configuracion.tipo]: configuracion,
+          }));
+          setMostrarConfiguracionTubular(false);
+          setTipoConfiguracionTubularActivo("");
+        }}
+        onCancelar={() => {
+          setMostrarConfiguracionTubular(false);
+          setTipoConfiguracionTubularActivo("");
+        }}
+      />
     </>
   );
 };
