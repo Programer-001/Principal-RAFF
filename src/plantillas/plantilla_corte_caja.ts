@@ -142,8 +142,8 @@ export const generarPDFCorteCaja = async (
 
         pagos.sort(
             (a, b) =>
-                Number(a.transaccion || 0) -
-                Number(b.transaccion || 0)
+                Number(a.factura || 0) -
+                Number(b.factura || 0)
         );
 
         const pagosActivos = pagos.filter(
