@@ -162,6 +162,13 @@ useEffect(() => {
         notas,
       },
     });
+      if (!data) {
+    setServiciosSeleccionados({});
+    setPreciosServicios({});
+    setProductosActivos(false);
+    setProductosExtras([]);
+    setNotas("");
+      }
   };
 
   return (
