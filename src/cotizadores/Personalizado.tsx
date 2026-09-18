@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ProductosExtras, { ProductoExtra } from "./ProductosExtras";
 
 type Servicio = {
@@ -52,7 +52,40 @@ const Personalizado: React.FC<PersonalizadoProps> = ({ onGuardar, data,setDirty 
   );
 
   const [notas, setNotas] = useState(data?.datos?.notas || "");
+  // Actualizar estado cuando cambie la data
+useEffect(() => {
+  if (data) {
+    // EDITAR: cargar los datos de la partida
+    setServiciosSeleccionados(
+      data?.datos?.serviciosSeleccionados || {}
+    );
 
+    setPreciosServicios(
+      data?.datos?.preciosServicios || {}
+    );
+
+    setProductosActivos(
+      data?.datos?.productosActivos || false
+    );
+
+    setProductosExtras(
+      data?.datos?.productosExtras || []
+    );
+
+    setNotas(
+      data?.datos?.notas || ""
+    );
+  } else {
+    // NUEVO: limpiar formulario
+    setServiciosSeleccionados({});
+    setPreciosServicios({});
+    setProductosActivos(false);
+    setProductosExtras([]);
+    setNotas("");
+  }
+}, [data]);
+
+  // Marcar como "dirty" cuando cambie cualquier estado
   const cambiarServicio = (key: string) => {
     setServiciosSeleccionados((prev) => ({
       ...prev,
@@ -115,7 +148,7 @@ const Personalizado: React.FC<PersonalizadoProps> = ({ onGuardar, data,setDirty 
     if (!onGuardar) return;
 
     onGuardar({
-      id: Date.now().toString(),
+      id: data?.id || Date.now().toString(),
       tipo: "personalizado",
       descripcion,
       total: Number(total.toFixed(2)),
@@ -158,11 +191,11 @@ const Personalizado: React.FC<PersonalizadoProps> = ({ onGuardar, data,setDirty 
         <p>{descripcion}</p>
     </div>
 
-        {onGuardar && (
-          <button className="btn btn-blue" onClick={guardar}>
-            Agregar a OT
-          </button>
-        )}
+{onGuardar && (
+  <button className="btn btn-blue" onClick={guardar}>
+    {data ? "Actualizar" : "AGREGAR"}
+  </button>
+)}
 
         <h3>Total: {formatearMoneda(total)}</h3>
 
