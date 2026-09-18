@@ -43,6 +43,7 @@ import DevolucionesMercancia from "./DevolucionesMercancia/DevolucionesMercancia
 import Enrolado from "./Enrolado/Enrolado";
 import Tablas from "./Info_adicional/Tablas";
 import Paqueterias from "./Administracion/Paqueterias";
+import ResistenciasStock from "./funciones/ResistenciasStock";
 import Calculadora from "./Calculadora/Calculadora";
 import Checador from "./checador/Checador";
 import Calendario from "./Calendario/Calendario";
@@ -95,6 +96,7 @@ function AppLayout() {
         if (pathname.startsWith("/paqueterias")) return "paqueterias";
         if (pathname.startsWith("/calendario")) return "calendario";
         if (pathname.startsWith("/mostrar_tablas")) return "mostrar_tablas";
+        if (pathname.startsWith("/resistenciasstock ")) return "resistenciasstock";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
         
@@ -145,7 +147,9 @@ function AppLayout() {
             enrolado: "/enrolado",
             tablas: "/tablas",
             menu_personalizado:"/menu_personalizado",
-            paqueterias: "/paqueterias"
+            paqueterias: "/paqueterias",
+            resistenciasstock: "/resistenciasstock"
+
         };
 
         navigate(mapa[v] || "/home");
@@ -199,6 +203,7 @@ function AppLayout() {
                 <Route path="/devoluciones" element={<DevolucionesMercancia />} />
                 <Route path="/menu_personalizado" element={<PermisosMenu />} />
                 <Route path="/paqueterias" element={<Paqueterias />} />
+                <Route path="/resistenciasstock" element={<ResistenciasStock />} />
             </Routes>
         </div>
     );

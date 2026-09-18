@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 import { tablasPrecios, TipoResistencia } from "../datos/PrecioTipoResistencia";
-import { resistenciasStock } from "../datos/resistencias_stock";
 import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 import {obtenerDescuento, descuentosTubular} from "../datos/PrecioTipoResistencia";
 import ProductosExtras, {ProductoExtra} from "./ProductosExtras";
@@ -20,6 +19,21 @@ interface Props {
         username?: string;
     };
 }
+type ResistenciaStock = {
+  id: string;
+  nombre: string;
+  habilitado: boolean;
+  valores: {
+    voltaje: string;
+    potencia: string;
+    longitud: string;
+    diametro: string;
+    dobleces: string;
+    tornillo: string;
+    borne: string;
+    datosAdicionales: string;
+  };
+};
 
 const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
 const [diametro, setDiametro] = useState<TipoResistencia | "">("");
@@ -59,22 +73,24 @@ const esAdministracion = perfil?.area === "Administración";
 //-------------------------------------------------------------------------------->>
 const [catalogos, setCatalogos] = useState<any>({});
 const [seleccionados, setSeleccionados] = useState<any>({});
+const [resistenciasStock, setResistenciasStock] = useState<ResistenciaStock[]>([]);
   useEffect(() => {
-    const rutas = [
-      "tornillo",
-      "borne",
-      "Diametro_de_tubo",
-      "Aspecto de la resistencia",
-      "desoldar_base",
-      "dobleces",
-      "soldadura_resistencia",
-      "soldar_cable_resistencia",
-      "cable_para_soldar",
-      "tapones_macho",
-      "barrenos",
-      "sellos",
-      "servicios",
-    ];
+  const rutas = [
+    "tornillo",
+    "borne",
+    "Diametro_de_tubo",
+    "Diametro_del_tubo",
+    "Aspecto de la resistencia",
+    "desoldar_base",
+    "dobleces",
+    "soldadura_resistencia",
+    "soldar_cable_resistencia",
+    "cable_para_soldar",
+    "tapones_macho",
+    "barrenos",
+    "sellos",
+    "servicios",
+  ];
 // Función para cargar datos de Firebase
     const cargarDatos = async () => {
       const nuevosCatalogos: any = {};
@@ -523,6 +539,55 @@ const aplicarStock = (stock: any) => {
 
   
 };
+// ---------------------------------------------------------
+// CARGAR RESISTENCIAS DE STOCK
+// ---------------------------------------------------------
+useEffect(() => {
+  const cargarResistenciasStock = async () => {
+    try {
+      const snapshot = await get(
+        ref(db, "ResistenciasStock")
+      );
+
+      if (!snapshot.exists()) {
+        setResistenciasStock([]);
+        return;
+      }
+
+      const data = snapshot.val();
+
+      const lista: ResistenciaStock[] = Object.entries(data)
+        .map(([id, item]: [string, any]) => ({
+          id,
+          nombre: item.nombre || "",
+          habilitado: item.habilitado !== false,
+          valores: {
+            voltaje: item.valores?.voltaje || "",
+            potencia: item.valores?.potencia || "",
+            longitud: item.valores?.longitud || "",
+            diametro: item.valores?.diametro || "",
+            dobleces: item.valores?.dobleces || "",
+            tornillo: item.valores?.tornillo || "",
+            borne: item.valores?.borne || "",
+            datosAdicionales:
+              item.valores?.datosAdicionales || "",
+          },
+        }))
+        .filter((item) => item.habilitado);
+
+      setResistenciasStock(lista);
+    } catch (error) {
+      console.error(
+        "Error cargando resistencias de stock:",
+        error
+      );
+
+      setResistenciasStock([]);
+    }
+  };
+
+  cargarResistenciasStock();
+}, []);
 
   //-----------------------log---------------------
 
@@ -672,29 +737,23 @@ const aplicarStock = (stock: any) => {
           {/* Diámetro Tubo */}
           <div className="form-row">
             <label>Diámetro Tubo</label>
+
             <select
               value={diametro}
-              onChange={(e) => setDiametro(e.target.value as TipoResistencia)}
+              onChange={(e) =>
+                setDiametro(e.target.value as TipoResistencia)
+              }
             >
               <option value="">Seleccione...</option>
-              <option value="5/16 tp 304">5/16 tp 304</option>
-              <option value="5/16 tp 316">5/16 tp 316</option>
-              <option value="5/16 tp 304 circunferencial">
-                5/16 tp 304 circunferencial
-              </option>
-              <option value="5/16 tp 316 circunferencial">
-                5/16 tp 316 circunferencial
-              </option>
-              <option value="7/16 tp 304">7/16 tp 304</option>
-              <option value="7/16 tp 316">7/16 tp 316</option>
-              <option value="7/16 tp 304 circunferencial">
-                7/16 tp 304 circunferencial
-              </option>
-              <option value="7/16 tp 316 circunferencial">
-                7/16 tp 316 circunferencial
-              </option>
-              <option value="5/16 cobre">5/16 cobre</option>
-              <option value="7/16 cobre">7/16 cobre</option>
+
+              {catalogos["Diametro_del_tubo"]?.map((item: any) => (
+                <option
+                  key={item.id}
+                  value={item.tipo}
+                >
+                  {item.tipo}
+                </option>
+              ))}
             </select>
           </div>
           {/* Borne */}
@@ -1151,7 +1210,7 @@ const aplicarStock = (stock: any) => {
                 >
                   {resistenciasStock.map((stock) => (
                     <button
-                      key={stock.nombre}
+                      key={stock.id}
                       type="button"
                       onClick={() => aplicarStock(stock)}
                       style={{

@@ -1,0 +1,426 @@
+/* =========================================================
+   RESISTENCIAS STOCK
+========================================================= */
+
+.res-stock {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+
+/* =========================================================
+   PANEL IZQUIERDO
+========================================================= */
+
+.res-stock-sidebar {
+  background: #ffffff;
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.res-stock-sidebar-titulo {
+  padding: 15px 16px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #d8d8d8;
+
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.res-stock-cargando {
+  padding: 20px;
+  text-align: center;
+  color: #777;
+}
+
+
+/* RESISTENCIA */
+
+.res-stock-item {
+  width: 100%;
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  padding: 10px 14px;
+
+  border: 0;
+  border-bottom: 1px solid #e4e4e4;
+
+  background: #ffffff;
+
+  text-align: left;
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    padding-left 0.15s ease;
+}
+
+.res-stock-item:hover {
+  background: #f3f3f3;
+  padding-left: 18px;
+}
+
+.res-stock-item.activo {
+  background: #e8e8e8;
+  font-weight: 700;
+}
+
+.res-stock-item-nombre {
+  flex: 1;
+}
+
+.res-stock-deshabilitada {
+  font-size: 10px;
+  color: #888;
+  font-weight: 400;
+}
+
+
+/* BOTÓN + */
+
+.res-stock-agregar {
+  width: 100%;
+  height: 55px;
+
+  border: 0;
+
+  background: #ffffff;
+
+  font-size: 30px;
+  font-weight: 400;
+
+  cursor: pointer;
+
+  transition: background 0.15s ease;
+}
+
+.res-stock-agregar:hover {
+  background: #f1f1f1;
+}
+
+
+/* =========================================================
+   PANEL DERECHO
+========================================================= */
+
+.res-stock-contenido {
+  min-height: 500px;
+
+  background: #ffffff;
+
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
+
+  overflow: hidden;
+}
+
+.res-stock-titulo {
+  padding: 15px 20px;
+
+  background: #f5f5f5;
+
+  border-bottom: 1px solid #d8d8d8;
+
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   SIN SELECCIÓN
+========================================================= */
+
+.res-stock-vacio {
+  min-height: 350px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  color: #8a8a8a;
+  text-align: center;
+}
+
+
+/* =========================================================
+   CONTENIDO
+========================================================= */
+
+.res-stock-informacion,
+.res-stock-formulario {
+  padding: 25px 30px;
+}
+
+
+/* =========================================================
+   CAMPOS
+========================================================= */
+
+.res-stock-campo,
+.res-stock-campo-lectura {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 20px;
+
+  align-items: center;
+
+  padding: 10px 0;
+
+  border-bottom: 1px solid #eeeeee;
+}
+
+.res-stock-campo label,
+.res-stock-campo-lectura label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.res-stock-campo-lectura span,
+.res-stock-campo-lectura strong {
+  min-width: 0;
+
+  font-size: 14px;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   INPUTS Y SELECTS
+========================================================= */
+
+.res-stock-campo input[type="text"],
+.res-stock-campo input[type="number"],
+.res-stock-campo select,
+.res-stock-campo textarea {
+  width: 100%;
+  max-width: 650px;
+
+  box-sizing: border-box;
+
+  padding: 9px 11px;
+
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+
+  background: #ffffff;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  outline: none;
+}
+
+.res-stock-campo input[type="text"]:focus,
+.res-stock-campo input[type="number"]:focus,
+.res-stock-campo select:focus,
+.res-stock-campo textarea:focus {
+  border-color: #888888;
+}
+
+
+/* =========================================================
+   CHECKBOX
+========================================================= */
+
+.res-stock-check input[type="checkbox"] {
+  width: 19px;
+  height: 19px;
+
+  margin: 0;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+.res-stock-textarea {
+  align-items: start;
+}
+
+.res-stock-textarea label {
+  padding-top: 9px;
+}
+
+.res-stock-textarea textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+
+/* =========================================================
+   ESTADO HABILITADO
+========================================================= */
+
+.res-stock-estado {
+  width: fit-content;
+
+  padding: 4px 10px;
+
+  border-radius: 20px;
+
+  font-size: 12px !important;
+  font-weight: 700;
+}
+
+.res-stock-estado.habilitado {
+  background: #eeeeee;
+}
+
+.res-stock-estado.deshabilitado {
+  background: #dddddd;
+  color: #666666;
+}
+
+
+/* =========================================================
+   BOTONES
+========================================================= */
+
+.res-stock-acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-top: 25px;
+}
+
+.res-stock-btn {
+  min-height: 40px;
+
+  padding: 9px 18px;
+
+  border: 1px solid #bdbdbd;
+  border-radius: 6px;
+
+  background: #ffffff;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.res-stock-btn:hover {
+  background: #eeeeee;
+}
+
+.res-stock-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* EDITAR */
+
+.res-stock-btn-editar {
+  min-width: 110px;
+}
+
+
+/* GUARDAR */
+
+.res-stock-btn-guardar {
+  min-width: 170px;
+}
+
+
+/* CANCELAR */
+
+.res-stock-btn-cancelar {
+  min-width: 110px;
+}
+
+
+/* ELIMINAR */
+
+.res-stock-btn-eliminar {
+  min-width: 190px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .res-stock {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .res-stock-campo,
+  .res-stock-campo-lectura {
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .res-stock-informacion,
+  .res-stock-formulario {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 650px) {
+  .res-stock {
+    grid-template-columns: 1fr;
+  }
+
+  .res-stock-campo,
+  .res-stock-campo-lectura {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .res-stock-campo {
+    padding: 12px 0;
+  }
+
+  .res-stock-campo input[type="text"],
+  .res-stock-campo input[type="number"],
+  .res-stock-campo select,
+  .res-stock-campo textarea {
+    max-width: none;
+  }
+
+  .res-stock-informacion,
+  .res-stock-formulario {
+    padding: 16px;
+  }
+
+  .res-stock-acciones {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .res-stock-btn {
+    width: 100%;
+  }
+}
