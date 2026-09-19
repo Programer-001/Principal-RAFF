@@ -365,6 +365,91 @@
   min-width: 190px;
 }
 
+/* =========================================================
+   PRODUCTOS EXTRAS - RESISTENCIAS STOCK
+========================================================= */
+
+.res-stock-productos-extras {
+  margin-top: 18px;
+  margin-bottom: 22px;
+  padding: 18px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.res-stock-productos-extras > label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.res-stock-producto-extra {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) 160px 42px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.res-stock-producto-extra input {
+  width: 100%;
+  height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.res-stock-producto-extra input:focus {
+  outline: none;
+  border-color: #777;
+}
+
+.res-stock-btn-extra-eliminar {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  background: #dc3545;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.res-stock-btn-extra-eliminar:hover {
+  opacity: 0.85;
+}
+
+.res-stock-btn-extra-agregar {
+  margin-top: 5px;
+  padding: 9px 14px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.res-stock-btn-extra-agregar:hover {
+  background: #f0f0f0;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 700px) {
+  .res-stock-producto-extra {
+    grid-template-columns: 1fr;
+  }
+
+  .res-stock-btn-extra-eliminar {
+    width: 100%;
+  }
+}
+
 
 /* =========================================================
    RESPONSIVE

@@ -23,6 +23,7 @@ type ResistenciaStock = {
   id: string;
   nombre: string;
   habilitado: boolean;
+
   valores: {
     voltaje: string;
     potencia: string;
@@ -31,8 +32,19 @@ type ResistenciaStock = {
     dobleces: string;
     tornillo: string;
     borne: string;
+    soldaduraResistencia: string;
+    soldarCableResistencia: string;
+    cableParaSoldar: string;
+    longitudCable: string;
+    cantidadCable: string;
+
     datosAdicionales: string;
   };
+
+  productosExtras: {
+    descripcion: string;
+    precio: number;
+  }[];
 };
 
 const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
@@ -513,31 +525,120 @@ const totalProductosExtras = productosExtras.reduce(
     }
   }, [data]);
 
-    // FUNCION STOCK
-const aplicarStock = (stock: any) => {
-  setVoltaje(Number(stock.valores.voltaje));
-  setPotencia(Number(stock.valores.potencia));
-  setLongitud(Number(stock.valores.longitud));
-  setDiametro(stock.valores.diametro);
-  setDatosAdicionales(stock.valores.datosAdicionales);
+// =========================================================
+// FUNCIÓN STOCK
+// =========================================================
+const aplicarStock = (stock: ResistenciaStock) => {
+
+  // ---------------------------------------------------------
+  // DATOS BÁSICOS
+  // ---------------------------------------------------------
+
+  setVoltaje(
+    Number(stock.valores.voltaje) || 0
+  );
+
+  setPotencia(
+    Number(stock.valores.potencia) || 0
+  );
+
+  setLongitud(
+    Number(stock.valores.longitud) || 0
+  );
+
+  setDiametro(
+    (stock.valores.diametro || "") as TipoResistencia | ""
+  );
+
+  setDatosAdicionales(
+    stock.valores.datosAdicionales || ""
+  );
+
+
+  // ---------------------------------------------------------
+  // SELECTS
+  // ---------------------------------------------------------
 
   setSeleccionados((prev: any) => ({
     ...prev,
 
-    dobleces: catalogos["dobleces"]?.find(
-      (item: any) => item.tipo === stock.valores.dobleces
-    ),
+    // DOBLECES
+    dobleces:
+      catalogos["dobleces"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.dobleces
+      ),
 
-    tornillo: catalogos["tornillo"]?.find(
-      (item: any) => item.tipo === stock.valores.tornillo
-    ),
+    // TORNILLO
+    tornillo:
+      catalogos["tornillo"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.tornillo
+      ),
 
-    borne: catalogos["borne"]?.find(
-      (item: any) => item.tipo === stock.valores.borne
-    ),
+    // BORNE
+    borne:
+      catalogos["borne"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.borne
+      ),
+
+    // SOLDADURA EN RESISTENCIA
+    soldadura_resistencia:
+      catalogos["soldadura_resistencia"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.soldaduraResistencia
+      ),
+
+    // SOLDAR CABLE EN RESISTENCIA
+    soldar_cable_resistencia:
+      catalogos["soldar_cable_resistencia"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.soldarCableResistencia
+      ),
+
+    // CABLE PARA SOLDAR
+    cable_para_soldar:
+      catalogos["cable_para_soldar"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.cableParaSoldar
+      ),
   }));
 
-  
+
+  // ---------------------------------------------------------
+  // CABLE
+  // ---------------------------------------------------------
+
+  setLongitudCable(
+    Number(stock.valores.longitudCable) || 0
+  );
+
+  setCantidadCable(
+    Number(stock.valores.cantidadCable) || 0
+  );
+
+
+  // ---------------------------------------------------------
+  // PRODUCTOS EXTRAS
+  // ---------------------------------------------------------
+
+  const extras: ProductoExtra[] = (
+    stock.productosExtras || []
+  ).map((extra, index) => ({
+    id: `stock-${stock.id}-${index}`,
+    descripcion: extra.descripcion || "",
+    precio: Number(extra.precio) || 0,
+
+    // La cantidad se captura manualmente en Tubular
+    cantidad: 0,
+  }));
+
+  setProductosExtras(extras);
+
+  // Si la resistencia tiene productos extras,
+  // activa automáticamente la sección.
+  setExtrasActivos(extras.length > 0);
 };
 // ---------------------------------------------------------
 // CARGAR RESISTENCIAS DE STOCK
@@ -556,24 +657,82 @@ useEffect(() => {
 
       const data = snapshot.val();
 
-      const lista: ResistenciaStock[] = Object.entries(data)
-        .map(([id, item]: [string, any]) => ({
-          id,
-          nombre: item.nombre || "",
-          habilitado: item.habilitado !== false,
-          valores: {
-            voltaje: item.valores?.voltaje || "",
-            potencia: item.valores?.potencia || "",
-            longitud: item.valores?.longitud || "",
-            diametro: item.valores?.diametro || "",
-            dobleces: item.valores?.dobleces || "",
-            tornillo: item.valores?.tornillo || "",
-            borne: item.valores?.borne || "",
-            datosAdicionales:
-              item.valores?.datosAdicionales || "",
-          },
-        }))
-        .filter((item) => item.habilitado);
+      const lista: ResistenciaStock[] =
+        Object.entries(data)
+          .map(
+            ([id, item]: [string, any]) => ({
+              id,
+
+              nombre: item.nombre || "",
+
+              habilitado:
+                item.habilitado !== false,
+
+              valores: {
+                voltaje:
+                  item.valores?.voltaje || "",
+
+                potencia:
+                  item.valores?.potencia || "",
+
+                longitud:
+                  item.valores?.longitud || "",
+
+                diametro:
+                  item.valores?.diametro || "",
+
+                dobleces:
+                  item.valores?.dobleces || "",
+
+                tornillo:
+                  item.valores?.tornillo || "",
+
+                borne:
+                  item.valores?.borne || "",
+                
+                  soldaduraResistencia:
+                  item.valores?.soldaduraResistencia || "",
+
+                soldarCableResistencia:
+                  item.valores
+                    ?.soldarCableResistencia || "",
+
+                cableParaSoldar:
+                  item.valores
+                    ?.cableParaSoldar || "",
+
+                longitudCable:
+                  item.valores
+                    ?.longitudCable || "",
+
+                cantidadCable:
+                  item.valores
+                    ?.cantidadCable || "",
+
+                datosAdicionales:
+                  item.valores
+                    ?.datosAdicionales || "",
+              },
+
+              productosExtras:
+                Array.isArray(
+                  item.productosExtras
+                )
+                  ? item.productosExtras.map(
+                      (extra: any) => ({
+                        descripcion:
+                          extra.descripcion || "",
+
+                        precio:
+                          Number(extra.precio) || 0,
+                      })
+                    )
+                  : [],
+            })
+          )
+          .filter(
+            (item) => item.habilitado
+          );
 
       setResistenciasStock(lista);
     } catch (error) {
