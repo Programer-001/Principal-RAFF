@@ -594,6 +594,8 @@ const totalProductosExtras = productosExtras.reduce(
 
       // 🔹 placa
       setTipoPlaca(d.tipoPlaca || "");
+      setPrecioPlaca(d.precioPlaca || 0);
+      setCantidadPlaca(d.cantidadPlaca || 0);
         setMuestra(d.muestra || "");
         setDatosAdicionales(d.datosAdicionales || "");
 
@@ -1249,7 +1251,9 @@ const aplicarStock = (stock: any) => {
                       onGuardar({
                           id: data?.id || Date.now().toString(),
                           tipo: "tubular",
-                          descripcion: descripcion,
+                          descripcion: descripcionConfiguracionTubular
+                          ? `${descripcion}\n\n${descripcionConfiguracionTubular}`
+                          : descripcion,
                           //totalConDescuento PORQUE EL IVA SE CALCULA EN EL RESUMEN DE ORDENES DE TRABAJO, cotizador.tsx
                           total: Number(totalConDescuento.toFixed(2)),
                           datos: {

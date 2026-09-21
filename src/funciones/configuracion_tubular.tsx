@@ -65,6 +65,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
   onCancelar,
 }) => {
   const [filas, setFilas] = useState<ConfiguracionTubularFila[]>([]);
+  const [mostrarInformacion, setMostrarInformacion] = useState(false);
 
   /* =========================================================
      CARGAR CONFIGURACIÓN
@@ -74,6 +75,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
     if (!abierto) return;
 
     if (!tipo) return;
+    setMostrarInformacion(false);
 
     /*
       Si ya existe una configuración guardada
@@ -88,6 +90,9 @@ const ConfiguracionTubular: React.FC<Props> = ({
         configuracionActual.filas.map((fila) => ({
           ...fila,
           conceptos: [...(fila.conceptos || [])],
+          potencia: tipo === "Brida"
+            ? fila.resistencias * potenciaGeneral
+            : fila.potencia,
         }))
       );
 
@@ -119,6 +124,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
     tipo,
     cantidadMontajes,
     voltajeGeneral,
+    potenciaGeneral,
     configuracionActual,
   ]);
 
@@ -143,15 +149,14 @@ const ConfiguracionTubular: React.FC<Props> = ({
           ? {
               ...fila,
               [campo]: valor,
+              ...(tipo === "Brida" && campo === "resistencias"
+                ? { potencia: valor * potenciaGeneral }
+                : {}),
             }
           : fila
       )
     );
   };
-
-  /* =========================================================
-     CONCEPTOS
-  ========================================================= */
 
   const agregarConcepto = (filaIndex: number) => {
     setFilas((anteriores) =>
@@ -583,58 +588,32 @@ const ConfiguracionTubular: React.FC<Props> = ({
                     />
                   </td>
 
-                  {/* POTENCIA */}
-
-                  <td
-                    style={{
-                      padding: "12px 10px",
-                      verticalAlign: "top",
-                      borderBottom: "1px solid #eee",
-                    }}
-                  >
-                    <input
-                      type="number"
-                      min={0}
-                      value={
-                        fila.potencia === 0
-                          ? ""
-                          : fila.potencia
-                      }
-                      placeholder={
-                        potenciaGeneral
-                          ? String(potenciaGeneral)
-                          : ""
-                      }
-                      onKeyDown={(e) => {
-                        if (
-                          ["-", "+", "e", "E"].includes(
-                            e.key
-                          )
-                        ) {
-                          e.preventDefault();
-                        }
-                      }}
-                      onChange={(e) => {
-                        const valor =
-                          e.target.value;
-
-                        actualizarFila(
-                          index,
-                          "potencia",
-                          valor === ""
-                            ? 0
-                            : Math.max(
-                                0,
-                                Number(valor)
-                              )
-                        );
-                      }}
-                      style={{
-                        width: "110px",
-                        padding: "8px",
-                        boxSizing: "border-box",
-                      }}
-                    />
+                   {/* POTENCIA TOTAL DE LA BRIDA / POTENCIA INDIVIDUAL EN OTROS MONTAJES */}
+                  <td style={{ padding: "12px 10px", verticalAlign: "top", borderBottom: "1px solid #eee" }}>
+                    {tipo === "Brida" ? (
+                      <input
+                        type="number"
+                        readOnly
+                        value={fila.resistencias > 0 ? fila.resistencias * potenciaGeneral : ""}
+                        title="Potencia total = resistencias de la brida × potencia general por resistencia"
+                        style={{ width: "110px", padding: "8px", boxSizing: "border-box", background: "#f5f5f5" }}
+                      />
+                    ) : (
+                      <input
+                        type="number"
+                        min={0}
+                        value={fila.potencia === 0 ? "" : fila.potencia}
+                        placeholder={potenciaGeneral ? String(potenciaGeneral) : ""}
+                        onKeyDown={(e) => {
+                          if (["-", "+", "e", "E"].includes(e.key)) e.preventDefault();
+                        }}
+                        onChange={(e) => {
+                          const valor = e.target.value;
+                          actualizarFila(index, "potencia", valor === "" ? 0 : Math.max(0, Number(valor)));
+                        }}
+                        style={{ width: "110px", padding: "8px", boxSizing: "border-box" }}
+                      />
+                    )}
                   </td>
 
                   {/* VOLTAJE */}
@@ -844,6 +823,51 @@ const ConfiguracionTubular: React.FC<Props> = ({
             )}
         </div>
 
+        {tipo === "Brida" && (
+          <div style={{ marginTop: 20 }}>
+            <button
+              type="button"
+              onClick={() => setMostrarInformacion((actual) => !actual)}
+              style={{ padding: "9px 14px", cursor: "pointer", border: "1px solid #ccc", borderRadius: 6, background: "#fff" }}
+            >
+              {mostrarInformacion ? "Ocultar información eléctrica" : "⚡ Mostrar información eléctrica"}
+            </button>
+            {mostrarInformacion && filas.map((fila, index) => {
+              const potenciaTotal = fila.resistencias * potenciaGeneral;
+              const corrienteIndividual = fila.voltaje > 0 && potenciaGeneral > 0
+                ? potenciaGeneral / fila.voltaje
+                : null;
+              const datos = [
+                ["Cantidad de resistencias", String(fila.resistencias)],
+                ["Voltaje nominal por resistencia", `${fila.voltaje} V`],
+                ["Potencia nominal por resistencia", `${potenciaGeneral} W`],
+                ["Corriente nominal por resistencia", corrienteIndividual === null ? "—" : `${corrienteIndividual.toFixed(2)} A`],
+                ["Potencia nominal total de la brida", `${potenciaTotal.toLocaleString("es-MX")} W`],
+              ];
+              return (
+                <div key={index} style={{ marginTop: 16, padding: 12, background: "#f7f7f7", borderRadius: 6 }}>
+                  <strong>BRIDA {index + 1}</strong>
+                  <table style={{ width: "100%", marginTop: 8, borderCollapse: "collapse", fontSize: 14 }}>
+                    <tbody>
+                      {datos.map(([concepto, valor]) => (
+                        <tr key={concepto} style={{ borderBottom: "1px solid #ddd" }}>
+                          <td style={{ padding: 9 }}>{concepto}</td>
+                          <td style={{ padding: 9, textAlign: "right", fontWeight: concepto === "Potencia nominal total de la brida" ? "bold" : "normal" }}>{valor}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+            {mostrarInformacion && (
+              <p style={{ fontSize: 12, color: "#555" }}>
+                Datos nominales por resistencia. La corriente total de alimentación depende del cableado eléctrico de la brida.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* =====================================================
             BOTONES
         ===================================================== */}
@@ -864,13 +888,23 @@ const ConfiguracionTubular: React.FC<Props> = ({
             Guardar
           </button>
 
-          <button
-            type="button"
-            className="btn"
-            onClick={onCancelar}
-          >
-            Cancelar
-          </button>
+        <button
+          type="button"
+          onClick={onCancelar}
+          style={{
+            backgroundColor: "#ffffff",
+            color: "#333333",
+            border: "1px solid #999999",
+            borderRadius: "6px",
+            padding: "10px 35px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            minWidth: "200px",
+          }}
+        >
+          Cancelar
+        </button>
         </div>
       </div>
     </div>
