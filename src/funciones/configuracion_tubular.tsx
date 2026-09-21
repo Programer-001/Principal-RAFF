@@ -90,9 +90,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
         configuracionActual.filas.map((fila) => ({
           ...fila,
           conceptos: [...(fila.conceptos || [])],
-          potencia: tipo === "Brida"
-            ? fila.resistencias * potenciaGeneral
-            : fila.potencia,
+          potencia: fila.resistencias * potenciaGeneral,
         }))
       );
 
@@ -140,7 +138,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
 
   const actualizarFila = (
     index: number,
-    campo: "resistencias" | "potencia" | "voltaje",
+    campo: "resistencias" | "voltaje",
     valor: number
   ) => {
     setFilas((anteriores) =>
@@ -149,7 +147,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
           ? {
               ...fila,
               [campo]: valor,
-              ...(tipo === "Brida" && campo === "resistencias"
+              ...(campo === "resistencias"
                 ? { potencia: valor * potenciaGeneral }
                 : {}),
             }
@@ -300,7 +298,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
       filas: filas.map((fila) => ({
         resistencias: Number(fila.resistencias) || 0,
 
-        potencia: Number(fila.potencia) || 0,
+        potencia: Number(fila.resistencias) * potenciaGeneral,
 
         voltaje: Number(fila.voltaje) || 0,
 
@@ -588,32 +586,15 @@ const ConfiguracionTubular: React.FC<Props> = ({
                     />
                   </td>
 
-                   {/* POTENCIA TOTAL DE LA BRIDA / POTENCIA INDIVIDUAL EN OTROS MONTAJES */}
+                   {/* POTENCIA TOTAL AUTOMÁTICA DEL MONTAJE */}
                   <td style={{ padding: "12px 10px", verticalAlign: "top", borderBottom: "1px solid #eee" }}>
-                    {tipo === "Brida" ? (
-                      <input
-                        type="number"
-                        readOnly
-                        value={fila.resistencias > 0 ? fila.resistencias * potenciaGeneral : ""}
-                        title="Potencia total = resistencias de la brida × potencia general por resistencia"
-                        style={{ width: "110px", padding: "8px", boxSizing: "border-box", background: "#f5f5f5" }}
-                      />
-                    ) : (
-                      <input
-                        type="number"
-                        min={0}
-                        value={fila.potencia === 0 ? "" : fila.potencia}
-                        placeholder={potenciaGeneral ? String(potenciaGeneral) : ""}
-                        onKeyDown={(e) => {
-                          if (["-", "+", "e", "E"].includes(e.key)) e.preventDefault();
-                        }}
-                        onChange={(e) => {
-                          const valor = e.target.value;
-                          actualizarFila(index, "potencia", valor === "" ? 0 : Math.max(0, Number(valor)));
-                        }}
-                        style={{ width: "110px", padding: "8px", boxSizing: "border-box" }}
-                      />
-                    )}
+                    <input
+                      type="number"
+                      readOnly
+                      value={fila.resistencias > 0 ? fila.resistencias * potenciaGeneral : ""}
+                      title="Potencia total = resistencias asignadas × potencia nominal por resistencia"
+                      style={{ width: "110px", padding: "8px", boxSizing: "border-box", background: "#f5f5f5" }}
+                    />
                   </td>
 
                   {/* VOLTAJE */}
@@ -823,7 +804,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
             )}
         </div>
 
-        {tipo === "Brida" && (
+        {(
           <div style={{ marginTop: 20 }}>
             <button
               type="button"
@@ -842,17 +823,17 @@ const ConfiguracionTubular: React.FC<Props> = ({
                 ["Voltaje nominal por resistencia", `${fila.voltaje} V`],
                 ["Potencia nominal por resistencia", `${potenciaGeneral} W`],
                 ["Corriente nominal por resistencia", corrienteIndividual === null ? "—" : `${corrienteIndividual.toFixed(2)} A`],
-                ["Potencia nominal total de la brida", `${potenciaTotal.toLocaleString("es-MX")} W`],
+                [`Potencia nominal total de ${tipo.toLowerCase()} ${index + 1}`, `${potenciaTotal.toLocaleString("es-MX")} W`],
               ];
               return (
                 <div key={index} style={{ marginTop: 16, padding: 12, background: "#f7f7f7", borderRadius: 6 }}>
-                  <strong>BRIDA {index + 1}</strong>
+                  <strong>{tipo === "Lamina" ? "LÁMINA" : tipo.toUpperCase()} {index + 1}</strong>
                   <table style={{ width: "100%", marginTop: 8, borderCollapse: "collapse", fontSize: 14 }}>
                     <tbody>
                       {datos.map(([concepto, valor]) => (
                         <tr key={concepto} style={{ borderBottom: "1px solid #ddd" }}>
                           <td style={{ padding: 9 }}>{concepto}</td>
-                          <td style={{ padding: 9, textAlign: "right", fontWeight: concepto === "Potencia nominal total de la brida" ? "bold" : "normal" }}>{valor}</td>
+                          <td style={{ padding: 9, textAlign: "right", fontWeight: concepto.startsWith("Potencia nominal total de ") ? "bold" : "normal" }}>{valor}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -862,7 +843,7 @@ const ConfiguracionTubular: React.FC<Props> = ({
             })}
             {mostrarInformacion && (
               <p style={{ fontSize: 12, color: "#555" }}>
-                Datos nominales por resistencia. La corriente total de alimentación depende del cableado eléctrico de la brida.
+                Datos nominales por resistencia. La corriente total de alimentación depende del cableado eléctrico del montaje.
               </p>
             )}
           </div>
