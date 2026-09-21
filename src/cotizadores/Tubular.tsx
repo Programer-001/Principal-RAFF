@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
 import { tablasPrecios, TipoResistencia } from "../datos/PrecioTipoResistencia";
-import { resistenciasStock } from "../datos/resistencias_stock";
 import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
 import {obtenerDescuento, descuentosTubular} from "../datos/PrecioTipoResistencia";
 import ProductosExtras, {ProductoExtra} from "./ProductosExtras";
@@ -24,6 +23,33 @@ interface Props {
         username?: string;
     };
 }
+type ResistenciaStock = {
+  id: string;
+  nombre: string;
+  habilitado: boolean;
+
+  valores: {
+    voltaje: string;
+    potencia: string;
+    longitud: string;
+    diametro: string;
+    dobleces: string;
+    tornillo: string;
+    borne: string;
+    soldaduraResistencia: string;
+    soldarCableResistencia: string;
+    cableParaSoldar: string;
+    longitudCable: string;
+    cantidadCable: string;
+
+    datosAdicionales: string;
+  };
+
+  productosExtras: {
+    descripcion: string;
+    precio: number;
+  }[];
+};
 
 const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
 const [diametro, setDiametro] = useState<TipoResistencia | "">("");
@@ -63,7 +89,6 @@ const esAdministracion = perfil?.area === "Administración";
 //-------------------------------------------------------------------------------->>
 const [catalogos, setCatalogos] = useState<any>({});
 const [seleccionados, setSeleccionados] = useState<any>({});
-
 // Configuración técnica opcional para Brida / Placa / Lámina / Tapón macho.
 // No modifica precios; solo complementa la descripción y permite volver a editarla.
 const [mostrarConfiguracionTubular, setMostrarConfiguracionTubular] = useState(false);
@@ -72,22 +97,24 @@ const [tipoConfiguracionTubularActivo, setTipoConfiguracionTubularActivo] =
 const [configuracionesTubular, setConfiguracionesTubular] = useState<
   Partial<Record<TipoConfiguracionTubular, ConfiguracionTubularDatos>>
 >({});
+const [resistenciasStock, setResistenciasStock] = useState<ResistenciaStock[]>([]);
   useEffect(() => {
-    const rutas = [
-      "tornillo",
-      "borne",
-      "Diametro_de_tubo",
-      "Aspecto de la resistencia",
-      "desoldar_base",
-      "dobleces",
-      "soldadura_resistencia",
-      "soldar_cable_resistencia",
-      "cable_para_soldar",
-      "tapones_macho",
-      "barrenos",
-      "sellos",
-      "servicios",
-    ];
+  const rutas = [
+    "tornillo",
+    "borne",
+    "Diametro_de_tubo",
+    "Diametro_del_tubo",
+    "Aspecto de la resistencia",
+    "desoldar_base",
+    "dobleces",
+    "soldadura_resistencia",
+    "soldar_cable_resistencia",
+    "cable_para_soldar",
+    "tapones_macho",
+    "barrenos",
+    "sellos",
+    "servicios",
+  ];
 // Función para cargar datos de Firebase
     const cargarDatos = async () => {
       const nuevosCatalogos: any = {};
@@ -618,32 +645,228 @@ const totalProductosExtras = productosExtras.reduce(
     }
   }, [data]);
 
-    // FUNCION STOCK
-const aplicarStock = (stock: any) => {
-  setVoltaje(Number(stock.valores.voltaje));
-  setPotencia(Number(stock.valores.potencia));
-  setLongitud(Number(stock.valores.longitud));
-  setDiametro(stock.valores.diametro);
-  setDatosAdicionales(stock.valores.datosAdicionales);
+// =========================================================
+// FUNCIÓN STOCK
+// =========================================================
+const aplicarStock = (stock: ResistenciaStock) => {
+
+  // ---------------------------------------------------------
+  // DATOS BÁSICOS
+  // ---------------------------------------------------------
+
+  setVoltaje(
+    Number(stock.valores.voltaje) || 0
+  );
+
+  setPotencia(
+    Number(stock.valores.potencia) || 0
+  );
+
+  setLongitud(
+    Number(stock.valores.longitud) || 0
+  );
+
+  setDiametro(
+    (stock.valores.diametro || "") as TipoResistencia | ""
+  );
+
+  setDatosAdicionales(
+    stock.valores.datosAdicionales || ""
+  );
+
+
+  // ---------------------------------------------------------
+  // SELECTS
+  // ---------------------------------------------------------
 
   setSeleccionados((prev: any) => ({
     ...prev,
 
-    dobleces: catalogos["dobleces"]?.find(
-      (item: any) => item.tipo === stock.valores.dobleces
-    ),
+    // DOBLECES
+    dobleces:
+      catalogos["dobleces"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.dobleces
+      ),
 
-    tornillo: catalogos["tornillo"]?.find(
-      (item: any) => item.tipo === stock.valores.tornillo
-    ),
+    // TORNILLO
+    tornillo:
+      catalogos["tornillo"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.tornillo
+      ),
 
-    borne: catalogos["borne"]?.find(
-      (item: any) => item.tipo === stock.valores.borne
-    ),
+    // BORNE
+    borne:
+      catalogos["borne"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.borne
+      ),
+
+    // SOLDADURA EN RESISTENCIA
+    soldadura_resistencia:
+      catalogos["soldadura_resistencia"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.soldaduraResistencia
+      ),
+
+    // SOLDAR CABLE EN RESISTENCIA
+    soldar_cable_resistencia:
+      catalogos["soldar_cable_resistencia"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.soldarCableResistencia
+      ),
+
+    // CABLE PARA SOLDAR
+    cable_para_soldar:
+      catalogos["cable_para_soldar"]?.find(
+        (item: any) =>
+          item.tipo === stock.valores.cableParaSoldar
+      ),
   }));
 
-  
+
+  // ---------------------------------------------------------
+  // CABLE
+  // ---------------------------------------------------------
+
+  setLongitudCable(
+    Number(stock.valores.longitudCable) || 0
+  );
+
+  setCantidadCable(
+    Number(stock.valores.cantidadCable) || 0
+  );
+
+
+  // ---------------------------------------------------------
+  // PRODUCTOS EXTRAS
+  // ---------------------------------------------------------
+
+  const extras: ProductoExtra[] = (
+    stock.productosExtras || []
+  ).map((extra, index) => ({
+    id: `stock-${stock.id}-${index}`,
+    descripcion: extra.descripcion || "",
+    precio: Number(extra.precio) || 0,
+
+    // La cantidad se captura manualmente en Tubular
+    cantidad: 0,
+  }));
+
+  setProductosExtras(extras);
+
+  // Si la resistencia tiene productos extras,
+  // activa automáticamente la sección.
+  setExtrasActivos(extras.length > 0);
 };
+// ---------------------------------------------------------
+// CARGAR RESISTENCIAS DE STOCK
+// ---------------------------------------------------------
+useEffect(() => {
+  const cargarResistenciasStock = async () => {
+    try {
+      const snapshot = await get(
+        ref(db, "ResistenciasStock")
+      );
+
+      if (!snapshot.exists()) {
+        setResistenciasStock([]);
+        return;
+      }
+
+      const data = snapshot.val();
+
+      const lista: ResistenciaStock[] =
+        Object.entries(data)
+          .map(
+            ([id, item]: [string, any]) => ({
+              id,
+
+              nombre: item.nombre || "",
+
+              habilitado:
+                item.habilitado !== false,
+
+              valores: {
+                voltaje:
+                  item.valores?.voltaje || "",
+
+                potencia:
+                  item.valores?.potencia || "",
+
+                longitud:
+                  item.valores?.longitud || "",
+
+                diametro:
+                  item.valores?.diametro || "",
+
+                dobleces:
+                  item.valores?.dobleces || "",
+
+                tornillo:
+                  item.valores?.tornillo || "",
+
+                borne:
+                  item.valores?.borne || "",
+                
+                  soldaduraResistencia:
+                  item.valores?.soldaduraResistencia || "",
+
+                soldarCableResistencia:
+                  item.valores
+                    ?.soldarCableResistencia || "",
+
+                cableParaSoldar:
+                  item.valores
+                    ?.cableParaSoldar || "",
+
+                longitudCable:
+                  item.valores
+                    ?.longitudCable || "",
+
+                cantidadCable:
+                  item.valores
+                    ?.cantidadCable || "",
+
+                datosAdicionales:
+                  item.valores
+                    ?.datosAdicionales || "",
+              },
+
+              productosExtras:
+                Array.isArray(
+                  item.productosExtras
+                )
+                  ? item.productosExtras.map(
+                      (extra: any) => ({
+                        descripcion:
+                          extra.descripcion || "",
+
+                        precio:
+                          Number(extra.precio) || 0,
+                      })
+                    )
+                  : [],
+            })
+          )
+          .filter(
+            (item) => item.habilitado
+          );
+
+      setResistenciasStock(lista);
+    } catch (error) {
+      console.error(
+        "Error cargando resistencias de stock:",
+        error
+      );
+
+      setResistenciasStock([]);
+    }
+  };
+
+  cargarResistenciasStock();
+}, []);
 
   //-----------------------log---------------------
 
@@ -793,29 +1016,23 @@ const aplicarStock = (stock: any) => {
           {/* Diámetro Tubo */}
           <div className="form-row">
             <label>Diámetro Tubo</label>
+
             <select
               value={diametro}
-              onChange={(e) => setDiametro(e.target.value as TipoResistencia)}
+              onChange={(e) =>
+                setDiametro(e.target.value as TipoResistencia)
+              }
             >
               <option value="">Seleccione...</option>
-              <option value="5/16 tp 304">5/16 tp 304</option>
-              <option value="5/16 tp 316">5/16 tp 316</option>
-              <option value="5/16 tp 304 circunferencial">
-                5/16 tp 304 circunferencial
-              </option>
-              <option value="5/16 tp 316 circunferencial">
-                5/16 tp 316 circunferencial
-              </option>
-              <option value="7/16 tp 304">7/16 tp 304</option>
-              <option value="7/16 tp 316">7/16 tp 316</option>
-              <option value="7/16 tp 304 circunferencial">
-                7/16 tp 304 circunferencial
-              </option>
-              <option value="7/16 tp 316 circunferencial">
-                7/16 tp 316 circunferencial
-              </option>
-              <option value="5/16 cobre">5/16 cobre</option>
-              <option value="7/16 cobre">7/16 cobre</option>
+
+              {catalogos["Diametro_del_tubo"]?.map((item: any) => (
+                <option
+                  key={item.id}
+                  value={item.tipo}
+                >
+                  {item.tipo}
+                </option>
+              ))}
             </select>
           </div>
           {/* Borne */}
@@ -1329,7 +1546,7 @@ const aplicarStock = (stock: any) => {
                 >
                   {resistenciasStock.map((stock) => (
                     <button
-                      key={stock.nombre}
+                      key={stock.id}
                       type="button"
                       onClick={() => aplicarStock(stock)}
                       style={{
