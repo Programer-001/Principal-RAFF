@@ -36,6 +36,8 @@ const MENU_BASE: Record<string, MenuItem> = {
     taller: { key: "taller", label: "Taller" },
     //tablas
     tablas:{key:"tablas", label:"Tablas"},
+    //reporte de orden de trabajo
+    reporteorden:{key:"reporteorden", label:"Reporte de orden de trabajo"},
 
     //submenus
     rh: {
@@ -224,7 +226,8 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.enrolado,
             MENU_BASE.devoluciones,
             MENU_BASE.taller,
-            MENU_BASE.tablas
+            MENU_BASE.tablas,
+            MENU_BASE.reporteorden
 
         ],
     },
@@ -243,7 +246,8 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.administracion,
             MENU_BASE.contabilidad,
             MENU_BASE.devoluciones,
-            MENU_BASE.tablas
+            MENU_BASE.tablas,
+            MENU_BASE.reporteorden
         ],
     },
     {

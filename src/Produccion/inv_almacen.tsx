@@ -44,9 +44,11 @@ type PanelModo =
     | "ninguno"
     | "agregar_almacen"
     | "ingresar_almacen"
+    | "ajustar_almacen"
     | "solicitar_almacen"
     | "agregar_resistencia"
-    | "ingresar_resistencia";
+    | "ingresar_resistencia"
+    | "ajustar_resistencia";
 
 const InvAlmacen: React.FC = () => {
     const db = getDatabase(app);
@@ -73,6 +75,11 @@ const InvAlmacen: React.FC = () => {
     const [tipoSeleccionado, setTipoSeleccionado] = useState("");
     const [cantidadEntradaResistencia, setCantidadEntradaResistencia] = useState("");
 
+    const [idAjuste, setIdAjuste] = useState("");
+    const [cantidadAjuste, setCantidadAjuste] = useState("");
+    const [motivoAjuste, setMotivoAjuste] = useState("");
+    const [guardandoAjuste, setGuardandoAjuste] = useState(false);
+
     const [modoEntradaStock, setModoEntradaStock] = useState<ModoEntradaStock>("");
     const [folioOrdenCompra, setFolioOrdenCompra] = useState("");
     const [ordenCompraCargada, setOrdenCompraCargada] = useState<any | null>(null);
@@ -87,7 +94,7 @@ const InvAlmacen: React.FC = () => {
 
             const lista: ItemAlmacen[] = Object.entries(data)
                 .map(([firebaseKey, item]: [string, any]) => ({
-                    id: item.id || firebaseKey || "",
+                    id: firebaseKey,
                     descripcion: item.descripcion || item.DESCRIPCION || "",
                     cantidad: Number(item.cantidad ?? item.CANTIDAD ?? 0),
                     fecha: item.fecha || item.FECHA || "",
@@ -105,7 +112,7 @@ const InvAlmacen: React.FC = () => {
 
             const lista: ItemResistencia[] = Object.entries(data)
                 .map(([firebaseKey, item]: [string, any]) => ({
-                    id: item.id || firebaseKey || "",
+                    id: firebaseKey,
                     tipo: item.TIPO || item.tipo || "",
                     cantidad: Number(item.CANTIDAD ?? item.cantidad ?? 0),
                     fecha: item.FECHA || item.fecha || "",
@@ -212,6 +219,9 @@ const InvAlmacen: React.FC = () => {
         setNuevaCantidadResistencia("");
         setTipoSeleccionado("");
         setCantidadEntradaResistencia("");
+        setIdAjuste("");
+        setCantidadAjuste("");
+        setMotivoAjuste("");
 
         setModoEntradaStock("");
         setFolioOrdenCompra("");
@@ -288,30 +298,34 @@ const InvAlmacen: React.FC = () => {
     };
 
     const ingresarStockAlmacenManual = async () => {
-        const descripcion = descripcionSeleccionada.trim();
+        const idMaterial = descripcionSeleccionada.trim();
         const cantidadAgregar = Number(cantidadEntradaAlmacen || 0);
 
-        if (!descripcion) {
+        if (!idMaterial) {
             alert("Selecciona un material.");
             return;
         }
 
-        if (cantidadAgregar <= 0) {
+        if (!Number.isSafeInteger(cantidadAgregar) || cantidadAgregar <= 0) {
             alert("La cantidad debe ser mayor a 0.");
             return;
         }
 
-        const item = almacen.find((x) => x.descripcion === descripcion);
+        const item = almacen.find((x) => x.id === idMaterial);
 
         if (!item) {
             alert("No se encontró el material seleccionado.");
             return;
         }
 
-        const cantidadAnterior = Number(item.cantidad || 0);
-        const cantidadNueva = cantidadAnterior + cantidadAgregar;
-
         const itemRef = ref(db, `produccion/almacen_inventario/${item.id}`);
+        const actual = await get(itemRef);
+        if (!actual.exists()) {
+            alert("El material no existe en Firebase.");
+            return;
+        }
+        const cantidadAnterior = Number(actual.val().cantidad ?? actual.val().CANTIDAD ?? 0);
+        const cantidadNueva = cantidadAnterior + cantidadAgregar;
 
         await update(itemRef, {
             cantidad: cantidadNueva,
@@ -638,20 +652,20 @@ const InvAlmacen: React.FC = () => {
     };
 
     const ingresarStockResistencia = async () => {
-        const tipo = tipoSeleccionado.trim();
+        const idResistencia = tipoSeleccionado.trim();
         const cantidadAgregar = Number(cantidadEntradaResistencia || 0);
 
-        if (!tipo) {
+        if (!idResistencia) {
             alert("Selecciona un tipo de resistencia.");
             return;
         }
 
-        if (cantidadAgregar <= 0) {
+        if (!Number.isSafeInteger(cantidadAgregar) || cantidadAgregar <= 0) {
             alert("La cantidad debe ser mayor a 0.");
             return;
         }
 
-        const item = resistencias.find((x) => x.tipo === tipo);
+        const item = resistencias.find((x) => x.id === idResistencia);
 
         if (!item) {
             alert("No se encontró el tipo seleccionado.");
@@ -685,6 +699,93 @@ const InvAlmacen: React.FC = () => {
         alert("Stock de resistencias actualizado.");
         cerrarPanel();
     };
+
+    // Ajuste: la cantidad escrita reemplaza la existencia actual; no se suma.
+    const ajustarInventario = async (tipo: "almacen" | "resistencia") => {
+        if (guardandoAjuste) return;
+        const esAlmacen = tipo === "almacen";
+        const item = esAlmacen
+            ? almacen.find((x) => x.id === idAjuste)
+            : resistencias.find((x) => x.id === idAjuste);
+        if (!item) {
+            alert("Selecciona un material o resistencia.");
+            return;
+        }
+        if (cantidadAjuste.trim() === "") {
+            alert("Escribe la nueva cantidad.");
+            return;
+        }
+        const nueva = Number(cantidadAjuste);
+        if (!Number.isSafeInteger(nueva) || nueva < 0) {
+            alert("La cantidad debe ser un número entero mayor o igual a cero.");
+            return;
+        }
+        const nombre = esAlmacen
+            ? (item as ItemAlmacen).descripcion
+            : (item as ItemResistencia).tipo;
+        const ruta = esAlmacen
+            ? `produccion/almacen_inventario/${item.id}`
+            : `produccion/resistencias_stock/${item.id}`;
+        setGuardandoAjuste(true);
+        try {
+            const itemRef = ref(db, ruta);
+            const snapshot = await get(itemRef);
+            if (!snapshot.exists()) {
+                alert("No se encontró el registro en Firebase.");
+                return;
+            }
+            const datos = snapshot.val();
+            const anterior = Number(esAlmacen
+                ? (datos.cantidad ?? datos.CANTIDAD ?? 0)
+                : (datos.CANTIDAD ?? datos.cantidad ?? 0));
+            if (!Number.isFinite(anterior)) {
+                alert("La cantidad registrada no es válida. Revisa Firebase.");
+                return;
+            }
+            if (anterior === nueva) {
+                alert("La cantidad ya es igual a la registrada.");
+                return;
+            }
+            const diferencia = nueva - anterior;
+            if (!window.confirm(
+                `${nombre} (${item.id})\nCantidad anterior: ${anterior}\n` +
+                `Nueva cantidad: ${nueva}\nDiferencia: ${diferencia > 0 ? "+" : ""}${diferencia}\n\n¿Guardar ajuste?`
+            )) return;
+
+            // Escribimos en la misma clave de cantidad que ya usa cada módulo.
+            await update(itemRef, esAlmacen
+                ? { cantidad: nueva, fecha: fechaHoy(), tipoMovimiento: "ajuste" }
+                : { CANTIDAD: nueva, FECHA: fechaHoy(), tipoMovimiento: "ajuste" });
+
+            try {
+                await guardarMovimiento({
+                    modulo: esAlmacen ? "almacen_inventario" : "resistencias_stock",
+                    accion: "ajuste_inventario",
+                    itemId: item.id,
+                    ...(esAlmacen ? { descripcion: nombre } : { tipo: nombre }),
+                    cantidadAnterior: anterior,
+                    cantidadNueva: nueva,
+                    cantidadMovimiento: diferencia,
+                    motivo: motivoAjuste.trim(),
+                });
+            } catch (error) {
+                console.error("Se guardó el ajuste, pero falló el historial:", error);
+                alert("La cantidad se actualizó, pero no se pudo registrar el movimiento en el historial.");
+                cerrarPanel();
+                return;
+            }
+            alert(`Inventario actualizado: ${nombre}\n${anterior} → ${nueva} piezas.`);
+            cerrarPanel();
+        } catch (error) {
+            console.error("Error al ajustar inventario:", error);
+            alert("No se pudo guardar el ajuste. Revisa la consola.");
+        } finally {
+            setGuardandoAjuste(false);
+        }
+    };
+
+    const materialAjuste = almacen.find((x) => x.id === idAjuste);
+    const resistenciaAjuste = resistencias.find((x) => x.id === idAjuste);
 
     const totalAlmacen = useMemo(() => {
         return almacen.reduce((acc, item) => acc + Number(item.cantidad || 0), 0);
@@ -726,6 +827,10 @@ const InvAlmacen: React.FC = () => {
                                     onClick={() => abrirPanel("ingresar_almacen")}
                                 >
                                     Ingresar stock
+                                </button>
+
+                                <button className="btn btn-purple" onClick={() => abrirPanel("ajustar_almacen")}>
+                                    Ajustar inventario
                                 </button>
 
                                 <button
@@ -818,6 +923,9 @@ const InvAlmacen: React.FC = () => {
                                     onClick={() => abrirPanel("ingresar_resistencia")}
                                 >
                                     Ingresar stock
+                                </button>
+                                <button className="btn btn-purple" onClick={() => abrirPanel("ajustar_resistencia")}>
+                                    Ajustar inventario
                                 </button>
                             </div>
                         </div>
@@ -959,7 +1067,7 @@ const InvAlmacen: React.FC = () => {
                                         >
                                             <option value="">Selecciona material</option>
                                             {almacen.map((item) => (
-                                                <option key={item.id} value={item.descripcion}>
+                                                <option key={item.id} value={item.id}>
                                                     {item.descripcion}
                                                 </option>
                                             ))}
@@ -1045,6 +1153,46 @@ const InvAlmacen: React.FC = () => {
                             </div>
                         )}
 
+                        {modoPanel === "ajustar_almacen" && (
+                            <div className="inv-form">
+                                <h3>Ajustar inventario de almacén</h3>
+                                <label>Material</label>
+                                <select value={idAjuste} onChange={(e) => {
+                                    setIdAjuste(e.target.value);
+                                    setCantidadAjuste("");
+                                    setMotivoAjuste("");
+                                }}>
+                                    <option value="">Selecciona material</option>
+                                    {almacen.map((item) => (
+                                        <option key={item.id} value={item.id}>{item.descripcion}</option>
+                                    ))}
+                                </select>
+                                {materialAjuste && (
+                                    <>
+                                        <label>Cantidad actual</label>
+                                        <div style={{ padding: 12, background: "#f1f5f9", borderRadius: 6, fontWeight: "bold" }}>
+                                            {materialAjuste.cantidad} piezas
+                                        </div>
+                                        <label>Nueva cantidad total</label>
+                                        <input type="number" min="0" step="1" value={cantidadAjuste}
+                                            onChange={(e) => setCantidadAjuste(e.target.value)}
+                                            placeholder="Cantidad real en inventario" />
+                                        {cantidadAjuste !== "" && Number.isSafeInteger(Number(cantidadAjuste)) && Number(cantidadAjuste) >= 0 && (
+                                            <div>Diferencia: {Number(cantidadAjuste) - materialAjuste.cantidad > 0 ? "+" : ""}
+                                                {Number(cantidadAjuste) - materialAjuste.cantidad} piezas</div>
+                                        )}
+                                        <label>Motivo del ajuste (opcional)</label>
+                                        <input value={motivoAjuste} onChange={(e) => setMotivoAjuste(e.target.value)}
+                                            placeholder="Ej. Conteo físico" />
+                                        <button className="btn btn-blue" disabled={guardandoAjuste}
+                                            onClick={() => ajustarInventario("almacen")}>
+                                            {guardandoAjuste ? "Guardando..." : "Guardar ajuste"}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
                         {modoPanel === "solicitar_almacen" && (
                             <div className="inv-form">
                                 <h3>
@@ -1122,6 +1270,46 @@ const InvAlmacen: React.FC = () => {
                             </div>
                         )}
 
+                        {modoPanel === "ajustar_resistencia" && (
+                            <div className="inv-form">
+                                <h3>Ajustar inventario de resistencias</h3>
+                                <label>Resistencia</label>
+                                <select value={idAjuste} onChange={(e) => {
+                                    setIdAjuste(e.target.value);
+                                    setCantidadAjuste("");
+                                    setMotivoAjuste("");
+                                }}>
+                                    <option value="">Selecciona resistencia</option>
+                                    {resistencias.map((item) => (
+                                        <option key={item.id} value={item.id}>{item.tipo}</option>
+                                    ))}
+                                </select>
+                                {resistenciaAjuste && (
+                                    <>
+                                        <label>Cantidad actual</label>
+                                        <div style={{ padding: 12, background: "#f1f5f9", borderRadius: 6, fontWeight: "bold" }}>
+                                            {resistenciaAjuste.cantidad} piezas
+                                        </div>
+                                        <label>Nueva cantidad total</label>
+                                        <input type="number" min="0" step="1" value={cantidadAjuste}
+                                            onChange={(e) => setCantidadAjuste(e.target.value)}
+                                            placeholder="Cantidad real en inventario" />
+                                        {cantidadAjuste !== "" && Number.isSafeInteger(Number(cantidadAjuste)) && Number(cantidadAjuste) >= 0 && (
+                                            <div>Diferencia: {Number(cantidadAjuste) - resistenciaAjuste.cantidad > 0 ? "+" : ""}
+                                                {Number(cantidadAjuste) - resistenciaAjuste.cantidad} piezas</div>
+                                        )}
+                                        <label>Motivo del ajuste (opcional)</label>
+                                        <input value={motivoAjuste} onChange={(e) => setMotivoAjuste(e.target.value)}
+                                            placeholder="Ej. Conteo físico" />
+                                        <button className="btn btn-blue" disabled={guardandoAjuste}
+                                            onClick={() => ajustarInventario("resistencia")}>
+                                            {guardandoAjuste ? "Guardando..." : "Guardar ajuste"}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
                         {modoPanel === "ingresar_resistencia" && (
                             <div className="inv-form">
                                 <h3>Ingresar stock a resistencias</h3>
@@ -1133,7 +1321,7 @@ const InvAlmacen: React.FC = () => {
                                 >
                                     <option value="">Selecciona tipo</option>
                                     {resistencias.map((item) => (
-                                        <option key={item.id} value={item.tipo}>
+                                        <option key={item.id} value={item.id}>
                                             {item.tipo}
                                         </option>
                                     ))}

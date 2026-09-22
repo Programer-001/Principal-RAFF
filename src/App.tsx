@@ -48,6 +48,7 @@ import Calculadora from "./Calculadora/Calculadora";
 import Checador from "./checador/Checador";
 import Calendario from "./Calendario/Calendario";
 import MostrarTablas from "./Configuracion/Mostrar_tablas"; 
+import ReporteOrdenTrabajo from "./Reportes/ReporteOrdenTrabajo";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 //import "./styles.css";
@@ -96,6 +97,7 @@ function AppLayout() {
         if (pathname.startsWith("/paqueterias")) return "paqueterias";
         if (pathname.startsWith("/calendario")) return "calendario";
         if (pathname.startsWith("/mostrar_tablas")) return "mostrar_tablas";
+        if (pathname.startsWith("/reporteorden")) return "reporteorden";
         if (pathname.startsWith("/resistenciasstock ")) return "resistenciasstock";
         if (pathname.startsWith("/perfil")) return "perfil";
         if (pathname.startsWith("/home")) return "home";
@@ -148,7 +150,8 @@ function AppLayout() {
             tablas: "/tablas",
             menu_personalizado:"/menu_personalizado",
             paqueterias: "/paqueterias",
-            resistenciasstock: "/resistenciasstock"
+            resistenciasstock: "/resistenciasstock",
+            reporteorden: "/reporteorden"
 
         };
 
@@ -204,6 +207,7 @@ function AppLayout() {
                 <Route path="/menu_personalizado" element={<PermisosMenu />} />
                 <Route path="/paqueterias" element={<Paqueterias />} />
                 <Route path="/resistenciasstock" element={<ResistenciasStock />} />
+                <Route path="/reporteorden" element={<ReporteOrdenTrabajo />} />
             </Routes>
         </div>
     );
