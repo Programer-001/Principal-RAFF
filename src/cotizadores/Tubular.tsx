@@ -687,42 +687,42 @@ const aplicarStock = (stock: ResistenciaStock) => {
       catalogos["dobleces"]?.find(
         (item: any) =>
           item.tipo === stock.valores.dobleces
-      ),
+      )?? null,
 
     // TORNILLO
     tornillo:
       catalogos["tornillo"]?.find(
         (item: any) =>
           item.tipo === stock.valores.tornillo
-      ),
+      )?? null,
 
     // BORNE
     borne:
       catalogos["borne"]?.find(
         (item: any) =>
           item.tipo === stock.valores.borne
-      ),
+      )?? null,
 
     // SOLDADURA EN RESISTENCIA
     soldadura_resistencia:
       catalogos["soldadura_resistencia"]?.find(
         (item: any) =>
           item.tipo === stock.valores.soldaduraResistencia
-      ),
+      )?? null,
 
     // SOLDAR CABLE EN RESISTENCIA
     soldar_cable_resistencia:
       catalogos["soldar_cable_resistencia"]?.find(
         (item: any) =>
           item.tipo === stock.valores.soldarCableResistencia
-      ),
+      )?? null,
 
     // CABLE PARA SOLDAR
     cable_para_soldar:
       catalogos["cable_para_soldar"]?.find(
         (item: any) =>
           item.tipo === stock.valores.cableParaSoldar
-      ),
+      )?? null,
   }));
 
 
