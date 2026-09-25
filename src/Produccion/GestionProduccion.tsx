@@ -440,14 +440,26 @@ const GestionProduccion: React.FC = () => {
             unsubscribe();
         };
     }, []);
+    // ============================================
+    // CALCULAR ESTADO GENERAL DE LA OT
+    // ============================================
+    const calcularEstadoGeneralOT = (
+        trabajos: Record<string, TrabajoItem>
+    ): "completada" | "fabricacion" => {
+        const partidas = Object.values(trabajos || {});
+        return partidas.length > 0 && partidas.every(
+            (partida) => partida.estadoProduccion === "lista_para_entrega"
+        ) ? "completada" : "fabricacion";
+    };
+
     // =========================
     // FUNCION GUARDAR
     // =========================
-
     const guardarPartida = async () => {
         if (!otSeleccionada || !partidaSeleccionada) return;
 
-        if (!partidaSeleccionada.key) {
+        const partidaKey = partidaSeleccionada.key;
+        if (!partidaKey) {
             alert("No se encontró la clave de la partida");
             return;
         }
@@ -458,35 +470,51 @@ const GestionProduccion: React.FC = () => {
         }
 
         const esEspecial = esTipoEspecial(partidaSeleccionada.tipo);
-
         if (!esEspecial && estado === "en_proceso") {
             if (!trabajador) {
                 alert("Para guardar en En proceso debes asignar un trabajador");
                 return;
             }
-
             if (!fechaInicio) {
                 alert("Para guardar en En proceso debes capturar la fecha de inicio");
                 return;
             }
+        }
 
-            const esTubular = (partidaSeleccionada.tipo || "").toLowerCase() === "tubular";
-
+        if (estado === "inspeccion" && !checkRevision) {
+            alert("Debes confirmar la revisión antes de guardar la inspección");
+            return;
         }
 
         try {
             const db = getDatabase(app);
-            const ruta = `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`;
+            const otRef = ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}`);
 
-            if (estado === "inspeccion" && !checkRevision) {
-                alert("Debes confirmar la revisión antes de guardar la inspección");
+            // Consultar el estado actual antes de modificar o entregar material.
+            const snapshotOT = await get(otRef);
+            if (!snapshotOT.exists()) {
+                alert("La orden de trabajo ya no existe");
                 return;
             }
 
-            const datosActualizar: any = {
-                trabajador: esEspecial ? "" : estado === "en_fila" ? "" : trabajador,
-                fechaInicio: esEspecial ? "" : estado === "en_fila" ? "" : fechaInicio,
-                fechaFin: esEspecial ? "" : estado === "en_fila" ? "" : fechaFin,
+            const otActual = snapshotOT.val() as OrdenTrabajo;
+            if (otActual.estadoGeneral === "entregada") {
+                alert("Esta orden de trabajo ya fue entregada. Debes reabrirla antes de modificar sus partidas.");
+                return;
+            }
+            if (otActual.taller !== true) {
+                alert("Esta orden de trabajo ya no está en taller.");
+                return;
+            }
+            if (!otActual.trabajos?.[partidaKey]) {
+                alert("La partida ya no existe en esta orden de trabajo.");
+                return;
+            }
+
+            const datosActualizar: Partial<TrabajoItem> = {
+                trabajador: esEspecial || estado === "en_fila" ? "" : trabajador,
+                fechaInicio: esEspecial || estado === "en_fila" ? "" : fechaInicio,
+                fechaFin: esEspecial || estado === "en_fila" ? "" : fechaFin,
                 estadoProduccion: estado,
             };
 
@@ -500,71 +528,63 @@ const GestionProduccion: React.FC = () => {
             } else if (partidaSeleccionada.inspeccion) {
                 datosActualizar.inspeccion = partidaSeleccionada.inspeccion;
             }
-            // 🔥 ENTREGAR MATERIAL AUTOMÁTICAMENTE
-            const esTubular =
-                (partidaSeleccionada.tipo || "").toLowerCase() === "tubular";
 
-                if (
-                estado === "en_proceso" &&
-                esTubular &&
-                partidaSeleccionada.materialEntregado !== true
-                ) {
+            // Conservar la entrega automática de materiales para tubulares.
+            const esTubular = (partidaSeleccionada.tipo || "").toLowerCase() === "tubular";
+            if (estado === "en_proceso" && esTubular &&
+                otActual.trabajos[partidaKey].materialEntregado !== true) {
                 const entregado = await entregarMaterial();
+                if (!entregado) return;
+            }
 
-                if (!entregado) {
-                    return;
-                }
-                }
+            // Leer de nuevo las partidas tras cualquier entrega de material.
+            const snapshotActualizado = await get(otRef);
+            if (!snapshotActualizado.exists()) {
+                alert("La orden de trabajo ya no existe");
+                return;
+            }
+            const otVigente = snapshotActualizado.val() as OrdenTrabajo;
+            if (otVigente.estadoGeneral === "entregada" || otVigente.taller !== true ||
+                !otVigente.trabajos?.[partidaKey]) {
+                alert("La orden de trabajo cambió de estado. Actualiza la pantalla antes de guardar.");
+                return;
+            }
 
-            await update(ref(db, ruta), datosActualizar);
-
-            // 🔥 VERIFICAR SI TODA LA OT YA ESTÁ COMPLETADA
-            const trabajosActualizados = {
-                ...(otSeleccionada.trabajos || {}),
-                [partidaSeleccionada.key!]: {
-                    ...(otSeleccionada.trabajos?.[partidaSeleccionada.key!] || {}),
+            const trabajosActualizados: Record<string, TrabajoItem> = {
+                ...otVigente.trabajos,
+                [partidaKey]: {
+                    ...otVigente.trabajos[partidaKey],
                     ...datosActualizar,
                 },
             };
+            const nuevoEstadoGeneral = calcularEstadoGeneralOT(trabajosActualizados);
 
-            const todasListas = Object.values(trabajosActualizados).length > 0 &&
-                Object.values(trabajosActualizados).every(
-                    (t: any) => t.estadoProduccion === "lista_para_entrega"
-                );
-
-            if (todasListas) {
-                const db = getDatabase(app);
-                await update(ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}`), {
-                    estadoGeneral: "completada",
-                });
-            }
-
-            setOtSeleccionada((prev) => {
-                if (!prev || !prev.trabajos) return prev;
-
-                return {
-                    ...prev,
-                    trabajos: {
-                        ...prev.trabajos,
-                        [partidaSeleccionada.key!]: {
-                            ...prev.trabajos[partidaSeleccionada.key!],
-                            trabajador: esEspecial ? "" : estado === "en_fila" ? "" : trabajador,
-                            fechaInicio: esEspecial ? "" : estado === "en_fila" ? "" : fechaInicio,
-                            fechaFin: esEspecial ? "" : estado === "en_fila" ? "" : fechaFin,
-                            estadoProduccion: estado,
-                            inspeccion:
-                                estado === "inspeccion"
-                                    ? {
-                                        aprobado: checkRevision,
-                                        usuario: usuarioActual,
-                                        fecha: new Date().toISOString(),
-                                        observaciones,
-                                    }
-                                    : prev.trabajos[partidaSeleccionada.key!].inspeccion,
-                        },
-                    },
-                };
+            // Una sola actualización para la partida y el estado general.
+            const actualizaciones: Record<string, unknown> = {
+                estadoGeneral: nuevoEstadoGeneral,
+            };
+            Object.entries(datosActualizar).forEach(([campo, valor]) => {
+                if (valor !== undefined) {
+                    actualizaciones[`trabajos/${partidaKey}/${campo}`] = valor;
+                }
             });
+            await update(otRef, actualizaciones);
+
+            setOtSeleccionada((prev) => prev ? {
+                ...prev,
+                estadoGeneral: nuevoEstadoGeneral,
+                trabajos: {
+                    ...(prev.trabajos || {}),
+                    [partidaKey]: {
+                        ...(prev.trabajos?.[partidaKey] || {}),
+                        ...datosActualizar,
+                    },
+                },
+            } : prev);
+            setPartidaSeleccionada((prev) => prev ? {
+                ...prev,
+                ...datosActualizar,
+            } : prev);
 
             alert("Partida guardada correctamente ✅");
         } catch (error) {

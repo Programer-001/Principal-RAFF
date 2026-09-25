@@ -1022,7 +1022,11 @@ const GestionOT = () => {
                                     </tr>
                                 ) : (
                                     ordenesFiltradas.map((ot) => {
-                                        const otCompleta = Object.values(ot.trabajos || {}).every(
+                                    const trabajosOT = Object.values(ot.trabajos || {});
+
+                                    const otCompleta =
+                                        trabajosOT.length > 0 &&
+                                        trabajosOT.every(
                                             (t: any) => t.estadoProduccion === "lista_para_entrega"
                                         );
 

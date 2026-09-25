@@ -51,6 +51,17 @@ type ResistenciaStock = {
   }[];
 };
 
+// Regla de compatibilidad entre diámetro de tubo y tornillo.
+// Se conserva la opción NO para cualquier diámetro.
+const tornilloCompatible = (diametroTubo: string, tipoTornillo: string): boolean => {
+  if (tipoTornillo.trim().toUpperCase() === "NO") return true;
+  if (!diametroTubo) return false;
+  if (diametroTubo.includes("7/16")) {
+    return !/\b1\s*\/\s*2\b/.test(tipoTornillo);
+  }
+  return true;
+};
+
 const Tubular = ({ data, onGuardar, setDirty, perfil }: Props) => {
 const [diametro, setDiametro] = useState<TipoResistencia | "">("");
 const [longitud, setLongitud] = useState<number>(0); //Longitud
@@ -138,7 +149,21 @@ const [resistenciasStock, setResistenciasStock] = useState<ResistenciaStock[]>([
 
     cargarDatos();
   }, []);
-// Función para renderizar un select genérico
+// Los tornillos se obtienen del catálogo de Firebase, sin modificar sus precios.
+  const tornillosDisponibles = (catalogos["tornillo"] || []).filter(
+    (item: any) => tornilloCompatible(diametro, String(item.tipo || ""))
+  );
+
+  // Evita conservar un tornillo incompatible al cambiar de diámetro,
+  // cargar una cotización anterior o aplicar una resistencia de stock.
+  useEffect(() => {
+    const actual = seleccionados["tornillo"];
+    if (actual && !tornilloCompatible(diametro, String(actual.tipo || ""))) {
+      setSeleccionados((prev: any) => ({ ...prev, tornillo: null }));
+    }
+  }, [diametro, seleccionados["tornillo"]]);
+
+  // Función para renderizar un select genérico
   const renderSelect = (nombre: string) => (
     <select
       value={seleccionados[nombre]?.id || ""}
@@ -602,8 +627,15 @@ const totalProductosExtras = productosExtras.reduce(
       setPotencia(d.potencia || 0);
     setMaxWatts(!!d.maxWatts);
     setSacarWatts(!!d.sacarWatts);
-      // 🔹 seleccionados
-      setSeleccionados(d.seleccionados || {});
+      // 🔹 seleccionados: validar también al editar cotizaciones antiguas.
+      const seleccionAnterior = d.seleccionados || {};
+      const tornilloAnterior = seleccionAnterior.tornillo;
+      setSeleccionados({
+        ...seleccionAnterior,
+        tornillo: tornilloAnterior && tornilloCompatible(
+          String(d.diametro || ""), String(tornilloAnterior.tipo || "")
+        ) ? tornilloAnterior : null,
+      });
 
       // 🔹 cables (INPUTS, no totales)
       setLongitudCable(d.longitudCable || 0);
@@ -693,8 +725,9 @@ const aplicarStock = (stock: ResistenciaStock) => {
     tornillo:
       catalogos["tornillo"]?.find(
         (item: any) =>
-          item.tipo === stock.valores.tornillo
-      )?? null,
+          item.tipo === stock.valores.tornillo &&
+          tornilloCompatible(String(stock.valores.diametro || ""), String(item.tipo || ""))
+      ) ?? null,
 
     // BORNE
     borne:
@@ -1019,9 +1052,16 @@ useEffect(() => {
 
             <select
               value={diametro}
-              onChange={(e) =>
-                setDiametro(e.target.value as TipoResistencia)
-              }
+              onChange={(e) => {
+                const nuevoDiametro = e.target.value as TipoResistencia | "";
+                setDiametro(nuevoDiametro);
+                setSeleccionados((prev: any) => ({
+                  ...prev,
+                  tornillo: prev.tornillo && tornilloCompatible(
+                    nuevoDiametro, String(prev.tornillo.tipo || "")
+                  ) ? prev.tornillo : null,
+                }));
+              }}
             >
               <option value="">Seleccione...</option>
 
@@ -1046,10 +1086,28 @@ useEffect(() => {
             {renderSelect("dobleces")}
           </div>
 
-          {/* Tornillo */}
+          {/* Tornillo: opciones filtradas por diámetro del tubo */}
           <div className="form-row">
             <label>Tornillo</label>
-            {renderSelect("tornillo")}
+            <select
+              value={tornillosDisponibles.some(
+                (item: any) => item.id === seleccionados["tornillo"]?.id
+              ) ? seleccionados["tornillo"].id : ""}
+              onChange={(e) => {
+                const elegido = tornillosDisponibles.find(
+                  (item: any) => item.id === e.target.value
+                );
+                setSeleccionados((prev: any) => ({
+                  ...prev,
+                  tornillo: elegido || null,
+                }));
+              }}
+            >
+              <option value="">Seleccione...</option>
+              {tornillosDisponibles.map((item: any) => (
+                <option key={item.id} value={item.id}>{item.tipo}</option>
+              ))}
+            </select>
           </div>
 
           {/* Desoldar Resistencia de Base */}
