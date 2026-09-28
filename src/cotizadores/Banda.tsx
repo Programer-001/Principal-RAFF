@@ -291,6 +291,30 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
     .replace(/\s+/g, " ")
     .trim();
 
+  //--------------------------------- pasar al siguiente campo ---------------------------------
+
+  // ENTER → SIGUIENTE CAMPO
+const pasarAlSiguienteCampo = (
+  e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  if (e.key !== "Enter") return;
+
+  e.preventDefault();
+
+  const formulario = e.currentTarget.closest(".form-container");
+  if (!formulario) return;
+
+  const elementos = Array.from(
+    formulario.querySelectorAll<HTMLElement>(
+      'input:not(:disabled):not([type="checkbox"]), select:not(:disabled), textarea:not(:disabled)'
+    )
+  ).filter((elemento) => elemento.offsetParent !== null);
+
+  const posicionActual = elementos.indexOf(e.currentTarget);
+
+  elementos[posicionActual + 1]?.focus();
+};
+
   return (
     <>
     <div className="form-container">
@@ -303,6 +327,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
         <input
           type="number"
           value={cantidad === 0 ? "" : cantidad}
+          onKeyDown={pasarAlSiguienteCampo}
           onChange={(e) => setCantidad(parseFloat(e.target.value) || 0)}
         />
       </div>
@@ -313,6 +338,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
         </label>
         <select
           value={selector}
+          onKeyDown={pasarAlSiguienteCampo}
                   onChange={(e) => {
                       const nuevoSelector = parseFloat(e.target.value);
 
@@ -370,6 +396,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
           <input
             type="number"
             value={diametro === 0 ? "" : diametro}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setDiametro(parseFloat(e.target.value) || 0)}
           />
         </div>
@@ -384,6 +411,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             <input
               type="number"
               value={longitudTiraCm === 0 ? "" : longitudTiraCm}
+              onKeyDown={pasarAlSiguienteCampo}
               onChange={(e) =>
                 setLongitudTiraCm(parseFloat(e.target.value) || 0)
               }
@@ -405,6 +433,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
           <input
             type="number"
             value={ancho === 0 ? "" : ancho}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setAncho(parseFloat(e.target.value) || 0)}
           />
         </div>
@@ -417,6 +446,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
         <input
           type="number"
           value={voltaje === 0 ? "" : voltaje}
+          onKeyDown={pasarAlSiguienteCampo}
           onChange={(e) => setVoltaje(parseFloat(e.target.value) || 0)}
         />
       </div>
@@ -428,6 +458,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
         <input
           type="number"
           value={potencia === 0 ? "" : potencia}
+          onKeyDown={pasarAlSiguienteCampo}
           onChange={(e) => setPotencia(parseFloat(e.target.value) || 0)}
         />
       </div>

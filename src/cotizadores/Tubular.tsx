@@ -164,31 +164,33 @@ const [resistenciasStock, setResistenciasStock] = useState<ResistenciaStock[]>([
   }, [diametro, seleccionados["tornillo"]]);
 
   // Función para renderizar un select genérico
-  const renderSelect = (nombre: string) => (
-    <select
-      value={seleccionados[nombre]?.id || ""}
-      onChange={(e) => {
-        const id = e.target.value;
 
-        const seleccionado = catalogos[nombre]?.find(
-          (item: any) => item.id === id
-        );
+    const renderSelect = (nombre: string) => (
+      <select
+        value={seleccionados[nombre]?.id || ""}
+        onKeyDown={pasarAlSiguienteCampo}
+        onChange={(e) => {
+          const id = e.target.value;
 
-        setSeleccionados((prev: any) => ({
-          ...prev,
-          [nombre]: seleccionado || null,
-        }));
-      }}
-    >
-      <option value="">Seleccione...</option>
+          const seleccionado = catalogos[nombre]?.find(
+            (item: any) => item.id === id
+          );
 
-      {catalogos[nombre]?.map((item: any) => (
-        <option key={item.id} value={item.id}>
-          {item.tipo}
-        </option>
-      ))}
-    </select>
-  );
+          setSeleccionados((prev: any) => ({
+            ...prev,
+            [nombre]: seleccionado || null,
+          }));
+        }}
+      >
+        <option value="">Seleccione...</option>
+
+        {catalogos[nombre]?.map((item: any) => (
+          <option key={item.id} value={item.id}>
+            {item.tipo}
+          </option>
+        ))}
+      </select>
+    );
   /*
   ======================================================================  
  ZONA DE CALCULOS PARA TUBULAR
@@ -900,7 +902,27 @@ useEffect(() => {
 
   cargarResistenciasStock();
 }, []);
+// ENTER → SIGUIENTE CAMPO
+const pasarAlSiguienteCampo = (
+  e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  if (e.key !== "Enter") return;
 
+  e.preventDefault();
+
+  const formulario = e.currentTarget.closest(".form-container");
+  if (!formulario) return;
+
+  const elementos = Array.from(
+    formulario.querySelectorAll<HTMLElement>(
+      'input:not(:disabled):not([type="checkbox"]), select:not(:disabled), textarea:not(:disabled)'
+    )
+  ).filter((elemento) => elemento.offsetParent !== null);
+
+  const posicionActual = elementos.indexOf(e.currentTarget);
+
+  elementos[posicionActual + 1]?.focus();
+};
   //-----------------------log---------------------
 
   console.log("Cable seleccionado:", seleccionados["cable_para_soldar"]);
@@ -908,6 +930,7 @@ useEffect(() => {
   console.log("Longitud:", longitudCable);
   console.log("Cantidad:", cantidadCable);
   console.log("TotalCable:", totalCable);
+
   //---------------------------HTML------------------------------------
   return (
     <>
@@ -925,10 +948,13 @@ useEffect(() => {
               min={0}
               value={cantidadResistencias === 0 ? "" : cantidadResistencias}
               onKeyDown={(e) => {
-                if (e.key === "-" || e.key === "e") {
-                  e.preventDefault();
-                }
-              }}
+                                  if (["-", "+", "e", "E"].includes(e.key)) {
+                                    e.preventDefault();
+                                    return;
+                                  }
+
+                                  pasarAlSiguienteCampo(e);
+                                }}
               onChange={(e) => {
                 const valor = e.target.value;
 
@@ -951,7 +977,10 @@ useEffect(() => {
               onKeyDown={(e) => {
                 if (["-", "+", "e", "E"].includes(e.key)) {
                   e.preventDefault();
+                  return;
                 }
+
+                pasarAlSiguienteCampo(e);
               }}
               onChange={(e) => {
                 const valor = e.target.value;
@@ -973,9 +1002,12 @@ useEffect(() => {
               min={0}
               value={potencia === 0 ? "" : potencia}
               onKeyDown={(e) => {
-                if (["-", "+", "e", "E"].includes(e.key)  ) {
-                  e.preventDefault();
-                }
+                                  if (["-", "+", "e", "E"].includes(e.key)) {
+                                    e.preventDefault();
+                                    return;
+                                  }
+
+                pasarAlSiguienteCampo(e);
               }}
               onChange={(e) => {
                 const valor = e.target.value;
@@ -1025,7 +1057,10 @@ useEffect(() => {
             onKeyDown={(e) => {
               if (["-", "+", "e", "E"].includes(e.key)) {
                 e.preventDefault();
+                return;
               }
+
+              pasarAlSiguienteCampo(e);
             }}
             onChange={(e) => {
               const valor = e.target.value;
@@ -1046,86 +1081,115 @@ useEffect(() => {
     </div>
     */}
 
-          {/* Diámetro Tubo */}
-          <div className="form-row">
-            <label>Diámetro Tubo</label>
-
-            <select
-              value={diametro}
-              onChange={(e) => {
-                const nuevoDiametro = e.target.value as TipoResistencia | "";
-                setDiametro(nuevoDiametro);
-                setSeleccionados((prev: any) => ({
-                  ...prev,
-                  tornillo: prev.tornillo && tornilloCompatible(
-                    nuevoDiametro, String(prev.tornillo.tipo || "")
-                  ) ? prev.tornillo : null,
-                }));
-              }}
-            >
-              <option value="">Seleccione...</option>
-
-              {catalogos["Diametro_del_tubo"]?.map((item: any) => (
-                <option
-                  key={item.id}
-                  value={item.tipo}
-                >
-                  {item.tipo}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* Borne */}
-          <div className="form-row">
-            <label>Borne</label>
-            {renderSelect("borne")}
-          </div>
-          {/* Dobleces */}
-          <div className="form-row">
-            <label>Dobleces</label>
-            {renderSelect("dobleces")}
-          </div>
-
-          {/* Tornillo: opciones filtradas por diámetro del tubo */}
-          <div className="form-row">
-            <label>Tornillo</label>
-            <select
-              value={tornillosDisponibles.some(
-                (item: any) => item.id === seleccionados["tornillo"]?.id
-              ) ? seleccionados["tornillo"].id : ""}
-              onChange={(e) => {
-                const elegido = tornillosDisponibles.find(
-                  (item: any) => item.id === e.target.value
-                );
-                setSeleccionados((prev: any) => ({
-                  ...prev,
-                  tornillo: elegido || null,
-                }));
-              }}
-            >
-              <option value="">Seleccione...</option>
-              {tornillosDisponibles.map((item: any) => (
-                <option key={item.id} value={item.id}>{item.tipo}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Desoldar Resistencia de Base */}
-          <div className="form-row">
-            <label>Desoldar Resistencia de Base</label>
-            {renderSelect("desoldar_base")}
-          </div>
-        {tipoDesoldarBase !== "NO" && tipoDesoldarBase !== "" && (
+            {/* Diámetro Tubo */}
             <div className="form-row">
-                <label>Cantidad a desoldar de base</label>
-                <input
-                    type="number"
-                    min={0}
-                    value={cantidadDesoldarBase === 0 ? "" : cantidadDesoldarBase}
-                    onChange={(e) => setCantidadDesoldarBase(Number(e.target.value))}
-                />
+              <label>Diámetro Tubo</label>
+
+              <select
+                value={diametro}
+                onKeyDown={pasarAlSiguienteCampo}
+                onChange={(e) => {
+                  const nuevoDiametro = e.target.value as TipoResistencia | "";
+
+                  setDiametro(nuevoDiametro);
+
+                  setSeleccionados((prev: any) => ({
+                    ...prev,
+                    tornillo:
+                      prev.tornillo &&
+                      tornilloCompatible(
+                        nuevoDiametro,
+                        String(prev.tornillo.tipo || "")
+                      )
+                        ? prev.tornillo
+                        : null,
+                  }));
+                }}
+              >
+                <option value="">Seleccione...</option>
+
+                {catalogos["Diametro_del_tubo"]?.map((item: any) => (
+                  <option
+                    key={item.id}
+                    value={item.tipo}
+                  >
+                    {item.tipo}
+                  </option>
+                ))}
+              </select>
             </div>
-        )}
+
+            {/* Borne */}
+            <div className="form-row">
+              <label>Borne</label>
+              {renderSelect("borne")}
+            </div>
+
+            {/* Dobleces */}
+            <div className="form-row">
+              <label>Dobleces</label>
+              {renderSelect("dobleces")}
+            </div>
+
+            {/* Tornillo: opciones filtradas por diámetro del tubo */}
+            <div className="form-row">
+              <label>Tornillo</label>
+
+              <select
+                value={
+                  tornillosDisponibles.some(
+                    (item: any) => item.id === seleccionados["tornillo"]?.id
+                  )
+                    ? seleccionados["tornillo"].id
+                    : ""
+                }
+                onKeyDown={pasarAlSiguienteCampo}
+                onChange={(e) => {
+                  const elegido = tornillosDisponibles.find(
+                    (item: any) => item.id === e.target.value
+                  );
+
+                  setSeleccionados((prev: any) => ({
+                    ...prev,
+                    tornillo: elegido || null,
+                  }));
+                }}
+              >
+                <option value="">Seleccione...</option>
+
+                {tornillosDisponibles.map((item: any) => (
+                  <option key={item.id} value={item.id}>
+                    {item.tipo}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Desoldar Resistencia de Base */}
+            <div className="form-row">
+              <label>Desoldar Resistencia de Base</label>
+              {renderSelect("desoldar_base")}
+            </div>
+
+            {tipoDesoldarBase !== "NO" && tipoDesoldarBase !== "" && (
+              <div className="form-row">
+                <label>Cantidad a desoldar de base</label>
+
+                <input
+                  type="number"
+                  min={0}
+                  value={
+                    cantidadDesoldarBase === 0
+                      ? ""
+                      : cantidadDesoldarBase
+                  }
+                  onKeyDown={pasarAlSiguienteCampo}
+                  onChange={(e) =>
+                    setCantidadDesoldarBase(Number(e.target.value))
+                  }
+                />
+              </div>
+            )}
           {/* --------------------------------------------------------------------------------------------------------------------------------------------*/}
 
           {/* Soldadura en resistencia */}
@@ -1156,29 +1220,41 @@ useEffect(() => {
               <>
                 <div className="form-row">
                   <label>Longitud de cable para soldar</label>
+
                   <input
-                type="number"
-                min={0}   
-                value={longitudCable === 0 ? "" : longitudCable}
-                    onChange={(e) => setLongitudCable(Number(e.target.value))}
+                    type="number"
+                    min={0}
+                    value={longitudCable === 0 ? "" : longitudCable}
+                    onChange={(e) =>
+                      setLongitudCable(Number(e.target.value))
+                    }
                     onKeyDown={(e) => {
                       if (e.key === "-" || e.key === "e") {
                         e.preventDefault();
+                        return;
                       }
+
+                      pasarAlSiguienteCampo(e);
                     }}
                   />
                 </div>
 
                 <div className="form-row">
                   <label>Cantidad de cables</label>
+
                   <input
-                  type="number"
-                  value={cantidadCable === 0 ? "" : cantidadCable}
-                    onChange={(e) => setCantidadCable(Number(e.target.value))}
+                    type="number"
+                    value={cantidadCable === 0 ? "" : cantidadCable}
+                    onChange={(e) =>
+                      setCantidadCable(Number(e.target.value))
+                    }
                     onKeyDown={(e) => {
                       if (e.key === "-" || e.key === "e") {
                         e.preventDefault();
+                        return;
                       }
+
+                      pasarAlSiguienteCampo(e);
                     }}
                   />
                 </div>
@@ -1188,10 +1264,13 @@ useEffect(() => {
           {/* Desoldar resistencia de tornillo */}
           <div className="form-row checkbox-row">
             <label>Desoldar resistencia de tornillo</label>
+
             <input
               type="checkbox"
               checked={desoldarTornillo}
-              onChange={() => setDesoldarTornillo(!desoldarTornillo)}
+              onChange={() =>
+                setDesoldarTornillo(!desoldarTornillo)
+              }
             />
           </div>
 
@@ -1199,11 +1278,19 @@ useEffect(() => {
           {desoldarTornillo && (
             <div className="form-row">
               <label>Cantidad de resistencias a desoldar</label>
+
               <input
                 type="number"
                 min={0}
-                value={cantidadDesoldar === 0 ? "" : cantidadDesoldar}
-                onChange={(e) => setCantidadDesoldar(Number(e.target.value))}
+                value={
+                  cantidadDesoldar === 0
+                    ? ""
+                    : cantidadDesoldar
+                }
+                onKeyDown={pasarAlSiguienteCampo}
+                onChange={(e) =>
+                  setCantidadDesoldar(Number(e.target.value))
+                }
               />
             </div>
           )}
@@ -1218,21 +1305,32 @@ useEffect(() => {
             <>
               <div className="form-row">
                 <label>Cantidad de tapones</label>
+
                 <input
                   type="number"
                   min={0}
-                  value={cantidadTapon === 0 ? "" : cantidadTapon}
-                  onChange={(e) => setCantidadTapon(Number(e.target.value))}
+                  value={
+                    cantidadTapon === 0
+                      ? ""
+                      : cantidadTapon
+                  }
+                  onKeyDown={pasarAlSiguienteCampo}
+                  onChange={(e) =>
+                    setCantidadTapon(Number(e.target.value))
+                  }
                 />
               </div>
 
               {cantidadTapon > 0 && (
                 <div className="form-row">
                   <label>Configuración</label>
+
                   <button
                     type="button"
                     className="btn btn-blue"
-                    onClick={() => abrirConfiguracionTubular("Tapón macho")}
+                    onClick={() =>
+                      abrirConfiguracionTubular("Tapón macho")
+                    }
                   >
                     ⚙ Configurar Tapón macho
                   </button>
@@ -1250,11 +1348,19 @@ useEffect(() => {
           {tipoBarrenos !== "NO" && tipoBarrenos !== "" && (
             <div className="form-row">
               <label>Cantidad de barrenados</label>
+
               <input
                 type="number"
                 min={0}
-                value={cantidadBarrenos === 0 ? "" : cantidadBarrenos}
-                onChange={(e) => setCantidadBarrenos(Number(e.target.value))}
+                value={
+                  cantidadBarrenos === 0
+                    ? ""
+                    : cantidadBarrenos
+                }
+                onKeyDown={pasarAlSiguienteCampo}
+                onChange={(e) =>
+                  setCantidadBarrenos(Number(e.target.value))
+                }
               />
             </div>
           )}
@@ -1262,10 +1368,13 @@ useEffect(() => {
           {/* Termoposo en Base */}
           <div className="form-row checkbox-row">
             <label>Termoposo en Base</label>
+
             <input
               type="checkbox"
               checked={termoposoBase}
-              onChange={() => setTermoposoBase(!termoposoBase)}
+              onChange={() =>
+                setTermoposoBase(!termoposoBase)
+              }
             />
           </div>
 
@@ -1273,14 +1382,22 @@ useEffect(() => {
           {termoposoBase && (
             <div className="form-row">
               <label>Cantidad de termoposos</label>
+
               <input
                 type="number"
                 min={0}
-                value={cantidadTermoposo === 0 ? "" : cantidadTermoposo}
+                value={
+                  cantidadTermoposo === 0
+                    ? ""
+                    : cantidadTermoposo
+                }
                 onKeyDown={(e) => {
                   if (e.key === "-" || e.key === "e") {
                     e.preventDefault();
+                    return;
                   }
+
+                  pasarAlSiguienteCampo(e);
                 }}
                 onChange={(e) => {
                   const valor = e.target.value;
@@ -1288,7 +1405,9 @@ useEffect(() => {
                   if (valor === "") {
                     setCantidadTermoposo(0);
                   } else {
-                    setCantidadTermoposo(Math.max(0, Number(valor)));
+                    setCantidadTermoposo(
+                      Math.max(0, Number(valor))
+                    );
                   }
                 }}
               />
@@ -1298,8 +1417,10 @@ useEffect(() => {
           {/* Placa / Base / Brida / Lámina */}
           <div className="form-row">
             <label>Placa / Base / Brida / Lámina</label>
+
             <select
               value={tipoPlaca}
+              onKeyDown={pasarAlSiguienteCampo}
               onChange={(e) => {
                 setTipoPlaca(e.target.value);
                 setPrecioPlaca(0);
@@ -1318,33 +1439,57 @@ useEffect(() => {
             <>
               <div className="form-row">
                 <label>Precio ({tipoPlaca})</label>
+
                 <input
                   type="number"
                   min={0}
-                  value={precioPlaca === 0 ? "" : precioPlaca}
-                  onChange={(e) => setPrecioPlaca(Number(e.target.value))}
+                  value={
+                    precioPlaca === 0
+                      ? ""
+                      : precioPlaca
+                  }
+                  onKeyDown={pasarAlSiguienteCampo}
+                  onChange={(e) =>
+                    setPrecioPlaca(Number(e.target.value))
+                  }
                 />
               </div>
 
               <div className="form-row">
                 <label>Cantidad ({tipoPlaca})</label>
+
                 <input
                   type="number"
                   min={0}
-                  value={cantidadPlaca === 0 ? "" : cantidadPlaca}
-                  onChange={(e) => setCantidadPlaca(Number(e.target.value))}
+                  value={
+                    cantidadPlaca === 0
+                      ? ""
+                      : cantidadPlaca
+                  }
+                  onKeyDown={pasarAlSiguienteCampo}
+                  onChange={(e) =>
+                    setCantidadPlaca(Number(e.target.value))
+                  }
                 />
               </div>
 
               {tipoPlacaConfigurable && cantidadPlaca > 0 && (
                 <div className="form-row">
                   <label>Configuración</label>
+
                   <button
                     type="button"
                     className="btn btn-blue"
-                    onClick={() => abrirConfiguracionTubular(tipoPlacaConfigurable)}
+                    onClick={() =>
+                      abrirConfiguracionTubular(
+                        tipoPlacaConfigurable
+                      )
+                    }
                   >
-                    ⚙ Configurar {tipoPlaca === "Lamina" ? "Lámina" : tipoPlaca}
+                    ⚙ Configurar{" "}
+                    {tipoPlaca === "Lamina"
+                      ? "Lámina"
+                      : tipoPlaca}
                   </button>
                 </div>
               )}
@@ -1355,17 +1500,24 @@ useEffect(() => {
           {cambiarTornillo && (
             <div className="form-row">
               <label>Cantidad de tornillos</label>
-              <input type="number" />
+
+              <input
+                type="number"
+                onKeyDown={pasarAlSiguienteCampo}
+              />
             </div>
           )}
 
           {/* Puentes */}
           <div className="form-row checkbox-row">
             <label>Puentes</label>
+
             <input
               type="checkbox"
               checked={puentes}
-              onChange={() => setPuentes(!puentes)}
+              onChange={() =>
+                setPuentes(!puentes)
+              }
             />
           </div>
 
@@ -1373,92 +1525,107 @@ useEffect(() => {
           {puentes && (
             <div className="form-row">
               <label>Cantidad de puentes</label>
+
               <input
                 type="number"
                 min={0}
-                value={cantidadPuentes === 0 ? "" : cantidadPuentes}
-                onChange={(e) => setCantidadPuentes(Number(e.target.value))}
+                value={
+                  cantidadPuentes === 0
+                    ? ""
+                    : cantidadPuentes
+                }
+                onKeyDown={pasarAlSiguienteCampo}
+                onChange={(e) =>
+                  setCantidadPuentes(Number(e.target.value))
+                }
               />
             </div>
           )}
 
-        {/* Sellos */}
-        <div className="form-row">
+          {/* Sellos */}
+          <div className="form-row">
             <label>Sellos</label>
             {renderSelect("sellos")}
-        </div>
+          </div>
 
-        {seleccionados["sellos"]?.tipo &&
+          {seleccionados["sellos"]?.tipo &&
             seleccionados["sellos"]?.tipo !== "NO" && (
-                <div className="form-row">
-                    <label>Cantidad de sellos</label>
-                    <input
-                        type="number"
-                        min={0}
-                        value={cantidadSellos === 0 ? "" : cantidadSellos}
-                        onChange={(e) => setCantidadSellos(Number(e.target.value))}
-                    />
-                </div>
+              <div className="form-row">
+                <label>Cantidad de sellos</label>
+
+                <input
+                  type="number"
+                  min={0}
+                  value={
+                    cantidadSellos === 0
+                      ? ""
+                      : cantidadSellos
+                  }
+                  onKeyDown={pasarAlSiguienteCampo}
+                  onChange={(e) =>
+                    setCantidadSellos(Number(e.target.value))
+                  }
+                />
+              </div>
             )}
+
           {/* Aleta */}
           <div className="form-row checkbox-row">
-            <label>
-              Aleta (solo 7/16)
-            </label>
+            <label>Aleta (solo 7/16)</label>
 
             <input
               type="checkbox"
               checked={aleta}
               disabled={!puedeUsarAleta}
-              onChange={() => setAleta(!aleta)}
+              onChange={() =>
+                setAleta(!aleta)
+              }
             />
           </div>
+
           {/* Otros Servicios */}
           <div className="form-row">
             <label>Otros Servicios</label>
             {renderSelect("servicios")}
           </div>
+
           {/* Productos extras */}
-            <ProductosExtras
+          <ProductosExtras
             activo={extrasActivos}
             setActivo={setExtrasActivos}
             productosExtras={productosExtras}
             setProductosExtras={setProductosExtras}
           />
+
           {/* Servicio Express */}
           <div className="form-row checkbox-row">
             <label>Servicio Express</label>
+
             <input
               type="checkbox"
               checked={servicioExpress}
-              onChange={() => setServicioExpress(!servicioExpress)}
+              onChange={() =>
+                setServicioExpress(!servicioExpress)
+              }
             />
           </div>
 
+          {/* MUESTRA */}
+          <div className="form-row">
+            <label>Muestra </label>
 
-            {/* MUESTRA */}
-            <div className="form-row">
-              <label>Muestra </label>
-              <select
-                value={muestra}
-                onChange={(e) => {
-                  setMuestra(e.target.value);
-                }}
-              >
-                <option value="">Seleccione...</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
-              </select>
-                  </div>
-                  {/* DATOS ADICIONALES */}
-                  <div className="form-row textarea-row">
-                      <label>Datos Adicionales: </label>
-                      <textarea
-                          value={datosAdicionales}
-                          onChange={(e) => setDatosAdicionales(e.target.value)}
-                          placeholder="Ej. salida a 90°"
-                      />
-                  </div>
+            <select
+              value={muestra}
+              onKeyDown={pasarAlSiguienteCampo}
+              onChange={(e) => {
+                setMuestra(e.target.value);
+              }}
+            >
+              <option value="">Seleccione...</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
 
           {/* DERECHA (DESCRIPCIÓN) */}
 
