@@ -805,7 +805,7 @@ const aplicarStock = (
             </p>
           </div>
         </div>
-      </div>
+    
 
       {/* TOTAL */}
       <h2>
@@ -897,7 +897,8 @@ const aplicarStock = (
       ))}
     </div>
   )}
-
+  {/*Fin de todo el formulario con todo y botones de stock */}
+</div>
       {/* INFORMACIÓN PARA ADMINISTRACIÓN */}
       {esAdministracion && (
         <div className="form-row textarea-row">

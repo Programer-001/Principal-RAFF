@@ -1113,7 +1113,7 @@ const aplicarStock = (
       >
         {data ? "ACTUALIZAR" : "AGREGAR"}
       </button>
-    </div>
+    
 
       {/* -------------------------------------------------------
       BOTONES DE STOCK
@@ -1152,6 +1152,8 @@ const aplicarStock = (
       )}
     </div>
   )}
+  {/*fin del div de todo el formulario incluyendo botones de stock */}
+  </div>
      {/* -------------------------------------------------------VARIABLES CUADRO----------------------------------------------------->> */}
           {esAdministracion && (
             <>

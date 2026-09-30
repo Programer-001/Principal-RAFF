@@ -26,6 +26,7 @@ interface Props {
 type ResistenciaStock = {
   id: string;
   nombre: string;
+  tipo: string;
   habilitado: boolean;
 
   valores: {
@@ -70,6 +71,7 @@ const [longitud, setLongitud] = useState<number>(0); //Longitud
 const [tipoPlaca, setTipoPlaca] = useState("");
 const [precioPlaca, setPrecioPlaca] = useState(0);
 const [cantidadPlaca, setCantidadPlaca] = useState(0);
+const [medidaPlaca, setMedidaPlaca] = useState("");
 const [desoldarTornillo, setDesoldarTornillo] = useState(false);
 const [termoposoBase, setTermoposoBase] = useState(false);
 const [cambiarTornillo, setCambiarTornillo] = useState(false);
@@ -387,6 +389,7 @@ const totalProductosExtras = productosExtras.reduce(
     setCantidadTapon(0);
 
     setTipoPlaca("");
+    setMedidaPlaca("");
     setPrecioPlaca(0);
     setCantidadPlaca(0);
       setCantidadDesoldarBase(0);
@@ -454,9 +457,9 @@ const totalProductosExtras = productosExtras.reduce(
           .filter((concepto) => concepto.trim() !== "")
           .forEach((concepto) => partes.push(concepto.trim().toUpperCase()));
 
-        return `${configuracion.tipo.toUpperCase()} ${index + 1}: ${partes.join(
-          " - "
-        )}`;
+        return `${configuracion.tipo.toUpperCase()} ${index + 1}${
+          medidaPlaca ? ` DE ${medidaPlaca.toUpperCase()}` : ""
+        }: ${partes.join(" - ")}`;
       })
       .join("\n");
   };
@@ -528,7 +531,7 @@ const totalProductosExtras = productosExtras.reduce(
   
   ${termoposoBase ? ` / TERMOPOSO (${cantidadTermoposo})` : ""}
   
-  ${tipoPlaca ? ` / ${tipoPlaca.toUpperCase()} (${cantidadPlaca})` : ""}
+  ${tipoPlaca ? ` / ${tipoPlaca.toUpperCase()}: ${medidaPlaca} (${cantidadPlaca})`: ""}
   
   ${puentes ? ` / PUENTES (${cantidadPuentes})` : ""}
   
@@ -657,6 +660,7 @@ const totalProductosExtras = productosExtras.reduce(
       setTipoPlaca(d.tipoPlaca || "");
       setPrecioPlaca(d.precioPlaca || 0);
       setCantidadPlaca(d.cantidadPlaca || 0);
+      setMedidaPlaca(d.medidaPlaca || "");
         setMuestra(d.muestra || "");
         setDatosAdicionales(d.datosAdicionales || "");
 
@@ -819,6 +823,9 @@ useEffect(() => {
               id,
 
               nombre: item.nombre || "",
+                // Los registros antiguos que no tienen tipo
+                // pertenecen a Tubular.
+                tipo: item.tipo || "tubular",
 
               habilitado:
                 item.habilitado !== false,
@@ -886,7 +893,7 @@ useEffect(() => {
             })
           )
           .filter(
-            (item) => item.habilitado
+            (item) => item.habilitado && item.tipo === "tubular"
           );
 
       setResistenciasStock(lista);
@@ -1423,6 +1430,7 @@ const pasarAlSiguienteCampo = (
               onKeyDown={pasarAlSiguienteCampo}
               onChange={(e) => {
                 setTipoPlaca(e.target.value);
+                setMedidaPlaca("");
                 setPrecioPlaca(0);
                 setCantidadPlaca(0);
               }}
@@ -1437,17 +1445,35 @@ const pasarAlSiguienteCampo = (
 
           {tipoPlaca !== "" && (
             <>
+              {/* Medidas / Diámetro */}
+              <div className="form-row">
+                <label>
+                  {tipoPlaca === "Brida"
+                    ? "Diámetro (Brida)"
+                    : `Medidas (${tipoPlaca === "Lamina" ? "Lámina" : tipoPlaca})`}
+                </label>
+
+                <input
+                  type="text"
+                  value={medidaPlaca}
+                  onKeyDown={pasarAlSiguienteCampo}
+                  onChange={(e) => setMedidaPlaca(e.target.value)}
+                  placeholder={
+                    tipoPlaca === "Brida"
+                      ? 'Ej. 6", 8", 10"'
+                      : "Ej. 20 x 15 cm"
+                  }
+                />
+              </div>
+
+              {/* Precio */}
               <div className="form-row">
                 <label>Precio ({tipoPlaca})</label>
 
                 <input
                   type="number"
                   min={0}
-                  value={
-                    precioPlaca === 0
-                      ? ""
-                      : precioPlaca
-                  }
+                  value={precioPlaca === 0 ? "" : precioPlaca}
                   onKeyDown={pasarAlSiguienteCampo}
                   onChange={(e) =>
                     setPrecioPlaca(Number(e.target.value))
@@ -1455,17 +1481,14 @@ const pasarAlSiguienteCampo = (
                 />
               </div>
 
+              {/* Cantidad */}
               <div className="form-row">
                 <label>Cantidad ({tipoPlaca})</label>
 
                 <input
                   type="number"
                   min={0}
-                  value={
-                    cantidadPlaca === 0
-                      ? ""
-                      : cantidadPlaca
-                  }
+                  value={cantidadPlaca === 0 ? "" : cantidadPlaca}
                   onKeyDown={pasarAlSiguienteCampo}
                   onChange={(e) =>
                     setCantidadPlaca(Number(e.target.value))
@@ -1481,21 +1504,16 @@ const pasarAlSiguienteCampo = (
                     type="button"
                     className="btn btn-blue"
                     onClick={() =>
-                      abrirConfiguracionTubular(
-                        tipoPlacaConfigurable
-                      )
+                      abrirConfiguracionTubular(tipoPlacaConfigurable)
                     }
                   >
                     ⚙ Configurar{" "}
-                    {tipoPlaca === "Lamina"
-                      ? "Lámina"
-                      : tipoPlaca}
+                    {tipoPlaca === "Lamina" ? "Lámina" : tipoPlaca}
                   </button>
                 </div>
               )}
             </>
           )}
-
           {/* Cantidad de tornillos */}
           {cambiarTornillo && (
             <div className="form-row">
@@ -1738,6 +1756,7 @@ const pasarAlSiguienteCampo = (
                               totalTermoposo,
                               totalPlaca,
                               tipoPlaca,
+                              medidaPlaca,
                               cantidadPlaca,
                               precioPlaca,
                               configuracionesTubular,
@@ -1767,7 +1786,7 @@ const pasarAlSiguienteCampo = (
               >
                   {data ? "ACTUALIZAR" : "AGREGAR"}
               </button >
-      </div>
+      
       {/* -------------------------------------------------------------------------------------------------------------->> */}
           {/* -------------------------------------------------------BOTONES DE STOCK----------------------------------------------------->> */}
 
@@ -1777,6 +1796,7 @@ const pasarAlSiguienteCampo = (
                     display: "flex",
                     gap: 8,
                     flexWrap: "wrap",
+                    marginTop: 20,
                     marginBottom: 20,
                   }}
                 >
@@ -1797,7 +1817,7 @@ const pasarAlSiguienteCampo = (
                     </button>
                   ))}
                 </div>
-
+</div>
 
 
 {/* -------------------------------------------------------------------------------------------------------------->> */}
