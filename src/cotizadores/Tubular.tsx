@@ -904,7 +904,7 @@ useEffect(() => {
 }, []);
 // ENTER → SIGUIENTE CAMPO
 const pasarAlSiguienteCampo = (
-  e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>
+  e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement| HTMLTextAreaElement>
 ) => {
   if (e.key !== "Enter") return;
 
@@ -1626,6 +1626,17 @@ const pasarAlSiguienteCampo = (
               <option value="no">No</option>
             </select>
           </div>
+          {/* DATOS ADICIONALES */}
+        <div className="form-row textarea-row full-width">
+          <label>Datos adicionales</label>
+
+          <textarea
+            value={datosAdicionales}
+            onChange={(e) => setDatosAdicionales(e.target.value)}
+            placeholder="Escribe datos adicionales..."
+            onKeyDown={pasarAlSiguienteCampo}
+          />
+        </div>
 
           {/* DERECHA (DESCRIPCIÓN) */}
 

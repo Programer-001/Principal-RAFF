@@ -18,6 +18,33 @@ interface Props {
     username?: string;
   };
 }
+type StockCartuchoBaja = {
+  id: string;
+  nombre: string;
+  tipo: string;
+  habilitado: boolean;
+
+  valores?: {
+    voltaje?: string;
+    potencia?: string;
+
+    diametro?: string;
+    longitud?: string;
+
+    cableAltaTemperatura?: string;
+
+    cableSeleccionadoId?: string;
+    calibreGradosCable?: string;
+
+    longitudCable?: string;
+    cantidadCables?: string;
+
+    terminalCable90?: boolean;
+    tuboZapa?: boolean;
+
+    datosAdicionales?: string;
+  };
+};
 
 const CartuchoBaja = ({
   data,
@@ -40,6 +67,12 @@ const CartuchoBaja = ({
 
   const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
     useState<any>(null);
+// -------------------------------------------------------------------------
+// RESISTENCIAS DE STOCK
+// -------------------------------------------------------------------------
+
+const [resistenciasStock, setResistenciasStock] =
+  useState<StockCartuchoBaja[]>([]);
 
   // Área administración
   const esAdministracion = perfil?.area === "Administración";
@@ -68,6 +101,8 @@ const CartuchoBaja = ({
     cargarSoldarCable();
   }, []);
 
+
+  
   // -------------------------------------------------------------------------
   // DATOS DEL CABLE
   // -------------------------------------------------------------------------
@@ -319,6 +354,167 @@ const CartuchoBaja = ({
       );
     }
   }, [data]);
+
+  // -------------------------------------------------------------------------
+// CARGAR RECETAS DE STOCK - CARTUCHO BAJA
+// -------------------------------------------------------------------------
+
+useEffect(() => {
+  const cargarResistenciasStock = async () => {
+    try {
+      const snapshot = await get(
+        ref(db, "ResistenciasStock")
+      );
+
+      if (!snapshot.exists()) {
+        setResistenciasStock([]);
+        return;
+      }
+
+      const data = snapshot.val();
+
+      const lista: StockCartuchoBaja[] =
+        Object.keys(data)
+          .map((id) => ({
+            id,
+            nombre: data[id]?.nombre || "",
+            tipo: data[id]?.tipo || "tubular",
+            habilitado:
+              data[id]?.habilitado !== false,
+            valores: data[id]?.valores || {},
+          }))
+          .filter(
+            (stock) =>
+              stock.tipo === "CartuchoB" &&
+              stock.habilitado
+          )
+          .sort((a, b) =>
+            a.nombre.localeCompare(
+              b.nombre,
+              "es",
+              {
+                sensitivity: "base",
+              }
+            )
+          );
+
+      setResistenciasStock(lista);
+    } catch (error) {
+      console.error(
+        "Error cargando stock de Cartucho Baja:",
+        error
+      );
+
+      setResistenciasStock([]);
+    }
+  };
+
+  cargarResistenciasStock();
+}, []);
+// -------------------------------------------------------------------------
+// APLICAR RECETA DE STOCK
+// -------------------------------------------------------------------------
+
+const aplicarStock = (
+  stock: StockCartuchoBaja
+) => {
+  const valores = stock.valores || {};
+
+  // IMPORTANTE:
+  // cantidadResistencias NO se modifica.
+  // Esa cantidad se captura manualmente en el cotizador.
+
+  setVoltaje(
+    valores.voltaje || ""
+  );
+
+  setWatts(
+    valores.potencia || ""
+  );
+
+  setDiametro(
+    valores.diametro || ""
+  );
+
+  setLongitudCm(
+    valores.longitud || ""
+  );
+
+  setCableAltaTemperatura(
+    valores.cableAltaTemperatura || ""
+  );
+
+  setMedidaCableCm(
+    valores.longitudCable || ""
+  );
+
+  setCantidadCables(
+    valores.cantidadCables || ""
+  );
+
+  setterminal90(
+    !!valores.terminalCable90
+  );
+
+  settubozapa(
+    !!valores.tuboZapa
+  );
+
+  setDatosAdicionales(
+    valores.datosAdicionales || ""
+  );
+
+  // -------------------------------------------------------
+  // BUSCAR EL CABLE REAL EN EL CATÁLOGO ACTUAL
+  // -------------------------------------------------------
+
+  if (
+    valores.cableAltaTemperatura === "SI"
+  ) {
+    const cableEncontrado =
+      opcionesSoldarCable.find(
+        (item) => {
+          // Primero intentamos por ID
+          if (
+            valores.cableSeleccionadoId &&
+            item.id ===
+              valores.cableSeleccionadoId
+          ) {
+            return true;
+          }
+
+          // Si cambió el ID o es una receta anterior,
+          // intentamos por el nombre/tipo.
+          if (
+            valores.calibreGradosCable &&
+            String(item.tipo)
+              .trim()
+              .toUpperCase() ===
+              String(
+                valores.calibreGradosCable
+              )
+                .trim()
+                .toUpperCase()
+          ) {
+            return true;
+          }
+
+          return false;
+        }
+      );
+
+    setSoldarCableSeleccionado(
+      cableEncontrado || null
+    );
+  } else {
+    setSoldarCableSeleccionado(null);
+
+    setMedidaCableCm("");
+    setCantidadCables("");
+  }
+
+  //setDirty(true);
+};
 
   // -------------------------------------------------------------------------
   // HTML
@@ -622,6 +818,86 @@ const CartuchoBaja = ({
         {formatearMoneda(total * 1.16)}
       </h1>
 
+            {/* GUARDAR */}
+      <button
+        className="btn btn-blue"
+        onClick={() => {
+          onGuardar({
+            id: data?.id || Date.now().toString(),
+            tipo: "CartuchoB",
+            descripcion,
+            total: Number(total.toFixed(2)),
+
+            datos: {
+              cantidadResistencias,
+              voltaje,
+              watts,
+              diametro,
+              longitudCm,
+
+              cableAltaTemperatura,
+              medidaCableCm,
+              cantidadCables,
+
+              soldarCableSeleccionado,
+              tipoSoldarCable,
+              precioSoldarCable,
+              totalCable,
+
+              precioUnitario,
+
+              datosAdicionales,
+
+              terminal90,
+              totalTerminal90,
+
+              tubozapa,
+              totalTuboZapa,
+            },
+          });
+
+          resetForm();
+          
+        }}
+      >
+        {data ? "ACTUALIZAR" : "AGREGAR"}
+      </button>
+
+        {/* -------------------------------------------------------
+      BOTONES DE STOCK
+  ------------------------------------------------------- */}
+
+  {resistenciasStock.length > 0 && (
+    <div
+      style={{
+        display: "flex",
+        gap: 8,
+        flexWrap: "wrap",
+        marginTop: 12,
+        marginBottom: 20,
+      }}
+    >
+      {resistenciasStock.map((stock) => (
+        <button
+          key={stock.id}
+          type="button"
+          onClick={() =>
+            aplicarStock(stock)
+          }
+          style={{
+            padding: "8px 12px",
+            borderRadius: 8,
+            border: "1px solid #ccc",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          {stock.nombre}
+        </button>
+      ))}
+    </div>
+  )}
+
       {/* INFORMACIÓN PARA ADMINISTRACIÓN */}
       {esAdministracion && (
         <div className="form-row textarea-row">
@@ -664,50 +940,7 @@ const CartuchoBaja = ({
         </div>
       )}
 
-      {/* GUARDAR */}
-      <button
-        className="btn btn-blue"
-        onClick={() => {
-          onGuardar({
-            id: data?.id || Date.now().toString(),
-            tipo: "CartuchoB",
-            descripcion,
-            total: Number(total.toFixed(2)),
 
-            datos: {
-              cantidadResistencias,
-              voltaje,
-              watts,
-              diametro,
-              longitudCm,
-
-              cableAltaTemperatura,
-              medidaCableCm,
-              cantidadCables,
-
-              soldarCableSeleccionado,
-              tipoSoldarCable,
-              precioSoldarCable,
-              totalCable,
-
-              precioUnitario,
-
-              datosAdicionales,
-
-              terminal90,
-              totalTerminal90,
-
-              tubozapa,
-              totalTuboZapa,
-            },
-          });
-
-          resetForm();
-          setDirty(false);
-        }}
-      >
-        {data ? "ACTUALIZAR" : "AGREGAR"}
-      </button>
     </>
   );
 };

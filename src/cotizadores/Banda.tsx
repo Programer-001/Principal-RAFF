@@ -5,6 +5,8 @@ import { tipoCable, termopar, tira } from "../datos/tipoCable";
 import { ItemCotizado } from "../cotizador";
 import { formatearMoneda } from "../funciones/formato_moneda";
 import { FiCopy } from "react-icons/fi";
+import { get, ref } from "firebase/database";
+import { db } from "../firebase/config";
 
 interface Props {
   data?: ItemCotizado;
@@ -16,6 +18,47 @@ interface Props {
         username?: string;
     };
 }
+
+type StockBandaItem = {
+  id: string;
+  nombre: string;
+  tipo: string;
+  habilitado: boolean;
+
+  valores?: {
+    tipo?: string;
+
+    diametro?: string;
+    ancho?: string;
+    longitudTiraCm?: string;
+
+    voltaje?: string;
+    potencia?: string;
+
+    barrilCincho?: boolean;
+    stuck?: boolean;
+
+    barrenosResaques?: boolean;
+    numBarrenos?: string;
+
+    colocarCables?: boolean;
+    tipoCableSeleccionado?: string;
+    longitudCm?: string;
+    cantidadCables?: string;
+
+    fabricar440?: boolean;
+    trifasica?: boolean;
+    caja?: boolean;
+
+    termopar?: boolean;
+    tipoTermoparSeleccionado?: string;
+    longitudTermoparCm?: string;
+
+    excedenteBanda?: boolean;
+
+    datosAdicionales?: string;
+  };
+};
 
 const Banda = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const [diametro, setDiametro] = useState<number>(0);
@@ -70,7 +113,74 @@ const Banda = ({ data, onGuardar, setDirty, perfil }: Props) => {
     // verificar si es un asesor para mostrar el campo de datos adicionales
     const esAdministracion = perfil?.area === "Administración";
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
+    // ---------------------------------------------------------
+// RESISTENCIAS DE STOCK - BANDA
+// ---------------------------------------------------------
+  const [resistenciasStock, setResistenciasStock] =useState<StockBandaItem[]>([]);
 
+  // ---------------------------------------------------------
+// CARGAR RECETAS DE STOCK DE BANDA
+// ---------------------------------------------------------
+
+useEffect(() => {
+  const cargarResistenciasStock = async () => {
+    try {
+      const snapshot = await get(
+        ref(db, "ResistenciasStock")
+      );
+
+      if (!snapshot.exists()) {
+        setResistenciasStock([]);
+        return;
+      }
+
+      const dataStock = snapshot.val();
+
+      const lista: StockBandaItem[] =
+        Object.keys(dataStock)
+          .map((id) => ({
+            id,
+            nombre:
+              dataStock[id]?.nombre || "",
+            tipo:
+              dataStock[id]?.tipo || "",
+            habilitado:
+              dataStock[id]?.habilitado !==
+              false,
+            valores:
+              dataStock[id]?.valores || {},
+          }))
+          .filter(
+            (stock) =>
+              stock.tipo === "banda" &&
+              stock.habilitado
+          )
+          .sort((a, b) =>
+            a.nombre.localeCompare(
+              b.nombre,
+              "es",
+              {
+                sensitivity: "base",
+              }
+            )
+          );
+
+      setResistenciasStock(lista);
+    } catch (error) {
+      console.error(
+        "Error cargando stock de Banda:",
+        error
+      );
+
+      setResistenciasStock([]);
+    }
+  };
+
+  cargarResistenciasStock();
+}, []);
+  // ---------------------------------------------------------
+// ussar useEffect para cargar los valores de la resistencia de stock si data existe
+// ---------------------------------------------------------
 
   useEffect(() => {
     if (data) {
@@ -314,6 +424,233 @@ const pasarAlSiguienteCampo = (
 
   elementos[posicionActual + 1]?.focus();
 };
+// ---------------------------------------------------------
+// APLICAR RECETA DE STOCK DE BANDA
+// ---------------------------------------------------------
+
+const aplicarStock = (
+  stock: StockBandaItem
+) => {
+  const valores = stock.valores || {};
+
+  // -------------------------------------------------------
+  // TIPO DE BANDA
+  // -------------------------------------------------------
+
+  const selectoresBanda: Record<
+    string,
+    number
+  > = {
+    MICA: 1,
+    SEMICURVA: 2,
+    PLANA: 3,
+    CERAMICA: 4,
+    "CERÁMICA": 4,
+    TIRA: 5,
+  };
+
+  const tipoStock = String(
+    valores.tipo || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  const nuevoSelector =
+    selectoresBanda[tipoStock] || 0;
+
+  setSelector(nuevoSelector);
+
+  // -------------------------------------------------------
+  // MEDIDAS
+  // -------------------------------------------------------
+
+  if (nuevoSelector === 5) {
+    // TIRA
+    setDiametro(0);
+    setAncho(4);
+
+    setLongitudTiraCm(
+      Number(
+        valores.longitudTiraCm || 0
+      )
+    );
+  } else {
+    setDiametro(
+      Number(valores.diametro || 0)
+    );
+
+    setAncho(
+      Number(valores.ancho || 0)
+    );
+
+    setLongitudTiraCm(0);
+  }
+
+  // -------------------------------------------------------
+  // VOLTAJE / POTENCIA
+  // -------------------------------------------------------
+
+  setVoltaje(
+    Number(valores.voltaje || 0)
+  );
+
+  setPotencia(
+    Number(valores.potencia || 0)
+  );
+
+  // -------------------------------------------------------
+  // BARRIL / STUCK
+  // -------------------------------------------------------
+
+  setBarrilCincho(
+    nuevoSelector !== 5
+      ? !!valores.barrilCincho
+      : false
+  );
+
+  setStuck(
+    !!valores.stuck
+  );
+
+  // -------------------------------------------------------
+  // BARRENOS
+  // -------------------------------------------------------
+
+  const tieneBarrenos =
+    nuevoSelector !== 5 &&
+    !!valores.barrenosResaques;
+
+  setBarrenos(tieneBarrenos);
+
+  setNumBarrenos(
+    tieneBarrenos
+      ? Number(
+          valores.numBarrenos || 0
+        )
+      : 0
+  );
+
+  // -------------------------------------------------------
+  // CABLES
+  // -------------------------------------------------------
+
+  const tieneCables =
+    !!valores.colocarCables;
+
+  setUsarCables(tieneCables);
+
+  if (tieneCables) {
+    setTipoCableSeleccionado(
+      valores.tipoCableSeleccionado ||
+        ""
+    );
+
+    setLongitudCm(
+      Number(
+        valores.longitudCm || 0
+      )
+    );
+
+    setCantidadCables(
+      Number(
+        valores.cantidadCables || 0
+      )
+    );
+  } else {
+    setTipoCableSeleccionado("");
+    setLongitudCm(0);
+    setCantidadCables(0);
+  }
+
+  // -------------------------------------------------------
+  // 440V
+  //
+  // Tu Banda ya recalcula fabricar440 según voltaje,
+  // pero también lo dejamos consistente aquí.
+  // -------------------------------------------------------
+
+  const voltajeStock =
+    Number(valores.voltaje || 0);
+
+  setFabricar440(
+    voltajeStock >= 440
+  );
+
+  // -------------------------------------------------------
+  // TRIFÁSICA / CAJA
+  // -------------------------------------------------------
+
+  setTrifasica(
+    nuevoSelector !== 5
+      ? !!valores.trifasica
+      : false
+  );
+
+  setCaja(
+    nuevoSelector !== 5
+      ? !!valores.caja
+      : false
+  );
+
+  // -------------------------------------------------------
+  // TERMOPAR
+  // -------------------------------------------------------
+
+  const tieneTermopar =
+    !!valores.termopar;
+
+  setUsarTermopar(
+    tieneTermopar
+  );
+
+  if (tieneTermopar) {
+    setTipoTermoparSeleccionado(
+      valores.tipoTermoparSeleccionado ||
+        ""
+    );
+
+    setLongitudTermoparCm(
+      Number(
+        valores.longitudTermoparCm || 0
+      )
+    );
+  } else {
+    setTipoTermoparSeleccionado("");
+    setLongitudTermoparCm(0);
+  }
+
+  // -------------------------------------------------------
+  // EXCEDENTE
+  // -------------------------------------------------------
+
+  setExcedente(
+    nuevoSelector !== 5
+      ? !!valores.excedenteBanda
+      : false
+  );
+
+  // -------------------------------------------------------
+  // DATOS ADICIONALES
+  // -------------------------------------------------------
+
+  setDatosAdicionales(
+    valores.datosAdicionales || ""
+  );
+
+  // -------------------------------------------------------
+  // NO MODIFICAMOS:
+  //
+  // cantidad
+  // muestra
+  // express
+  // servicioExpress
+  //
+  // Son valores de la cotización, no de la receta.
+  // -------------------------------------------------------
+
+  setDirty(true);
+};
+
 
   return (
     <>
@@ -777,6 +1114,44 @@ const pasarAlSiguienteCampo = (
         {data ? "ACTUALIZAR" : "AGREGAR"}
       </button>
     </div>
+
+      {/* -------------------------------------------------------
+      BOTONES DE STOCK
+  ------------------------------------------------------- */}
+
+  {resistenciasStock.length > 0 && (
+    <div
+      style={{
+        display: "flex",
+        gap: 8,
+        flexWrap: "wrap",
+        marginTop: 12,
+        marginBottom: 20,
+      }}
+    >
+      {resistenciasStock.map(
+        (stock) => (
+          <button
+            key={stock.id}
+            type="button"
+            onClick={() =>
+              aplicarStock(stock)
+            }
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border:
+                "1px solid #ccc",
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            {stock.nombre}
+          </button>
+        )
+      )}
+    </div>
+  )}
      {/* -------------------------------------------------------VARIABLES CUADRO----------------------------------------------------->> */}
           {esAdministracion && (
             <>
