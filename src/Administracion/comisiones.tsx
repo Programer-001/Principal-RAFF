@@ -63,6 +63,7 @@ const TIPOS_DISPONIBLES = [
     { value: "resorte", label: "Resorte" },
     { value: "termopar", label: "Termopar" },
     { value: "mantenimiento_reparacion", label: "Reparaciones" },
+    { value: "personalizado", label: "Personalizado" },
 
 ];
 
