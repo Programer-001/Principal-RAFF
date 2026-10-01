@@ -7,7 +7,21 @@ import { app, auth } from "../firebase/config";
 import { generarPDFOTCliente } from "../plantillas/plantillaOTCliente";
 import { generarPDFOTProduccion } from "../plantillas/plantillaOTProduccion";
 import { generarPDFOTProduccionPartida } from "../plantillas/plantillaOTProduccion_individual";
-import { calcularMaterialesTubular, MaterialItem } from "../datos/Armado_Resistencia";
+type MaterialCalculado = {
+    materialId: string;
+    nombre: string;
+    cantidad: number;
+};
+
+type RecetaProduccion = {
+    id: string;
+    nombre: string;
+    tipo: string;
+    habilitado: boolean;
+    diametros: Array<{ id: string; tipo: string }>;
+    materiales: Array<{ materialId: string; cantidad: number }>;
+    materialesVariables: Array<{ materialId: string; catalogoId: string; cantidad: number }>;
+};
 
 interface ClienteSnapshot {
     nombre?: string;
@@ -105,7 +119,9 @@ const GestionProduccion: React.FC = () => {
     const [fechaFin, setFechaFin] = useState("");
     const [estado, setEstado] = useState("");
     const [mostrarMateriales, setMostrarMateriales] = useState(false);
-    const [materialesCalculados, setMaterialesCalculados] = useState<MaterialItem[]>([]);
+    const [materialesCalculados, setMaterialesCalculados] = useState<MaterialCalculado[]>([]);
+    const [recetaMaterialNombre, setRecetaMaterialNombre] = useState("");
+    const [errorMaterialesReceta, setErrorMaterialesReceta] = useState("");
     const [filtrosEstado, setFiltrosEstado] = useState<string[]>([]);
     const [filtroTrabajador, setFiltroTrabajador] = useState("");
 
@@ -335,7 +351,124 @@ const GestionProduccion: React.FC = () => {
     // =========================
     // SELECCIONAR PARTIDA
     // =========================
-    const seleccionarPartida = (trabajo: TrabajoItem) => {
+    const comoLista = (valor: any): any[] => {
+        if (Array.isArray(valor)) return valor;
+        if (valor && typeof valor === "object") return Object.values(valor);
+        return [];
+    };
+
+    const normalizarTextoReceta = (valor: any) =>
+        String(valor ?? "")
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+    // Calcula los materiales directamente desde produccion/recetas_armado.
+    // Los materiales fijos y el material variable seleccionado se multiplican
+    // por datos.cantidadResistencias de la partida.
+    const calcularMaterialesDesdeReceta = async (trabajo: TrabajoItem): Promise<MaterialCalculado[]> => {
+        setRecetaMaterialNombre("");
+        setErrorMaterialesReceta("");
+
+        if ((trabajo.tipo || "").toLowerCase() !== "tubular") return [];
+
+        const diametroOT = String(trabajo.datos?.diametro || "").trim();
+        const cantidadResistencias = Number(trabajo.datos?.cantidadResistencias || 0);
+
+        if (!diametroOT) {
+            setErrorMaterialesReceta("La partida no tiene diámetro guardado.");
+            return [];
+        }
+        if (!Number.isFinite(cantidadResistencias) || cantidadResistencias <= 0) {
+            setErrorMaterialesReceta("La partida no tiene una cantidad de resistencias válida.");
+            return [];
+        }
+
+        const db = getDatabase(app);
+        const [snapRecetas, snapInventario] = await Promise.all([
+            get(ref(db, "produccion/recetas_armado")),
+            get(ref(db, "produccion/almacen_inventario")),
+        ]);
+
+        if (!snapRecetas.exists()) {
+            setErrorMaterialesReceta("No existen recetas en produccion/recetas_armado.");
+            return [];
+        }
+
+        const recetasData = snapRecetas.val() || {};
+        const recetas: RecetaProduccion[] = Object.entries(recetasData).map(([id, dato]: [string, any]) => ({
+            id,
+            nombre: String(dato?.nombre || ""),
+            tipo: String(dato?.tipo || "tubular"),
+            habilitado: dato?.habilitado !== false,
+            diametros: comoLista(dato?.diametros).map((d: any) => ({
+                id: String(d?.id || ""),
+                tipo: String(d?.tipo ?? d?.Tipo ?? ""),
+            })),
+            materiales: comoLista(dato?.materiales).map((m: any) => ({
+                materialId: String(m?.materialId || ""),
+                cantidad: Number(m?.cantidad || 0),
+            })),
+            materialesVariables: comoLista(dato?.materialesVariables).map((m: any) => ({
+                materialId: String(m?.materialId || ""),
+                catalogoId: String(m?.catalogoId || ""),
+                cantidad: Number(m?.cantidad || 0),
+            })),
+        }));
+
+        const diametroNormalizado = normalizarTextoReceta(diametroOT);
+        const recetasCoincidentes = recetas.filter((receta) =>
+            receta.habilitado &&
+            normalizarTextoReceta(receta.tipo) === "tubular" &&
+            receta.diametros.some((d) => normalizarTextoReceta(d.tipo) === diametroNormalizado)
+        );
+
+        if (recetasCoincidentes.length === 0) {
+            setErrorMaterialesReceta(`No hay una receta tubular habilitada asociada al diámetro ${diametroOT}.`);
+            return [];
+        }
+        if (recetasCoincidentes.length > 1) {
+            setErrorMaterialesReceta(`Hay ${recetasCoincidentes.length} recetas habilitadas para ${diametroOT}. Deja solamente una habilitada para evitar un descuento incorrecto.`);
+            return [];
+        }
+
+        const receta = recetasCoincidentes[0];
+        setRecetaMaterialNombre(receta.nombre);
+
+        const inventarioData = snapInventario.exists() ? snapInventario.val() || {} : {};
+        const acumulado = new Map<string, number>();
+
+        const agregar = (materialId: string, cantidadPorResistencia: number) => {
+            if (!materialId || !Number.isFinite(cantidadPorResistencia) || cantidadPorResistencia <= 0) return;
+            const total = cantidadPorResistencia * cantidadResistencias;
+            acumulado.set(materialId, (acumulado.get(materialId) || 0) + total);
+        };
+
+        // 1) Materiales fijos: siempre forman parte de la receta.
+        receta.materiales.forEach((m) => agregar(m.materialId, m.cantidad));
+
+        // 2) Variables: se activan únicamente si su catalogoId aparece
+        //    en datos.seleccionados de la OT (por ejemplo, tornillo.id).
+        const idsSeleccionados = new Set<string>();
+        const seleccionados = trabajo.datos?.seleccionados || {};
+        Object.values(seleccionados).forEach((opcion: any) => {
+            const id = String(opcion?.id || "").trim();
+            if (id) idsSeleccionados.add(id);
+        });
+
+        receta.materialesVariables
+            .filter((m) => idsSeleccionados.has(m.catalogoId))
+            .forEach((m) => agregar(m.materialId, m.cantidad));
+
+        return Array.from(acumulado.entries()).map(([materialId, cantidad]) => ({
+            materialId,
+            nombre: String(inventarioData?.[materialId]?.descripcion || materialId),
+            cantidad,
+        }));
+    };
+
+    const seleccionarPartida = async (trabajo: TrabajoItem) => {
         setPartidaSeleccionada(trabajo);
 
         setTrabajador(trabajo.trabajador || "");
@@ -344,15 +477,17 @@ const GestionProduccion: React.FC = () => {
         setEstado(trabajo.estadoProduccion || "en_fila");
         setCheckRevision(!!trabajo.inspeccion?.aprobado);
         setObservaciones(trabajo.inspeccion?.observaciones || "");
+        setMaterialesCalculados([]);
 
-        const descripcion = trabajo.descripcion || "";
-        const resultado = calcularMaterialesTubular(descripcion);
-
-        if ((trabajo.tipo || "").toLowerCase() === "tubular" && resultado.familia) {
-            setMaterialesCalculados(resultado.materiales);
-        } else {
+        try {
+            const materiales = await calcularMaterialesDesdeReceta(trabajo);
+            setMaterialesCalculados(materiales);
+        } catch (error) {
+            console.error("Error calculando materiales desde receta:", error);
             setMaterialesCalculados([]);
+            setErrorMaterialesReceta("No se pudieron calcular los materiales de la receta.");
         }
+
         setMostrarSeries(!!trabajo.seriesGeneradas);
         setNumerosSerie(trabajo.numerosSerie || []);
     };
@@ -664,25 +799,30 @@ const GestionProduccion: React.FC = () => {
     // ENTREGAR MATERIAL AUTOMÁTICAMENTE AL GUARDAR
     // ============================================
 const entregarMaterial = async (): Promise<boolean> => {
-  if (!otSeleccionada || !partidaSeleccionada || !partidaSeleccionada.key) {
-    return false;
-  }
+  if (!otSeleccionada || !partidaSeleccionada || !partidaSeleccionada.key) return false;
 
   if (partidaSeleccionada.materialEntregado === true) {
     setMostrarMateriales(false);
     return true;
   }
 
-  const confirmar = window.confirm(
-    `¿Deseas entregar material para la partida ${partidaSeleccionada.partida || ""}?`
-  );
-
-  if (!confirmar) return false;
-
   try {
+    // Recalcular justo antes de descontar para no usar una receta o cantidad vieja.
+    const materialesActuales = await calcularMaterialesDesdeReceta(partidaSeleccionada);
+    setMaterialesCalculados(materialesActuales);
+
+    if (materialesActuales.length === 0) {
+      alert(errorMaterialesReceta || "No se encontraron materiales válidos para entregar. Revisa la receta de esta partida.");
+      return false;
+    }
+
+    const confirmar = window.confirm(
+      `¿Deseas entregar y descontar material para la partida ${partidaSeleccionada.partida || ""}?`
+    );
+    if (!confirmar) return false;
+
     const db = getDatabase(app);
     const fechaEntrega = new Date().toISOString();
-
     const inventarioRef = ref(db, "produccion/almacen_inventario");
     const inventarioSnap = await get(inventarioRef);
 
@@ -691,48 +831,27 @@ const entregarMaterial = async (): Promise<boolean> => {
       return false;
     }
 
-    const inventarioData = inventarioSnap.val();
-
+    const inventarioData = inventarioSnap.val() || {};
     const faltantes: string[] = [];
-    const movimientosParaDescontar: Array<{
-      key: string;
-      nuevaCantidad: number;
-      descripcion: string;
-    }> = [];
+    const actualizacionesInventario: Record<string, number> = {};
 
-    for (const material of materialesCalculados) {
-      const nombreBuscado = normalizarNombreMaterial(material.nombre);
-
-      const encontradaKey = Object.keys(inventarioData).find((key) => {
-        const item = inventarioData[key];
-        const descripcion = (item.descripcion || "")
-          .toUpperCase()
-          .trim()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "");
-
-        return descripcion === nombreBuscado;
-      });
-
-      if (!encontradaKey) {
-        faltantes.push(`${material.nombre}: no existe en inventario`);
+    // La receta ya guarda materialId, por eso el descuento se hace por ID
+    // y no buscando coincidencias por descripción.
+    for (const material of materialesActuales) {
+      const itemInventario = inventarioData?.[material.materialId];
+      if (!itemInventario) {
+        faltantes.push(`${material.nombre}: ID ${material.materialId} no existe en inventario`);
         continue;
       }
 
-      const itemInventario = inventarioData[encontradaKey];
       const cantidadActual = Number(itemInventario.cantidad || 0);
       const requerida = Number(material.cantidad || 0);
-
       if (cantidadActual < requerida) {
-        faltantes.push(`${material.nombre}: faltan ${requerida - cantidadActual}`);
+        faltantes.push(`${itemInventario.descripcion || material.nombre}: requiere ${requerida}, existencia ${cantidadActual}`);
         continue;
       }
 
-      movimientosParaDescontar.push({
-        key: encontradaKey,
-        nuevaCantidad: cantidadActual - requerida,
-        descripcion: itemInventario.descripcion || material.nombre,
-      });
+      actualizacionesInventario[`${material.materialId}/cantidad`] = cantidadActual - requerida;
     }
 
     if (faltantes.length > 0) {
@@ -740,17 +859,11 @@ const entregarMaterial = async (): Promise<boolean> => {
       return false;
     }
 
-    for (const mov of movimientosParaDescontar) {
-      await update(ref(db, `produccion/almacen_inventario/${mov.key}`), {
-        cantidad: mov.nuevaCantidad,
-      });
-    }
+    // Un solo update para todas las cantidades del inventario.
+    await update(inventarioRef, actualizacionesInventario);
 
     await update(
-      ref(
-        db,
-        `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`
-      ),
+      ref(db, `ordenes_trabajo/${otSeleccionada.firebaseKey}/trabajos/${partidaSeleccionada.key}`),
       {
         materialSolicitado: true,
         materialEntregado: true,
@@ -758,20 +871,15 @@ const entregarMaterial = async (): Promise<boolean> => {
       }
     );
 
-    setPartidaSeleccionada((prev) =>
-      prev
-        ? {
-            ...prev,
-            materialSolicitado: true,
-            materialEntregado: true,
-            materialEntregaFecha: fechaEntrega,
-          }
-        : prev
-    );
+    setPartidaSeleccionada((prev) => prev ? {
+      ...prev,
+      materialSolicitado: true,
+      materialEntregado: true,
+      materialEntregaFecha: fechaEntrega,
+    } : prev);
 
     setOtSeleccionada((prev) => {
       if (!prev || !prev.trabajos) return prev;
-
       return {
         ...prev,
         trabajos: {
@@ -795,36 +903,6 @@ const entregarMaterial = async (): Promise<boolean> => {
     return false;
   }
 };
-    // =========================
-    // NORMALIZAR MATERIAL
-    // =========================
-    const normalizarNombreMaterial = (nombre: string) => {
-        const texto = (nombre || "")
-            .toUpperCase()
-            .trim()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "");
-
-        const equivalencias: Record<string, string> = {
-            "AISLADOR #17": "AISLADOR #17",
-            "CAPUCHON 3/8": "CAPUCHON 3/8",
-            "CAPUCHON 1/2": "CAPUCHON 1/2",
-            "TORNILLO 3/16": "TORNILLO 3/16",
-            "VARILLA 3MM": "VARILLA 3MM X 10 CM",
-            "VARILLA DE ACERO INOX": "VARILLA DE ACERO INOX",
-            "BIRLO DE TECHO 3/16": "BIRLO DE TECHO 3/16",
-            "TUERCA HEXAGONAL 3/16": "TUERCA HEXAGONAL 3/16",
-            "TORNILLO DE ACERO INOXIDABLE 1/2": "TORNILLO DE ACERO INOXIDABLE 1/2",
-            "TORNILLO DE ACERO INOXIDABLE 3/4": "TORNILLO DE ACERO INOXIDABLE 3/4",
-            "TORNILLO DE ACERO INOXIDABLE 5/8": "TORNILLO DE ACERO INOXIDABLE 5/8",
-            "TORNILLO DE FIERRO 1/2": "TORNILLO DE FIERRO 1/2",
-            "TORNILLO DE FIERRO 5/8": "TORNILLO DE FIERRO 5/8",
-            "TORNILLO DE FIERRO 3/4": "TORNILLO DE FIERRO 3/4",
-        };
-
-        return equivalencias[texto] || texto;
-    };
-
     // =========================
     // FILTROS DE BUSQUEDA
     // =========================
@@ -2016,6 +2094,17 @@ useEffect(() => {
                                     <h4 style={{ marginTop: 0, marginBottom: 12 }}>
                                         Material requerido
                                     </h4>
+
+                                    {recetaMaterialNombre && (
+                                        <div style={{ marginBottom: 10 }}>
+                                            <strong>Receta:</strong> {recetaMaterialNombre}
+                                        </div>
+                                    )}
+                                    {errorMaterialesReceta && (
+                                        <div style={{ marginBottom: 10, color: "#b42318", fontWeight: 600 }}>
+                                            {errorMaterialesReceta}
+                                        </div>
+                                    )}
 
                                     <div
                                         style={{

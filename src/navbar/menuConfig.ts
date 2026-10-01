@@ -38,6 +38,7 @@ const MENU_BASE: Record<string, MenuItem> = {
     tablas:{key:"tablas", label:"Tablas"},
     //reporte de orden de trabajo
     reporteorden:{key:"reporteorden", label:"Reporte de orden de trabajo"},
+    recetas_resistencias:{key:"recetasarmado", label:"Recetas de resistencias"},
 
     //submenus
     rh: {
@@ -93,7 +94,8 @@ const MENU_BASE: Record<string, MenuItem> = {
             { key: "pago_banda", label: "Pago de banda" },
             { key:"visor_pedidos_especiales", label: "Pedidos especiales"},
             { key:"mostrar_tablas", label: "Tablas de cotizador"},
-            { key:"resistenciasstock", label: "Resistencias Stock"}
+            { key:"resistenciasstock", label: "Resistencias Stock"},
+            { key:"recetasarmado", label: "Recetas de resistencias"}
         ],
     },
 };
