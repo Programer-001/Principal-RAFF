@@ -470,9 +470,45 @@ const Cotizador = () => {
         }
 
         if (!cliente) {
-            alert("Debes seleccionar o Registrar un cliente antes de finalizar la OT");
+            alert("Debes seleccionar o registrar un cliente antes de finalizar la OT");
             return;
         }
+
+        const esPublicoGeneral =
+            cliente.nombre?.trim().toUpperCase() === "PUBLICO GENERAL" ||
+            cliente.razonSocial?.trim().toUpperCase() === "PUBLICO GENERAL";
+
+            if (!esPublicoGeneral) {
+                const erroresCliente: string[] = [];
+
+                // Nombre o razón social
+                if (!cliente.nombre?.trim() && !cliente.razonSocial?.trim()) {
+                    erroresCliente.push("• Nombre o razón social");
+                }
+
+                // Giro
+                if (!cliente.giro?.trim()) {
+                    erroresCliente.push("• Giro");
+                }
+
+                // Teléfono
+                const telefonoDigitos = (cliente.telefono || "").replace(/\D/g, "");
+
+                if (!telefonoDigitos) {
+                    erroresCliente.push("• Teléfono");
+                } else if (telefonoDigitos.length !== 10) {
+                    erroresCliente.push("• Teléfono debe tener 10 dígitos");
+                }
+
+                // Mostrar todos juntos
+                if (erroresCliente.length > 0) {
+                    alert(
+                        "Faltan o deben corregirse los siguientes datos del cliente:\n\n" +
+                        erroresCliente.join("\n")
+                    );
+                    return;
+                }
+            }
 
         try {
             const db = getDatabase(app);
@@ -1015,6 +1051,22 @@ const Cotizador = () => {
                                 }
                                 style={{ width: "100%" }}
                             />
+                             {(cliente.telefono || "").replace(/\D/g, "").length > 0 &&
+                            (cliente.telefono || "").replace(/\D/g, "").length < 10 && (
+                                <div
+                                    style={{
+                                        marginTop: 5,
+                                        padding: "6px 10px",
+                                        background: "#fff3cd",
+                                        border: "1px solid #ffe69c",
+                                        borderRadius: 5,
+                                        color: "#664d03",
+                                        fontSize: 13,
+                                    }}
+                                >
+                                    ⚠️ Cuidado: el teléfono tiene menos de 10 dígitos.
+                                </div>
+                            )}
                         </div>
 
                         <div style={{ minWidth: 220 }}>
@@ -1044,6 +1096,19 @@ const Cotizador = () => {
                                 style={{ width: "100%" }}
                             />
                         </div>
+                       <div style={{ minWidth: 220 }}>
+                        <b>Giro:</b>
+                        <input
+                            type="text"
+                            value={cliente.giro || ""}
+                            onChange={(e) =>
+                                setCliente((prev) =>
+                                    prev ? { ...prev, giro: e.target.value } : prev
+                                )
+                            }
+                            style={{ width: "100%" }}
+                        />
+                    </div> 
                     </>
                 ) : (
                     <>
@@ -1059,6 +1124,9 @@ const Cotizador = () => {
                             {cliente.descuento
                                 ? `${(cliente.descuento * 100).toFixed(0)}%`
                                 : "0%"}
+                        </div>
+                        <div>
+                            <b>Giro:</b> {cliente.giro || "--"}
                         </div>
                         <div>
                             <b>Crédito:</b> {cliente.credito?.activo ? "ACTIVO" : "NO"}

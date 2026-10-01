@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { get, ref } from "firebase/database";
 import { db } from "../firebase/config";
 import { formatearMoneda, procesarInputMoneda } from "../funciones/formato_moneda";
+import { formatearFechaMX } from "../funciones/formato_fechas";
 import "../css/comisiones.css";
 
 type Empleado = {
@@ -88,6 +89,14 @@ const Comisiones = () => {
         const n = Number(valor);
         return Number.isFinite(n) ? n : 0;
     };
+
+    const obtenerNombreTipo = (tipo: string) => {
+    const encontrado = TIPOS_DISPONIBLES.find(
+        (item) => normalizarTexto(item.value) === normalizarTexto(tipo)
+    );
+
+    return encontrado?.label || tipo || "--";
+};
 
     const obtenerCantidad = (trabajo: Trabajo) => {
         const datos = trabajo?.datos || {};
@@ -554,13 +563,13 @@ const Comisiones = () => {
                                 <>
                                     {filasFiltradas.map((fila) => (
                                         <tr key={fila.partidaKey}>
-                                            <td>{fila.partidaKey}</td>
+                                            <td>{`${String(fila.otNumero).padStart(5, "0")}.${fila.partidaNumero}`}</td>
                                             <td>{fila.descripcion || "--"}</td>
                                             <td>{fila.operador || "--"}</td>
-                                            <td>{fila.tipo || "--"}</td>
+                                            <td>{obtenerNombreTipo(fila.tipo)}</td>
                                             <td className="td-number">{fila.cantidad}</td>
                                             <td className="td-number">{dinero(fila.total)}</td>
-                                            <td>{fila.fechaFin || "--"}</td>
+                                            <td>{formatearFechaMX(fila.fechaFin)}</td>
                                         </tr>
                                     ))}
 
