@@ -1063,12 +1063,8 @@ const aplicarStock = (
         </div>
       </div>
 
-      <h3 style={{ marginTop: "20px" }}>
-              Subtotal: {formatearMoneda(precioCalculado)}
-              <br/>
-              total:{formatearMoneda(precioCalculado*1.16)}
-      </h3>
-
+      <h2> Subtotal: {formatearMoneda(precioCalculado)}</h2>
+      <h1>total:{formatearMoneda(precioCalculado*1.16)}</h1>
           <button
               className="btn btn-blue"
         onClick={() => {

@@ -924,6 +924,28 @@ const Cotizador = () => {
                                     cp: "",
                                 })
                             }
+                             style={{
+                            height: "40px",
+                            padding: "0 17px",
+                            border: "1px solid #c8c8c8",
+                            borderRadius: "7px",
+                            background: "#fff",
+                            color: "#222",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                        }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "#f4f4f4";
+                            e.currentTarget.style.borderColor = "#999";
+                            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.12)";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "#fff";
+                            e.currentTarget.style.borderColor = "#c8c8c8";
+                            e.currentTarget.style.boxShadow = "none";
+                        }}
                         >
                             Cliente temporal
                         </button>

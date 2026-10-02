@@ -28,6 +28,7 @@ const Cuarzo = ({ data, onGuardar, setDirty }: Props) => {
 
     const [muestra, setMuestra] = useState<string>("");
     const [datosAdicionales, setDatosAdicionales] = useState<string>("");
+    const [servicioExpress, setServicioExpress] = useState(false);
 
     useEffect(() => {
         if (data) {
@@ -42,6 +43,7 @@ const Cuarzo = ({ data, onGuardar, setDirty }: Props) => {
 
             setMuestra(data.datos.muestra || "");
             setDatosAdicionales(data.datos.datosAdicionales || "");
+            setServicioExpress(data.datos.servicioExpress || false);
         }
     }, [data]);
 
@@ -50,7 +52,9 @@ const Cuarzo = ({ data, onGuardar, setDirty }: Props) => {
     };
 
     const precioProveedor = obtenerPrecioCuarzoProveedor(diametro, largo);
-    const precioCalculado = calcularTotalCuarzo();
+    // total general
+    const totalBase = calcularTotalCuarzo();
+    const precioCalculado =servicioExpress ? totalBase * 1.3: totalBase;
 
     const resetForm = () => {
         setCantidad(0);
@@ -63,6 +67,7 @@ const Cuarzo = ({ data, onGuardar, setDirty }: Props) => {
         setTerminalTornillo(false);
 
         setMuestra("");
+        setServicioExpress(false);
         setDatosAdicionales("");
     };
 
@@ -79,6 +84,7 @@ ${agregar(`LARGO: ${largo}`, largo > 0)}
 ${agregar(`CABLE`, cable)}
 ${agregar(`TERMINAL TORNILLO`, terminalTornillo)}
 ${agregar(`MUESTRA: ${muestra.toUpperCase()}`, !!muestra)}
+${agregar(`SERVICIO EXPRESS`, servicioExpress)}
 ${agregar(
         `DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`,
         !!datosAdicionales
@@ -93,9 +99,7 @@ ${agregar(
             <h1>Cuarzo</h1>
 
             <div className="form-row">
-                <label>
-                    <strong>Cantidad:</strong>
-                </label>
+                <label>Cantidad:</label>
                 <input
                     type="number"
                     value={cantidad === 0 ? "" : cantidad}
@@ -107,9 +111,7 @@ ${agregar(
             </div>
 
             <div className="form-row">
-                <label>
-                    <strong>Voltaje:</strong>
-                </label>
+                <label>Voltaje:</label>
                 <input
                     type="number"
                     value={voltaje === 0 ? "" : voltaje}
@@ -121,9 +123,7 @@ ${agregar(
             </div>
 
             <div className="form-row">
-                <label>
-                    <strong>Potencia:</strong>
-                </label>
+                <label>Potencia:</label>
                 <input
                     type="number"
                     value={potencia === 0 ? "" : potencia}
@@ -135,10 +135,7 @@ ${agregar(
             </div>
 
             <div className="form-row">
-                <label>
-                    <strong>Diámetro:</strong>
-                </label>
-
+                <label>Diámetro:</label>
                 <select
                     value={diametro}
                     onChange={(e) => {
@@ -156,10 +153,7 @@ ${agregar(
             </div>
 
             <div className="form-row">
-                <label>
-                    <strong>Largo:</strong>
-                </label>
-
+                <label>Largo:</label>
                 <select
                     value={largo || ""}
                     onChange={(e) => {
@@ -175,8 +169,6 @@ ${agregar(
                     ))}
                 </select>
             </div>
-
-            <h3>Opciones adicionales</h3>
 
             <div className="form-row checkbox-row">
                 <label>Cable</label>
@@ -215,6 +207,15 @@ ${agregar(
                     <option value="si">Sí</option>
                     <option value="no">No</option>
                 </select>
+            </div>
+
+            <div className="form-row checkbox-row">
+            <label>Servicio Express (+30%):</label>
+            <input
+                type="checkbox"
+                checked={servicioExpress}
+                onChange={(e) => setServicioExpress(e.target.checked)}
+            />
             </div>
 
             <div className="form-row textarea-row">
@@ -264,11 +265,9 @@ ${agregar(
                 </div>
             </div>
 
-            <h3 style={{ marginTop: "20px" }}>
-                Subtotal: {formatearMoneda(precioCalculado)}
-                <br />
-                total: {formatearMoneda(precioCalculado * 1.16)}
-            </h3>
+            {/* TOTAL */}
+                <h2>Subtotal: {formatearMoneda(precioCalculado)}</h2>
+                <h1> total: {formatearMoneda(precioCalculado * 1.16)}</h1>
 
             <button
                 className="btn btn-blue"
@@ -287,6 +286,7 @@ ${agregar(
                             cable,
                             terminalTornillo,
                             muestra,
+                            servicioExpress,
                             datosAdicionales,
                         },
                     });

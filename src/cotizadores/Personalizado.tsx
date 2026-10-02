@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import ProductosExtras, { ProductoExtra } from "./ProductosExtras";
 
-type Servicio = {
-  key: string;
-  nombre: string;
+type ProductoPersonalizado = {
+  id: string;
+  descripcion: string;
+  cantidad: number;
   precio: number;
 };
 
@@ -13,136 +13,175 @@ type PersonalizadoProps = {
   setDirty?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const SERVICIOS: Servicio[] = [
-  { key: "soldarTornillo", nombre: "SOLDAR TORNILLO", precio: 0 },
-  { key: "soldaduraResistencia", nombre: "SOLDADURA EN RESISTENCIA", precio: 0 },
-  { key: "soldarCables", nombre: "SOLDAR CABLES", precio: 0 },
-  { key: "desoldar", nombre: "DESOLDAR", precio: 0 },
-  { key: "sellosGarlock", nombre: "SELLOS DE GARLOCK", precio: 0 },
-  { key: "termoposoBase", nombre: "TERMOPOZO EN BASE", precio: 0 },
-  { key: "cambioTornilloCliente", nombre: "CAMBIO DE TORNILLO MISMO DEL CLIENTE", precio: 0 },
-  { key: "puentes", nombre: "PUENTES", precio: 0 },
-  { key: "soldarBorne", nombre: "SOLDAR BORNE", precio: 0 },
-  { key: "sacarHumedad", nombre: "SACAR HUMEDAD", precio: 0 },
-  { key: "pintar", nombre: "PINTAR", precio: 0 },
-  { key: "cardear", nombre: "CARDEAR", precio: 0 },
-];
-
 const formatearMoneda = (valor: number) =>
   valor.toLocaleString("es-MX", {
     style: "currency",
     currency: "MXN",
   });
 
-const Personalizado: React.FC<PersonalizadoProps> = ({ onGuardar, data,setDirty }) => {
-  const [serviciosSeleccionados, setServiciosSeleccionados] = useState<
-    Record<string, boolean>
-  >(data?.datos?.serviciosSeleccionados || {});
+const crearId = () => {
+  return `${Date.now()}-${Math.random()}`;
+};
 
-  const [preciosServicios, setPreciosServicios] = useState<Record<string, number>>(
-    data?.datos?.preciosServicios || {}
-  );
+const crearProductoVacio = (): ProductoPersonalizado => ({
+  id: crearId(),
+  descripcion: "",
+  cantidad: 1,
+  precio: 0,
+});
 
-  const [productosActivos, setProductosActivos] = useState<boolean>(
-    data?.datos?.productosActivos || false
-  );
+const Personalizado: React.FC<PersonalizadoProps> = ({
+  onGuardar,
+  data,
+  setDirty,
+}) => {
+  // =====================================================
+  // ESTADOS
+  // =====================================================
 
-  const [productosExtras, setProductosExtras] = useState<ProductoExtra[]>(
-    data?.datos?.productosExtras || []
-  );
+  const [productos, setProductos] = useState<ProductoPersonalizado[]>([
+    crearProductoVacio(),
+  ]);
 
-  const [notas, setNotas] = useState(data?.datos?.notas || "");
-  // Actualizar estado cuando cambie la data
-useEffect(() => {
-  if (data) {
-    // EDITAR: cargar los datos de la partida
-    setServiciosSeleccionados(
-      data?.datos?.serviciosSeleccionados || {}
-    );
+  const [notas, setNotas] = useState("");
+  const [servicioExpress, setServicioExpress] = useState(false);
 
-    setPreciosServicios(
-      data?.datos?.preciosServicios || {}
-    );
+  // =====================================================
+  // CARGAR DATOS AL EDITAR
+  // =====================================================
 
-    setProductosActivos(
-      data?.datos?.productosActivos || false
-    );
+  useEffect(() => {
+    if (data) {
+      const productosGuardados =
+        data?.datos?.productos ||
+        data?.datos?.productosExtras ||
+        [];
 
-    setProductosExtras(
-      data?.datos?.productosExtras || []
-    );
+      setProductos(
+        productosGuardados.length > 0
+          ? productosGuardados
+          : [crearProductoVacio()]
+      );
 
-    setNotas(
-      data?.datos?.notas || ""
-    );
-  } else {
-    // NUEVO: limpiar formulario
-    setServiciosSeleccionados({});
-    setPreciosServicios({});
-    setProductosActivos(false);
-    setProductosExtras([]);
-    setNotas("");
-  }
-}, [data]);
+      setNotas(data?.datos?.notas || "");
+      setServicioExpress(data?.servicioExpress || false);
+    } else {
+      setProductos([crearProductoVacio()]);
+      setNotas("");
+      setServicioExpress(false);
+    }
+  }, [data]);
 
-  // Marcar como "dirty" cuando cambie cualquier estado
-  const cambiarServicio = (key: string) => {
-    setServiciosSeleccionados((prev) => ({
+  // =====================================================
+  // AGREGAR PRODUCTO
+  // =====================================================
+
+  const agregarProducto = () => {
+    setProductos((prev) => [
       ...prev,
-      [key]: !prev[key],
-    }));
+      crearProductoVacio(),
+    ]);
+
+    //setDirty?.(true);
   };
 
-  const cambiarPrecioServicio = (key: string, valor: string) => {
-    setPreciosServicios((prev) => ({
-      ...prev,
-      [key]: Math.max(0, Number(valor) || 0),
-    }));
+  // =====================================================
+  // ACTUALIZAR PRODUCTO
+  // =====================================================
+
+  const actualizarProducto = (
+    id: string,
+    campo: keyof ProductoPersonalizado,
+    valor: string | number
+  ) => {
+    setProductos((prev) =>
+      prev.map((producto) =>
+        producto.id === id
+          ? {
+              ...producto,
+              [campo]: valor,
+            }
+          : producto
+      )
+    );
+
+    //setDirty?.(true);
   };
 
-  const serviciosActivos = useMemo(() => {
-    return SERVICIOS.filter((servicio) => serviciosSeleccionados[servicio.key]);
-  }, [serviciosSeleccionados]);
+  // =====================================================
+  // ELIMINAR PRODUCTO
+  // =====================================================
 
-  const totalManoObra = useMemo(() => {
-    return serviciosActivos.reduce((acc, servicio) => {
-      return acc + (preciosServicios[servicio.key] || 0);
+  const eliminarProducto = (id: string) => {
+    setProductos((prev) => {
+      const nuevosProductos = prev.filter(
+        (producto) => producto.id !== id
+      );
+
+      // Siempre dejar al menos una fila
+      if (nuevosProductos.length === 0) {
+        return [crearProductoVacio()];
+      }
+
+      return nuevosProductos;
+    });
+
+    //setDirty?.(true);
+  };
+
+  // =====================================================
+  // TOTAL
+  // =====================================================
+
+  const subtotal  = useMemo(() => {
+    return productos.reduce((acumulado, producto) => {
+      const cantidad =
+        Number(producto.cantidad) || 0;
+
+      const precio =
+        Number(producto.precio) || 0;
+
+      return acumulado + cantidad * precio;
     }, 0);
-  }, [serviciosActivos, preciosServicios]);
+  }, [productos]);
+  // Servicio Express +30%
+  const total = servicioExpress
+  ? subtotal * 1.3
+  : subtotal;
 
-  const totalProductos = useMemo(() => {
-    return productosExtras.reduce((acc, item) => {
-      return acc + (Number(item.cantidad) || 0) * (Number(item.precio) || 0);
-    }, 0);
-  }, [productosExtras]);
-
-  const total = totalManoObra + totalProductos;
+  // =====================================================
+  // DESCRIPCIÓN
+  // =====================================================
 
   const descripcion = useMemo(() => {
-    const manoObraTexto =
-      serviciosActivos.length > 0
-        ? serviciosActivos.map((s) => s.nombre).join(" / ")
-        : "";
+    const productosTexto = productos
+      .filter(
+        (producto) =>
+          producto.descripcion.trim() !== ""
+      )
+      .map(
+        (producto,index) =>
+          `PRODUCTO ${index + 1}: ${producto.descripcion.trim()} (${producto.cantidad})`
+      )
+      .join(" / ");
 
-    const productosTexto =
-      productosExtras.length > 0
-        ? productosExtras
-            .filter((p) => p.descripcion.trim() !== "")
-            .map((p) => `PRODUCTO: ${p.descripcion} (${p.cantidad})`)
-            .join(" / ")
-        : "";
-
-    const notasTexto = notas.trim() ? `NOTAS: ${notas.trim()}` : "";
+    const notasTexto = notas.trim()
+      ? `NOTAS: ${notas.trim()}`
+      : "";
 
     return [
       "SERVICIO PERSONALIZADO",
-      manoObraTexto,
       productosTexto,
       notasTexto,
+      servicioExpress ? "SERVICIO EXPRESS" : "",
     ]
       .filter(Boolean)
       .join(" / ");
-  }, [serviciosActivos, productosExtras, notas]);
+  }, [productos, notas,servicioExpress]);
+
+  // =====================================================
+  // GUARDAR
+  // =====================================================
 
   const guardar = () => {
     if (!onGuardar) return;
@@ -152,24 +191,29 @@ useEffect(() => {
       tipo: "personalizado",
       descripcion,
       total: Number(total.toFixed(2)),
+      servicioExpress,
+
       datos: {
-        serviciosSeleccionados,
-        preciosServicios,
-        productosActivos,
-        productosExtras,
-        totalManoObra,
-        totalProductos,
+        productos,
+        totalProductos: Number(total.toFixed(2)),
         notas,
+        servicioExpress,
       },
     });
-      if (!data) {
-    setServiciosSeleccionados({});
-    setPreciosServicios({});
-    setProductosActivos(false);
-    setProductosExtras([]);
-    setNotas("");
-      }
+
+    // Si es una partida nueva, limpiar formulario
+    if (!data) {
+      setProductos([crearProductoVacio()]);
+      setNotas("");
+      setServicioExpress(false);
+    }
+
+    
   };
+
+  // =====================================================
+  // HTML
+  // =====================================================
 
   return (
     <div className="form-container">
@@ -177,34 +221,258 @@ useEffect(() => {
 
       <h2>Productos</h2>
 
-      <ProductosExtras
-        activo={productosActivos}
-        setActivo={setProductosActivos}
-        productosExtras={productosExtras}
-        setProductosExtras={setProductosExtras}
-      />
+      {/* ================================================
+          PRODUCTOS
+      ================================================= */}
 
-      <div className="form-row">
-        <label>Notas adicionales</label>
-        <textarea
-          value={notas}
-          placeholder="Ej. revisar terminales, limpiar base, etc."
-          onChange={(e) => setNotas(e.target.value)}
+      <div
+        style={{
+          width: "100%",
+          marginTop: "10px",
+        }}
+      >
+        {productos.map((producto) => {
+          const subtotal =
+            (Number(producto.cantidad) || 0) *
+            (Number(producto.precio) || 0);
+
+          return (
+            <div
+              key={producto.id}
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "minmax(220px, 2fr) minmax(90px, 0.7fr) minmax(120px, 1fr) 100px 40px",
+                gap: "10px",
+                alignItems: "center",
+                width: "100%",
+                marginBottom: "8px",
+              }}
+            >
+              {/* DESCRIPCIÓN */}
+
+              <input
+                type="text"
+                placeholder="Descripción"
+                value={producto.descripcion}
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+                onChange={(e) =>
+                  actualizarProducto(
+                    producto.id,
+                    "descripcion",
+                    e.target.value
+                  )
+                }
+              />
+
+              {/* CANTIDAD */}
+
+              <input
+                type="number"
+                min={0}
+                placeholder="Cantidad"
+                value={
+                  producto.cantidad === 0
+                    ? ""
+                    : producto.cantidad
+                }
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ["-", "+", "e", "E"].includes(
+                      e.key
+                    )
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  const valor = e.target.value;
+
+                  actualizarProducto(
+                    producto.id,
+                    "cantidad",
+                    valor === ""
+                      ? 0
+                      : Math.max(
+                          0,
+                          Number(valor)
+                        )
+                  );
+                }}
+              />
+
+              {/* PRECIO */}
+
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Precio"
+                value={
+                  producto.precio === 0
+                    ? ""
+                    : producto.precio
+                }
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ["-", "+", "e", "E"].includes(
+                      e.key
+                    )
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  const valor = e.target.value;
+
+                  actualizarProducto(
+                    producto.id,
+                    "precio",
+                    valor === ""
+                      ? 0
+                      : Math.max(
+                          0,
+                          Number(valor)
+                        )
+                  );
+                }}
+              />
+
+              {/* SUBTOTAL */}
+
+              <strong
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  width: "100%",
+                  whiteSpace: "nowrap",
+                  fontSize: "16px",
+                }}
+              >
+                {formatearMoneda(subtotal)}
+              </strong>
+
+              {/* ELIMINAR */}
+
+              <button
+                type="button"
+                title="Eliminar producto"
+                onClick={() =>
+                  eliminarProducto(producto.id)
+                }
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  minWidth: "34px",
+                  minHeight: "34px",
+                  padding: 0,
+                  margin: 0,
+                  border: "none",
+                  borderRadius: "5px",
+                  background: "#e74c3c",
+                  color: "#ffffff",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                X
+              </button>
+            </div>
+          );
+        })}
+
+        {/* AGREGAR PRODUCTO */}
+
+        <button
+          type="button"
+          className="btn btn-blue"
+          onClick={agregarProducto}
+          style={{
+            marginTop: "5px",
+            marginBottom: "20px",
+          }}
+        >
+          + Agregar producto extra
+        </button>
+      </div>
+      {/* ================================================
+          SERVICIO EXPRESS
+      ================================================= */}
+      <div className="form-row checkbox-row">
+        <label>Servicio Express (+30%):</label>
+        <input
+          type="checkbox"
+          checked={servicioExpress}
+          onChange={(e) => setServicioExpress(e.target.checked)}
         />
       </div>
 
-    <div className="descripcion-box">
+      {/* ================================================
+          NOTAS
+      ================================================= */}
+
+      <div
+        className="form-row"
+        style={{
+          marginTop: "20px",
+        }}
+      >
+        <label>Notas adicionales</label>
+
+        <textarea
+          value={notas}
+          placeholder="Ej. revisar terminales, limpiar base, etc."
+          onChange={(e) => {
+            setNotas(e.target.value);
+          
+          }}
+        />
+      </div>
+
+      {/* ================================================
+          DESCRIPCIÓN
+      ================================================= */}
+
+      <div className="descripcion-box">
         <strong>Descripción</strong>
+
         <p>{descripcion}</p>
-    </div>
+      </div>
 
-{onGuardar && (
-  <button className="btn btn-blue" onClick={guardar}>
-    {data ? "Actualizar" : "AGREGAR"}
-  </button>
-)}
+      {/* ================================================
+          TOTAL
+      ================================================= */}
 
-        <h3>Total: {formatearMoneda(total)}</h3>
+      <h2>Subtotal: {formatearMoneda(total)}</h2>
+      <h1>Total: {formatearMoneda(total*1.16)}</h1>
+      {/* ================================================
+          AGREGAR / ACTUALIZAR
+      ================================================= */}
+
+      {onGuardar && (
+        <button
+          type="button"
+          className="btn btn-blue"
+          onClick={guardar}
+        >
+          {data ? "Actualizar" : "AGREGAR"}
+        </button>
+      )}
 
     </div>
   );

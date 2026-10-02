@@ -661,6 +661,32 @@ useEffect(() => {
     setOtLabel(state.otLabel || "");
     setEnvioFolioReservado(state.envioFolio || "");
   }, [location.state]);
+
+  // ==================================================
+// ENTER → SIGUIENTE CAMPO
+// ==================================================
+const pasarAlSiguienteCampo = (
+  e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement| HTMLTextAreaElement>
+) => {
+  if (e.key !== "Enter") return;
+
+  e.preventDefault();
+
+  const formulario = e.currentTarget.closest(".form-container");
+  if (!formulario) return;
+
+  const campos = Array.from(
+    formulario.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+      'input:not([type="checkbox"]):not([disabled]), select:not([disabled]), textarea:not([disabled])'
+    )
+  ).filter((campo) => campo.offsetParent !== null);
+
+  const indiceActual = campos.indexOf(e.currentTarget);
+
+  if (indiceActual >= 0 && indiceActual < campos.length - 1) {
+    campos[indiceActual + 1].focus();
+  }
+};
   //-----------------------------HTML--------------------------------------->>
 
   return (
@@ -767,7 +793,8 @@ useEffect(() => {
               {/* FIN CHECKBOX ENVIADO */}
 
               <h3>Destino</h3>
-
+{/*------------------------*EMPIEZA EL FORMULARIO DE ENVIO -----------------------*/}
+              {/*EMPRESA*/}
               <div className="form-row">
                 <label>Empresa:</label>
                 <input
@@ -775,9 +802,10 @@ useEffect(() => {
                   onChange={(e) =>
                     setCliente({ ...cliente, razonSocial: e.target.value })
                   }
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
               </div>
-
+              {/*NOMBRE*/}
               <div className="form-row">
                 <label>Nombre:</label>
                 <input
@@ -785,9 +813,10 @@ useEffect(() => {
                   onChange={(e) =>
                     setCliente({ ...cliente, nombre: e.target.value })
                   }
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
               </div>
-
+              {/*DIRECCIÓN*/}
               <div className="form-row">
                 <label>Dirección:</label>
                 <div className="direccion-row">
@@ -797,6 +826,7 @@ useEffect(() => {
                     onChange={(e) =>
                       setCliente({ ...cliente, direccion: e.target.value })
                     }
+                    onKeyDown={pasarAlSiguienteCampo}
                   />
                   <input
                     className="direccion-numero"
@@ -805,6 +835,7 @@ useEffect(() => {
                     onChange={(e) =>
                       setCliente({ ...cliente, numeroExterior: e.target.value })
                     }
+                    onKeyDown={pasarAlSiguienteCampo}
                   />
                 </div>
               </div>
@@ -816,6 +847,7 @@ useEffect(() => {
                   onChange={(e) =>
                     setCliente({ ...cliente, colonia: e.target.value })
                   }
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
               </div>
 
@@ -826,6 +858,7 @@ useEffect(() => {
                   onChange={(e) =>
                     setCliente({ ...cliente, municipio: e.target.value })
                   }
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
               </div>
 
@@ -836,6 +869,7 @@ useEffect(() => {
                   onChange={(e) =>
                     setCliente({ ...cliente, estado: e.target.value })
                   }
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
               </div>
 
@@ -846,6 +880,7 @@ useEffect(() => {
                   onChange={(e) =>
                     setCliente({ ...cliente, cp: e.target.value })
                   }
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
               </div>
 
@@ -856,6 +891,7 @@ useEffect(() => {
                   onChange={(e) =>
                     setCliente({ ...cliente, telefono: e.target.value })
                   }
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
               </div>
 
@@ -869,6 +905,7 @@ useEffect(() => {
                                   value={atencionRecibe}
                                   onChange={(e) => setAtencionRecibe(e.target.value)}
                                   placeholder="Nombre de quien recibe"
+                                  onKeyDown={pasarAlSiguienteCampo}
                               />
                           </div>
               <div className="form-row">
@@ -876,6 +913,7 @@ useEffect(() => {
             <select
               value={paqueteria}
               onChange={(e) => setPaqueteria(e.target.value)}
+              onKeyDown={pasarAlSiguienteCampo}
             >
               <option value="">Seleccionar</option>
 
@@ -893,6 +931,7 @@ useEffect(() => {
                   value={guia}
                   onChange={(e) => setGuia(e.target.value)}
                   placeholder="Número de guía"
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
                           </div>
                           <div className="form-row">
@@ -900,6 +939,7 @@ useEffect(() => {
                               <select
                                   value={tipoEntrega}
                                   onChange={(e) => setTipoEntrega(e.target.value)}
+                                  onKeyDown={pasarAlSiguienteCampo}
                               >
                                   <option value="">Seleccionar</option>
                                   <option value="Domicilio">Entrega a domicilio</option>
@@ -911,6 +951,7 @@ useEffect(() => {
                               <select
                                   value={formaPagoEnvio}
                                   onChange={(e) => setFormaPagoEnvio(e.target.value)}
+                                  onKeyDown={pasarAlSiguienteCampo}
                               >
                                   <option value="">Seleccionar</option>
                                   <option value="Prepagado">Prepagado</option>
@@ -938,6 +979,7 @@ useEffect(() => {
                                       value={convenioTexto}
                                       onChange={(e) => setConvenioTexto(e.target.value)}
                                       placeholder="Escribe el convenio"
+                                      onKeyDown={pasarAlSiguienteCampo}
                                   />
                               </div>
                           )}
@@ -947,6 +989,7 @@ useEffect(() => {
                   value={notas}
                   onChange={(e) => setNotas(e.target.value)}
                   rows={4}
+                  onKeyDown={pasarAlSiguienteCampo}
                 />
               </div>
 
@@ -974,6 +1017,7 @@ useEffect(() => {
                               e.target.value
                             )
                           }
+                          onKeyDown={pasarAlSiguienteCampo}
                         />
                       </td>
                       <td>
@@ -988,6 +1032,7 @@ useEffect(() => {
                             )
                           }
                           style={{ width: 60 }}
+                          onKeyDown={pasarAlSiguienteCampo}
                         />
                       </td>
                       <td>
@@ -996,6 +1041,7 @@ useEffect(() => {
                           onChange={(e) =>
                             actualizarProducto(index, "unidad", e.target.value)
                           }
+                          onKeyDown={pasarAlSiguienteCampo}
                         />
                       </td>
                       <td>

@@ -17,14 +17,14 @@ interface Props {
         username?: string;
     };
 }
-const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
+  const CartuchoAlta = ({ data, onGuardar, setDirty, perfil }: Props) => {
   const [cantidadResistencias, setCantidadResistencias] = useState("");
   const [voltaje, setVoltaje] = useState("");
   const [watts, setWatts] = useState("");
   const [diametro, setDiametro] = useState("");
   const [longitudCm, setLongitudCm] = useState("");
-const [milimetrica, setmilimetrica] = useState(false);
-const [diametroMm, setDiametroMm] = useState("");
+  const [milimetrica, setmilimetrica] = useState(false);
+  const [diametroMm, setDiametroMm] = useState("");
   const [terminal90, setterminal90] = useState(false);
   const [tubozapa, settubozapa] = useState(false);
   const [cableAltaTemperatura, setCableAltaTemperatura] = useState("");
@@ -32,10 +32,10 @@ const [diametroMm, setDiametroMm] = useState("");
   const [cantidadCables, setCantidadCables] = useState("");
   const [datosAdicionales, setDatosAdicionales] = useState("");
   const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<any[]>([]);
-  const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
-    useState<any>(null);
-    //Area administracion
-    const esAdministracion = perfil?.area === "Administración";
+  const [soldarCableSeleccionado, setSoldarCableSeleccionado] = useState<any>(null);
+  const [servicioExpress, setServicioExpress] = useState(false);
+  //Area administracion
+  const esAdministracion = perfil?.area === "Administración";
   //-------------------------------------useEffect-------------------------------------------->>
   useEffect(() => {
     const cargarSoldarCable = async () => {
@@ -135,9 +135,16 @@ const [diametroMm, setDiametroMm] = useState("");
     //totalCable +
     totalTerminal90 +
     totalTuboZapa;
-  const subtotal = totalPorResistencia*0.7;
-  // total general
-  const total = subtotal * (Number(cantidadResistencias) || 0)*1.7;
+const subtotal = totalPorResistencia * 0.7;
+
+// total general
+const totalBase =
+  subtotal * (Number(cantidadResistencias) || 0) * 1.7;
+
+// Servicio Express +30%
+const total = servicioExpress
+  ? totalBase * 1.3
+  : totalBase;
 
   const resetForm = () => {
     setCantidadResistencias("");
@@ -153,6 +160,7 @@ const [diametroMm, setDiametroMm] = useState("");
     setMedidaCableCm("");
     setCantidadCables("");
     setDatosAdicionales("");
+    setServicioExpress(false);
     setSoldarCableSeleccionado(null);
   };
   //------------------------DESCRIPCION-------------------------------------------------->>
@@ -180,11 +188,14 @@ const [diametroMm, setDiametroMm] = useState("");
 
     tubozapa ? `/ TUBO ZAPA` : null,
 
+    servicioExpress ? `/ SERVICIO EXPRESS` : null,
+
     datosAdicionales ? `/ DATOS: ${datosAdicionales}` : null,
   ]
     .filter(Boolean)
     .join(" ");
   //----------------------------------------------useEffect------------------------------->>
+  // Cargar datos si se proporciona un objeto "data"
   useEffect(() => {
     if (data) {
       const d = data.datos || {};
@@ -203,6 +214,7 @@ const [diametroMm, setDiametroMm] = useState("");
       setCableAltaTemperatura(d.cableAltaTemperatura || "");
       setMedidaCableCm(d.medidaCableCm || "");
       setCantidadCables(d.cantidadCables || "");
+      setServicioExpress(!!d.servicioExpress);
 
       setDatosAdicionales(d.datosAdicionales || "");
       setSoldarCableSeleccionado(d.soldarCableSeleccionado || null);
@@ -347,7 +359,7 @@ const [diametroMm, setDiametroMm] = useState("");
                       ))}
                   </select>
               </div>
-
+            {/*Longitud de cable*/}
               <div className="form-row">
                   <label>Longitud de cable (cm):</label>
                   <input
@@ -357,7 +369,7 @@ const [diametroMm, setDiametroMm] = useState("");
                       disabled={cableAltaTemperatura !== "SI" || !soldarCableSeleccionado}
                   />
               </div>
-
+            {/*Cantidad de cables*/}
               <div className="form-row">
                   <label>Cantidad de cables:</label>
                   <input
@@ -367,7 +379,7 @@ const [diametroMm, setDiametroMm] = useState("");
                       disabled={cableAltaTemperatura !== "SI" || !soldarCableSeleccionado || !medidaCableCm}
                   />
               </div>
-
+          {/*terminal 90°*/}
         <div className="form-row checkbox-row">
           <label>Terminal de cable a 90°:</label>
           <input
@@ -376,7 +388,7 @@ const [diametroMm, setDiametroMm] = useState("");
             onChange={(e) => setterminal90(e.target.checked)}
           />
         </div>
-
+        {/*Tubo zapa*/}
         <div className="form-row checkbox-row">
           <label>Tubo zapa:</label>
           <input
@@ -385,7 +397,16 @@ const [diametroMm, setDiametroMm] = useState("");
             onChange={(e) => settubozapa(e.target.checked)}
           />
         </div>
-
+        {/*servicio express*/}
+      <div className="form-row checkbox-row">
+      <label>Servicio Express (+30%):</label>
+      <input
+        type="checkbox"
+        checked={servicioExpress}
+        onChange={(e) => setServicioExpress(e.target.checked)}
+      />
+    </div>
+    {/*datos adicionales*/}
         <div className="form-row textarea-row">
         <label>Datos Adicionales:</label>
           <textarea
@@ -399,7 +420,7 @@ const [diametroMm, setDiametroMm] = useState("");
               style={{
                 border: "1px solid #ccc",
                 padding: "20px",
-                margin: "5%",
+                margin: "12px 0 20px 0",
                 borderRadius: "8px",
                 background: "#f9f9f9",
                 top: "10px",
@@ -433,76 +454,129 @@ const [diametroMm, setDiametroMm] = useState("");
               </div>
 
               <p style={{ fontSize: "14px" }}>{descripcion}</p>
-            </div>
+               </div>
+            {/* TOTAL */}
+              <h2>Subtotal: {formatearMoneda(total)}</h2>
+              <h1>Total: {formatearMoneda(total*1.16)}</h1>
 
-              <h2><strong>Subtotal: </strong>{formatearMoneda(total)}</h2>
-              <h1><strong>Total: </strong>{formatearMoneda(total*1.16)}</h1>
-              {/* TOTAL */}
+              <button
+                className="btn btn-blue"
+                onClick={() => {
+                  onGuardar({
+                    id: data?.id || Date.now().toString(),
+                    tipo: "CartuchoA",
+                    descripcion,
+                    total: Number(total.toFixed(2)),
+                    datos: {
+                      cantidadResistencias,
+                      voltaje,
+                      potencia: watts,
+                      watts,
+                      diametro,
+                      longitudCm,
+
+                      milimetrica,
+                      diametroMm,
+                      terminal90,
+                      tubozapa,
+
+                      cableAltaTemperatura,
+                      medidaCableCm,
+                      cantidadCables,
+
+                      soldarCableSeleccionado,
+                      tipoSoldarCable,
+                      precioSoldarCable,
+                      totalCable,
+
+                      precioUnitario,
+                      extraMilimetrica,
+                      totalTerminal90,
+                      totalTuboZapa,
+                      servicioExpress,
+
+                      datosAdicionales,
+                    },
+                  });
+                  resetForm();
+                  setDirty(false);
+                }}
+              >
+                {data ? "ACTUALIZAR" : "AGREGAR"}
+              </button>
+
+             
+              {/* Datos de administrador */}
               {esAdministracion && (
-                  <div>
-                      <p>Precio normal: {formatearMoneda(precioNormal*.7)}</p>
-                      <p>Precio milimétrica: {formatearMoneda(precioMilimetrico*0.7)}</p>
+                    <div
+                      style={{
+                        border: "1px solid #ccc",
+                        borderRadius: 8,
+                        padding: 12,
+                        marginTop: 15,
+                        background: "#f8f8f8",
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      <h3>Variables de Cartucho Alta</h3>
+
+                      <p>
+                        <strong>Precio normal:</strong>{" "}
+                        {formatearMoneda(precioNormal * 0.7)}
+                      </p>
+
+                      <p>
+                        <strong>Precio milimétrica:</strong>{" "}
+                        {formatearMoneda(precioMilimetrico * 0.7)}
+                      </p>
 
                       <hr />
 
-                      <p>Precio del cable: {formatearMoneda(precioSoldarCable)}</p>
-                      <p>Total cable: {formatearMoneda(totalCable)}</p>
+                      <p>
+                        <strong>Precio del cable:</strong>{" "}
+                        {formatearMoneda(precioSoldarCable)}
+                      </p>
 
-                      <p>Extra milimétrica: {formatearMoneda(extraMilimetrica)}</p>
-                      <p>Terminal 90: {formatearMoneda(totalTerminal90)}</p>
-                      <p>Tubo zapa: {formatearMoneda(totalTuboZapa)}</p>
+                      <p>
+                        <strong>Total cable:</strong>{" "}
+                        {formatearMoneda(totalCable)}
+                      </p>
+
+                      <p>
+                        <strong>Extra milimétrica:</strong>{" "}
+                        {formatearMoneda(extraMilimetrica)}
+                      </p>
+
+                      <p>
+                        <strong>Terminal 90:</strong>{" "}
+                        {formatearMoneda(totalTerminal90)}
+                      </p>
+
+                      <p>
+                        <strong>Tubo zapa:</strong>{" "}
+                        {formatearMoneda(totalTuboZapa)}
+                      </p>
 
                       <hr />
 
-                      <p>Precio por resistencia: {formatearMoneda(totalPorResistencia)}</p>
-                      <p>Subtotal: {formatearMoneda(total)}</p>
-                  </div>
+                      <p>
+                        <strong>Precio por resistencia:</strong>{" "}
+                        {formatearMoneda(totalPorResistencia)}
+                      </p>
+
+                      <p>
+                        <strong>Subtotal:</strong>{" "}
+                        {formatearMoneda(total)}
+                      </p>
+
+                      <p>
+                        <strong>Total + IVA:</strong>{" "}
+                        {formatearMoneda(total * 1.16)}
+                      </p>
+                    </div>
               )}
 
-        <button
-          className="btn btn-blue"
-          onClick={() => {
-            onGuardar({
-              id: data?.id || Date.now().toString(),
-              tipo: "CartuchoA",
-              descripcion,
-              total: Number(total.toFixed(2)),
-              datos: {
-                cantidadResistencias,
-                voltaje,
-                potencia: watts,
-                watts,
-                diametro,
-                longitudCm,
-
-                milimetrica,
-                diametroMm,
-                terminal90,
-                tubozapa,
-
-                cableAltaTemperatura,
-                medidaCableCm,
-                cantidadCables,
-
-                soldarCableSeleccionado,
-                tipoSoldarCable,
-                precioSoldarCable,
-                totalCable,
-
-                precioUnitario,
-                extraMilimetrica,
-                totalTerminal90,
-                totalTuboZapa,
-
-                datosAdicionales,
-              },
-            });
-            resetForm();
-            setDirty(false);
-          }}
-        >
-          {data ? "ACTUALIZAR" : "AGREGAR"}
-        </button>
+{/*Fin de todo el formulario con todo y botones de stock */}
       </div>
     </>
   );

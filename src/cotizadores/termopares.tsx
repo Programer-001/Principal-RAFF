@@ -173,9 +173,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             <h1>Termopares</h1>
 
             <div className="form-row">
-                <label>
-                    <strong>Cantidad:</strong>
-                </label>
+                <label>Cantidad:</label>
                 <input
                     type="number"
                     value={cantidad === 0 ? "" : cantidad}
@@ -184,9 +182,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             </div>
 
             <div className="form-row">
-                <label>
-                    <strong>Tipo:</strong>
-                </label>
+                <label>Tipo:</label>
                 <select
                     value={tipo}
                     onChange={(e) => setTipo(e.target.value)}
@@ -198,9 +194,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             </div>
 
             <div className="form-row">
-                <label>
-                    <strong>Termopar ceramico:</strong>
-                </label>
+                <label>Termopar ceramico:</label>
                 <select
                     value={termoparCeramico}
                     onChange={(e) => setTermoparCeramico(e.target.value)}
@@ -214,9 +208,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             </div>
 
             <div className="form-row">
-                <label>
-                    <strong>Medida de termopar en cm (cliente):</strong>
-                </label>
+                <label>Medida de termopar en cm (cliente):</label>
                 <input
                     type="number"
                     value={medidaClienteCm === 0 ? "" : medidaClienteCm}
@@ -225,9 +217,7 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             </div>
 
             <div className="form-row">
-                <label>
-                    <strong>Bulbo / Tornillo:</strong>
-                </label>
+                <label>Bulbo / Tornillo:</label>
                 <select
                     value={bulboTornillo}
                     disabled={usarCambioMedidaBulbo}
@@ -294,16 +284,6 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
                 </div>
             )}
 
-
-            <div className="form-row checkbox-row">
-                <label>Servicio express</label>
-                <input
-                    type="checkbox"
-                    checked={servicioExpress}
-                    onChange={(e) => setServicioExpress(e.target.checked)}
-                />
-            </div>
-
             <div className="form-row checkbox-row">
                 <label>Termopar especial P</label>
                 <input
@@ -313,6 +293,15 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
                 />
             </div>
 
+            <div className="form-row checkbox-row">
+                <label>Servicio express</label>
+                <input
+                    type="checkbox"
+                    checked={servicioExpress}
+                    onChange={(e) => setServicioExpress(e.target.checked)}
+                />
+            </div>
+            
             <div className="form-row textarea-row">
                 <label>Datos Adicionales:</label>
                 <textarea
@@ -356,24 +345,9 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
                     <p className="descripcion-texto">{descripcionTermopar}</p>
                 </div>
             </div>
-
-            {esAdministracion && (
-                <div style={{ marginTop: "20px" }}>
-            <h3> Base: ${totalBase.toFixed(2)} | Cerámica: ${totalCeramica.toFixed(2)}</h3>
-            <h3>Bulbo/Tornillo: ${totalBulboTornillo.toFixed(2)}</h3>
-            <h1>
-                Precio base: ${resultado.precio.toFixed(2)} | Medida tomada: {resultado.medidaSeleccionada} cm
-            </h1>
-                </div>
-            )}
-
-
-            <h2>
-                <strong>Subtotal:</strong> {formatearMoneda(total)}
-            </h2>
-            <h1>
-                <strong>Total:</strong> {formatearMoneda(total*1.16)}
-            </h1>
+            {/* TOTAL */ }
+            <h2>Subtotal: {formatearMoneda(total)}</h2>
+            <h1>Total: {formatearMoneda(total*1.16)}</h1>
             <button
                 className="btn btn-blue"
                 onClick={() => {
@@ -402,6 +376,48 @@ ${agregar(`DATOS ADICIONALES: ${datosAdicionales.toUpperCase()}`, !!datosAdicion
             >
                 {data ? "ACTUALIZAR" : "AGREGAR"}
             </button>
+
+            {/* DESCRIPCIÓN DE PRECIOS PARA ADMINISTRACIÓN */ }
+
+            {esAdministracion && (
+                <div
+                style={{
+                    border: "1px solid #ccc",
+                    borderRadius: 8,
+                    padding: 12,
+                    marginTop: 15,
+                    background: "#f8f8f8",
+                    fontFamily: "monospace",
+                }}
+                >
+                <h3>Variables de Resorte</h3>
+
+                <p>
+                    <strong>Base:</strong> ${totalBase.toFixed(2)}
+                </p>
+
+                <p>
+                    <strong>Cerámica:</strong> ${totalCeramica.toFixed(2)}
+                </p>
+
+                <p>
+                    <strong>Bulbo/Tornillo:</strong> ${totalBulboTornillo.toFixed(2)}
+                </p>
+
+                <hr />
+
+                <p>
+                    <strong>Precio base:</strong> ${resultado.precio.toFixed(2)}
+                </p>
+
+                <p>
+                    <strong>Medida tomada:</strong> {resultado.medidaSeleccionada} cm
+                </p>
+                </div>
+                            )}
+
+        {/*Fin de todo el formulario con todo y botones de stock */}
+
         </div>
     );
 };

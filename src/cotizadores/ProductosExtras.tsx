@@ -152,16 +152,17 @@ const ProductosExtras = ({
               </div>
             );
           })}
-
+          <h4>Total extras: {formatearMoneda(totalProductosExtras)}</h4>
           <button
             type="button"
             className="btn btn-blue"
+            style={{ marginTop: "5px", marginBottom: "20px" }}
             onClick={agregarExtra}
           >
             + Agregar producto extra
           </button>
 
-          <h3>Total extras: {formatearMoneda(totalProductosExtras)}</h3>
+          
         </div>
       )}
     </>

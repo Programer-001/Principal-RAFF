@@ -46,12 +46,7 @@ type StockCartuchoBaja = {
   };
 };
 
-const CartuchoBaja = ({
-  data,
-  onGuardar,
-  setDirty,
-  perfil,
-}: Props) => {
+const CartuchoBaja = ({data,onGuardar,setDirty,perfil,}: Props) => {
   const [cantidadResistencias, setCantidadResistencias] = useState("");
   const [voltaje, setVoltaje] = useState("");
   const [watts, setWatts] = useState("");
@@ -63,6 +58,7 @@ const CartuchoBaja = ({
   const [datosAdicionales, setDatosAdicionales] = useState("");
   const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<any[]>([]);
   const [terminal90, setterminal90] = useState(false);
+  const [termoparinterno, settermoparinterno] = useState(false);
   const [tubozapa, settubozapa] = useState(false);
 
   const [soldarCableSeleccionado, setSoldarCableSeleccionado] =
@@ -71,8 +67,9 @@ const CartuchoBaja = ({
 // RESISTENCIAS DE STOCK
 // -------------------------------------------------------------------------
 
-const [resistenciasStock, setResistenciasStock] =
-  useState<StockCartuchoBaja[]>([]);
+const [resistenciasStock, setResistenciasStock] =useState<StockCartuchoBaja[]>([]);
+//servicio express variable
+const [servicioExpress, setServicioExpress] = useState(false);
 
   // Área administración
   const esAdministracion = perfil?.area === "Administración";
@@ -112,7 +109,7 @@ const [resistenciasStock, setResistenciasStock] =
 
   const totalTerminal90 = terminal90 ? 150 : 0;
   const totalTuboZapa = tubozapa ? 130 : 0;
-
+  const totalTermoparinterno = termoparinterno ? 150 : 0;
   // -------------------------------------------------------------------------
   // CÁLCULO DEL CABLE
   // -------------------------------------------------------------------------
@@ -168,10 +165,16 @@ const [resistenciasStock, setResistenciasStock] =
     precioUnitario +
     totalCable +
     totalTerminal90 +
-    totalTuboZapa;
+    totalTuboZapa +
+    totalTermoparinterno;
 
-  const total =
+  const totalBase  =
     (totalPorResistencia * (Number(cantidadResistencias) || 0)) / 1.16;
+  
+    // Servicio Express +30%
+  const total = servicioExpress
+    ? totalBase * 1.3
+    : totalBase;
 
   // -------------------------------------------------------------------------
   // LIMPIAR FORMULARIO
@@ -190,6 +193,8 @@ const [resistenciasStock, setResistenciasStock] =
     setDatosAdicionales("");
     setSoldarCableSeleccionado(null);
     settubozapa(false);
+    setServicioExpress(false);
+    settermoparinterno(false);
   };
 
   // -------------------------------------------------------------------------
@@ -316,9 +321,10 @@ const [resistenciasStock, setResistenciasStock] =
           : null,
 
         terminal90 ? `/ TERMINAL 90°` : null,
+        termoparinterno ? `/ TERMOPAR INTERNO` : null,
 
         tubozapa ? `/ TUBO ZAPA` : null,
-
+        servicioExpress ? `/ SERVICIO EXPRESS` : null,
         datosAdicionales
           ? `/ DATOS: ${datosAdicionales}`
           : null,
@@ -345,13 +351,11 @@ const [resistenciasStock, setResistenciasStock] =
       setCableAltaTemperatura(d.cableAltaTemperatura || "");
       setMedidaCableCm(d.medidaCableCm || "");
       setDatosAdicionales(d.datosAdicionales || "");
-
+      settermoparinterno(!!d.termoparinterno);
       setterminal90(!!d.terminal90);
       settubozapa(!!d.tubozapa);
-
-      setSoldarCableSeleccionado(
-        d.soldarCableSeleccionado || null
-      );
+      setServicioExpress(!!d.servicioExpress);
+      setSoldarCableSeleccionado(d.soldarCableSeleccionado || null);
     }
   }, [data]);
 
@@ -750,7 +754,26 @@ const aplicarStock = (
             }
           />
         </div>
+          {/* TERMOPAR INTERNO */}
+        <div className="form-row checkbox-row">
+          <label>Termopar interno:</label>
 
+          <input
+            type="checkbox"
+            checked={termoparinterno}
+            onChange={(e) =>
+              settermoparinterno(e.target.checked)
+            }
+          />
+        </div>
+        <div className="form-row checkbox-row">
+          <label>Servicio Express (+30%):</label>
+          <input
+            type="checkbox"
+            checked={servicioExpress}
+            onChange={(e) => setServicioExpress(e.target.checked)}
+          />
+        </div>
         {/* DATOS ADICIONALES */}
         <div className="form-row textarea-row">
           <label>Datos Adicionales: </label>
@@ -808,17 +831,10 @@ const aplicarStock = (
     
 
       {/* TOTAL */}
-      <h2>
-        <strong>Subtotal:</strong>{" "}
-        {formatearMoneda(total)}
-      </h2>
+      <h2>Subtotal: {formatearMoneda(total)}</h2>
+      <h1>Total: {formatearMoneda(total * 1.16)}</h1>
 
-      <h1>
-        <strong>Total:</strong>{" "}
-        {formatearMoneda(total * 1.16)}
-      </h1>
-
-            {/* GUARDAR */}
+      {/* GUARDAR */}
       <button
         className="btn btn-blue"
         onClick={() => {
@@ -850,9 +866,11 @@ const aplicarStock = (
 
               terminal90,
               totalTerminal90,
-
+              servicioExpress,
               tubozapa,
               totalTuboZapa,
+              termoparinterno,
+              totalTermoparinterno,
             },
           });
 
@@ -897,50 +915,73 @@ const aplicarStock = (
       ))}
     </div>
   )}
-  {/*Fin de todo el formulario con todo y botones de stock */}
-</div>
+
       {/* INFORMACIÓN PARA ADMINISTRACIÓN */}
       {esAdministracion && (
-        <div className="form-row textarea-row">
-          <div>
-            <p>
-              Potencia maxima por resistencia:{" "}
-              {Number(longitudCm) * 10} Watts
-            </p>
+        <div
+          style={{
+            border: "1px solid #ccc",
+            borderRadius: 8,
+            padding: 12,
+            marginTop: 15,
+            background: "#f8f8f8",
+            fontFamily: "monospace",
+          }}
+        >
+          <h3>Variables de Cartucho Baja</h3>
 
-            <p>
-              Precio del cable:{" "}
-              {formatearMoneda(precioSoldarCable)}
-            </p>
+          <p>
+            <strong>Potencia máxima por resistencia:</strong>{" "}
+            {Number(longitudCm) * 10} Watts
+          </p>
 
-            <p>
-              Precio cable:{" "}
-              {formatearMoneda(totalCable)}
-            </p>
+          <hr />
 
-            <p>
-              Precio de resistencia:{" "}
-              {formatearMoneda(totalPorResistencia)}
-            </p>
+          <p>
+            <strong>Precio del cable:</strong>{" "}
+            {formatearMoneda(precioSoldarCable)}
+          </p>
 
-            <p>
-              Precio terminal 90°:{" "}
-              {formatearMoneda(totalTerminal90)}
-            </p>
+          <p>
+            <strong>Total cable:</strong>{" "}
+            {formatearMoneda(totalCable)}
+          </p>
 
-            <p>
-              Precio tubo zapa:{" "}
-              {formatearMoneda(totalTuboZapa)}
-            </p>
+          <p>
+            <strong>Precio terminal 90°:</strong>{" "}
+            {formatearMoneda(totalTerminal90)}
+          </p>
 
-            <p>
-              Subtotal:{" "}
-              {formatearMoneda(total)}
-            </p>
-          </div>
+          <p>
+            <strong>Precio tubo zapa:</strong>{" "}
+            {formatearMoneda(totalTuboZapa)}
+          </p>
+
+          <p>
+            <strong>Precio termopar interno:</strong>{" "}
+            {formatearMoneda(totalTermoparinterno)}
+          </p>
+
+          <hr />
+
+          <p>
+            <strong>Precio por resistencia:</strong>{" "}
+            {formatearMoneda(totalPorResistencia)}
+          </p>
+
+          <p>
+            <strong>Subtotal:</strong>{" "}
+            {formatearMoneda(total)}
+          </p>
+
+          <p>
+            <strong>Total + IVA:</strong>{" "}
+            {formatearMoneda(total * 1.16)}
+          </p>
         </div>
       )}
-
+{/*Fin de todo el formulario con todo y botones de stock */}
+</div>
 
     </>
   );

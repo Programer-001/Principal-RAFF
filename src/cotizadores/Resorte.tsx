@@ -34,6 +34,7 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
   const [alambreSeleccionado, setAlambreSeleccionado] = useState("");
   const [terminalSeleccionada, setTerminalSeleccionada] = useState("");
   const [cantidadTerminales, setCantidadTerminales] = useState("");
+  const [servicioExpress, setServicioExpress] = useState(false);
     //Area administracion
     const esAdministracion = perfil?.area === "Administración";
   //------------------useEffect-------------------------------->>
@@ -157,8 +158,11 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
   // total por resorte
   const totalPorResorte = costoAlambre + costoFabricacion + costoTerminales;
 
+  // totalBase
+  const totalBase =totalPorResorte * cantidadResortesNum;
+
   // total general
-  const totalGeneral = totalPorResorte * cantidadResortesNum;
+  const totalGeneral = servicioExpress? totalBase * 1.3 : totalBase;
   //-----------------------------------DESCRIPCION------------------->>
 
   const tipoAlambreSeleccionado = alambreActual?.tipo || "";
@@ -193,6 +197,7 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
           Number(cantidadTerminales) > 1 ? "ES" : ""
         }`
       : null,
+    servicioExpress ? `/ SERVICIO EXPRESS` : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -209,6 +214,7 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
     setTipoAlambre(d.TipoAlambre || "");
     setCantidadTerminales(d.cantidadTerminales || "");
     setTerminalSeleccionada(d.terminalSeleccionada || "");
+    setServicioExpress(!!d.servicioExpress);
   }, [data]);
 
   useEffect(() => {
@@ -306,6 +312,14 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
             />
           </div>
         )}
+        <div className="form-row checkbox-row">
+        <label>Servicio Express (+30%):</label>
+        <input
+          type="checkbox"
+          checked={servicioExpress}
+          onChange={(e) => setServicioExpress(e.target.checked)}
+        />
+      </div>
 
         {/* DESCRIPCIÓN FORMATEADA PARA COPIAR */}
         <div className="form-row textarea-row full-width descripcion-row">
@@ -341,11 +355,9 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
           </div>
         </div>
 
-
-
-      </div>
-      {/*Fin de los inputs */}
-
+          <h2>Subtotal: {formatearMoneda(totalGeneral)}</h2>
+          <h1>Total: {formatearMoneda(totalGeneral * 1.16)}</h1>
+          
           <button
               className="btn btn-blue"
         onClick={() => {
@@ -375,6 +387,7 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
 
               costoFabricacion,
               totalPorResorte,
+              servicioExpress,
             },
           });
 
@@ -385,60 +398,88 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
           setAlambreSeleccionado("");
           setTerminalSeleccionada("");
           setCantidadTerminales("");
+          setServicioExpress(false);
 
           setDirty(false);
         }}
       >
         {data ? "ACTUALIZAR" : "AGREGAR"}
-          </button>
-          <h2> <strong>Subtotal:</strong> {formatearMoneda(totalGeneral)}</h2>
-          <h1> <strong>Total:</strong> {formatearMoneda(totalGeneral * 1.16)}</h1>
+      </button>
+
+      
+      {/*Fin de los inputs */}
+
+
+
           {/*Mostrar los resultados*/}
           {esAdministracion && (
-              <div style={{ marginTop: "20px" }}>
+            <div
+              style={{
+                border: "1px solid #ccc",
+                borderRadius: 8,
+                padding: 12,
+                marginTop: 15,
+                background: "#f8f8f8",
+                fontFamily: "monospace",
+              }}
+            >
+              <h3>Variables de Resorte</h3>
 
+              <p>
+                <strong>Resistencia del alambre (ohms x metro):</strong>{" "}
+                {resistenciaPorMetro.toFixed(4)} Ω/m
+              </p>
 
-                  <h3>Resultados</h3>
+              <p>
+                <strong>Metros necesarios por resorte:</strong>{" "}
+                {metrosNecesarios.toFixed(2)} m
+              </p>
 
-                  <div>
-                      <strong>Resistencia del alambre (ohms x metro):</strong>{" "}
-                      {resistenciaPorMetro.toFixed(4)} Ω/m
-                  </div>
+              <p>
+                <strong>Precio por metro:</strong>{" "}
+                {formatearMoneda(precioAlambrePorMetro)}
+              </p>
 
-                  <div>
-                      <strong>Metros necesarios por resorte:</strong>{" "}
-                      {metrosNecesarios.toFixed(2)} m
-                  </div>
+              <p>
+                <strong>Costo del alambre por resorte:</strong>{" "}
+                {formatearMoneda(costoAlambre)}
+              </p>
 
-                  <div>
-                      <strong>Precio por metro:</strong> {formatearMoneda(precioAlambrePorMetro)}
-                  </div>
+              {mostrarCantidadTerminales && (
+                <p>
+                  <strong>Terminales por resorte:</strong>{" "}
+                  {cantidadTerminalesNum} × {formatearMoneda(precioTerminal)} ={" "}
+                  {formatearMoneda(costoTerminales)}
+                </p>
+              )}
 
-                  <div>
-                      <strong>Costo del alambre por resorte:</strong> $
-                      {formatearMoneda(costoAlambre)}
-                  </div>
+              <hr />
 
-                  {mostrarCantidadTerminales && (
-                      <div>
-                          <strong>Terminales por resorte:</strong> {cantidadTerminalesNum} x 
-                          {formatearMoneda(precioTerminal)} = {formatearMoneda(costoTerminales)}
-                      </div>
-                  )}
+              <p>
+                <strong>50% fabricación:</strong>{" "}
+                {formatearMoneda(costoFabricacion)}
+              </p>
 
-                  <div>
-                      <strong>50% fabricación:</strong> {formatearMoneda(costoFabricacion)}
-                  </div>
+              <p>
+                <strong>Subtotal por resorte:</strong>{" "}
+                {formatearMoneda(totalPorResorte)}
+              </p>
 
-                  <div>
-                      <strong>subtotal por resorte:</strong> {formatearMoneda(totalPorResorte)}
-                  </div>
+              <hr />
 
-                  <div>
-                      <strong>subtotal general:</strong> {formatearMoneda(totalGeneral)}
-                  </div>
-              </div>
+              <p>
+                <strong>Subtotal general:</strong>{" "}
+                {formatearMoneda(totalGeneral)}
+              </p>
+
+              <p>
+                <strong>Total + IVA:</strong>{" "}
+                {formatearMoneda(totalGeneral * 1.16)}
+              </p>
+            </div>
           )}
+          {/*Fin de todo el formulario con todo y botones de stock */}
+          </div>
     </>
   );
 };
