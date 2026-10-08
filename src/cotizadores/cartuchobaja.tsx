@@ -109,7 +109,7 @@ const [servicioExpress, setServicioExpress] = useState(false);
 
   const totalTerminal90 = terminal90 ? 150 : 0;
   const totalTuboZapa = tubozapa ? 130 : 0;
-  const totalTermoparinterno = termoparinterno ? 150 : 0;
+  const totalTermoparinterno = termoparinterno ? 232 : 0;
   // -------------------------------------------------------------------------
   // CÁLCULO DEL CABLE
   // -------------------------------------------------------------------------
