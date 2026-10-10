@@ -160,22 +160,34 @@ const normalizarTexto = (valor: unknown): string =>
     .trim()
     .toLowerCase();
 
+const esEmpleadoActivo = (empleado: Obj): boolean => {
+  return empleado.activo === true;
+};
+
 const esAsesorPermitido = (empleado: Obj): boolean => {
   const area = normalizarTexto(empleado.area);
   const puesto = normalizarTexto(empleado.puesto);
+
   return (
-    (area === 'mostrador' && puesto === 'asesor de ventas') ||
-    (area === 'administracion' && [
-      'gerente administrativo',
-      'gerente operacional',
-      'gerente operativo',
-    ].includes(puesto))
+    esEmpleadoActivo(empleado) &&
+    (
+      (area === "mostrador" && puesto === "asesor de ventas") ||
+      (
+        area === "administracion" &&
+        [
+          "gerente administrativo",
+          "gerente operacional",
+          "gerente operativo",
+        ].includes(puesto)
+      )
+    )
   );
 };
 
 const esOperadorPermitido = (empleado: Obj): boolean =>
-  normalizarTexto(empleado.area) === 'produccion' &&
-  normalizarTexto(empleado.puesto) === 'operador';
+  esEmpleadoActivo(empleado) &&
+  normalizarTexto(empleado.area) === "produccion" &&
+  normalizarTexto(empleado.puesto) === "operador";
 
 const ReporteOrdenTrabajo: React.FC = () => {
 
