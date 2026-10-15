@@ -1064,7 +1064,7 @@ const aplicarStock = (
       </div>
 
       <h2> Subtotal: {formatearMoneda(precioCalculado)}</h2>
-      <h1>total:{formatearMoneda(precioCalculado*1.16)}</h1>
+      <h1>Total:{formatearMoneda(precioCalculado*1.16)}</h1>
           <button
               className="btn btn-blue"
         onClick={() => {
