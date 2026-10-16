@@ -7,6 +7,28 @@ import { FiCopy } from "react-icons/fi";
 import { ItemCotizado } from "../cotizador";
 import { ref, get } from "firebase/database";
 import { db } from "../firebase/config";
+type ResistenciaStockAlta = {
+  id: string;
+  nombre: string;
+  tipo: string;
+  habilitado: boolean;
+  valores: {
+    voltaje?: string;
+    potencia?: string;
+    diametro?: string;
+    diametroMm?: string;
+    longitud?: string;
+    milimetrica?: boolean;
+    cableAltaTemperatura?: string;
+    calibreGradosCable?: string;
+    longitudCable?: string;
+    cantidadCables?: string;
+    terminalCable90?: boolean;
+    tuboZapa?: boolean;
+    datosAdicionales?: string;
+  };
+};
+
 interface Props {
     data?: ItemCotizado;
     onGuardar: (item: ItemCotizado) => void;
@@ -34,6 +56,7 @@ interface Props {
   const [opcionesSoldarCable, setOpcionesSoldarCable] = useState<any[]>([]);
   const [soldarCableSeleccionado, setSoldarCableSeleccionado] = useState<any>(null);
   const [servicioExpress, setServicioExpress] = useState(false);
+  const [resistenciasStock, setResistenciasStock] = useState<ResistenciaStockAlta[]>([]);
   //Area administracion
   const esAdministracion = perfil?.area === "Administración";
   //-------------------------------------useEffect-------------------------------------------->>
@@ -57,6 +80,34 @@ interface Props {
     cargarSoldarCable();
   }, []);
 
+  // Plantillas activas de Cartucho Alta desde Firebase
+  useEffect(() => {
+    const cargarStock = async () => {
+      try {
+        const snapshot = await get(ref(db, "ResistenciasStock"));
+        if (!snapshot.exists()) {
+          setResistenciasStock([]);
+          return;
+        }
+        const lista: ResistenciaStockAlta[] = Object.entries(snapshot.val())
+          .map(([id, item]: [string, any]) => ({
+            id,
+            nombre: item.nombre || "Sin nombre",
+            tipo: item.tipo || "",
+            habilitado: item.habilitado !== false,
+            valores: item.valores || {},
+          }))
+          .filter((item) => item.habilitado && item.tipo === "CartuchoA")
+          .sort((x, y) => x.nombre.localeCompare(y.nombre, "es"));
+        setResistenciasStock(lista);
+      } catch (error) {
+        console.error("Error cargando stock Cartucho Alta:", error);
+        setResistenciasStock([]);
+      }
+    };
+    cargarStock();
+  }, []);
+
   //---------------------------------FUNCIONES------------------------------------------------>>
 
   const tipoSoldarCable = soldarCableSeleccionado?.tipo || "";
@@ -77,13 +128,14 @@ interface Props {
     calcularPrecioCable(precioSoldarCable, Number(medidaCableCm)) *
     (Number(cantidadCables) || 0);
 //convierto longitud de cm -> pulgadas
-    const pulgadasReal = longitudCm ? Number(longitudCm) / 2.54 : 0;
+    const pulgadasReal =  Number(longitudCm) > 0? Number(longitudCm) / 2.54: 0;
 //convierto diametro de mm -> pulgadas
-    const pulgadas = anchos.reduce((prev, curr) => {
-        return Math.abs(curr - pulgadasReal) < Math.abs(prev - pulgadasReal)
-            ? curr
-            : prev;
-    });
+const pulgadas =pulgadasReal > 0 ? anchos.reduce((prev, curr) => {
+            return Math.abs(curr - pulgadasReal) <
+                Math.abs(prev - pulgadasReal)
+                ? curr
+                : prev;
+        }): 0;
     //sacamos el precio de la tabla
     const precioUnitario =
         milimetrica && diametroMm
@@ -142,9 +194,47 @@ const totalBase =
   subtotal * (Number(cantidadResistencias) || 0) * 1.7;
 
 // Servicio Express +30%
-const total = servicioExpress
-  ? totalBase * 1.3
-  : totalBase;
+const datosValidos =
+  Number(cantidadResistencias) > 0 &&
+  Number(longitudCm) > 0 &&
+  (milimetrica ? Number(diametroMm) > 0 : diametro !== "");
+const total = datosValidos ? (servicioExpress ? totalBase * 1.3 : totalBase) : 0;
+
+  // Aplica plantilla sin cambiar cantidad ni servicio express.
+  const aplicarStock = (stock: ResistenciaStockAlta) => {
+    const v = stock.valores;
+    setVoltaje(String(v.voltaje ?? ""));
+    setWatts(String(v.potencia ?? ""));
+    setLongitudCm(String(v.longitud ?? ""));
+    const esMilimetrica = v.milimetrica === true;
+    setmilimetrica(esMilimetrica);
+    setDiametro(esMilimetrica ? "" : String(v.diametro ?? ""));
+    setDiametroMm(esMilimetrica ? String(v.diametroMm ?? "") : "");
+
+    const usarCable = String(v.cableAltaTemperatura ?? "").toUpperCase();
+    setCableAltaTemperatura(usarCable);
+    if (usarCable === "SI") {
+      const texto = String(v.calibreGradosCable ?? "").trim().toLowerCase();
+      const opcion = opcionesSoldarCable.find((item) =>
+        String(item.id).toLowerCase() === texto ||
+        String(item.tipo).trim().toLowerCase() === texto
+      );
+      setSoldarCableSeleccionado(opcion || null);
+      setMedidaCableCm(opcion ? String(v.longitudCable ?? "") : "");
+      setCantidadCables(opcion ? String(v.cantidadCables ?? "") : "");
+      if (texto && !opcion) {
+        alert(`No se encontró el cable "${v.calibreGradosCable}" en el catálogo. Selecciónalo manualmente.`);
+      }
+    } else {
+      setSoldarCableSeleccionado(null);
+      setMedidaCableCm("");
+      setCantidadCables("");
+    }
+    setterminal90(v.terminalCable90 === true);
+    settubozapa(v.tuboZapa === true);
+    setDatosAdicionales(String(v.datosAdicionales ?? ""));
+    setDirty(true);
+  };
 
   const resetForm = () => {
     setCantidadResistencias("");
@@ -220,6 +310,33 @@ const total = servicioExpress
       setSoldarCableSeleccionado(d.soldarCableSeleccionado || null);
     }
   }, [data]);
+  // ---------------------------------------------------------
+// ENTER → SIGUIENTE CAMPO
+// ---------------------------------------------------------
+const pasarAlSiguienteCampo = (
+    e: React.KeyboardEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+) => {
+    if (e.key !== "Enter") return;
+
+    e.preventDefault();
+
+    const formulario = e.currentTarget.closest(".form-container");
+    if (!formulario) return;
+
+    const elementos = Array.from(
+        formulario.querySelectorAll<HTMLElement>(
+            'input:not(:disabled):not([type="checkbox"]), select:not(:disabled), textarea:not(:disabled)'
+        )
+    ).filter((elemento) => elemento.getClientRects().length > 0);
+
+    const posicionActual = elementos.indexOf(e.currentTarget);
+
+    if (posicionActual >= 0) {
+        elementos[posicionActual + 1]?.focus();
+    }
+};
   //---------------------HTML---------------------------------------------------------------------->>
   return (
     <>
@@ -231,6 +348,7 @@ const total = servicioExpress
           <input
             type="number"
             value={cantidadResistencias}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setCantidadResistencias(e.target.value)}
           />
         </div>
@@ -240,6 +358,7 @@ const total = servicioExpress
           <input
             type="number"
             value={voltaje}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setVoltaje(e.target.value)}
           />
         </div>
@@ -249,6 +368,7 @@ const total = servicioExpress
           <input
             type="number"
             value={watts}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setWatts(e.target.value)}
           />
         </div>
@@ -257,11 +377,13 @@ const total = servicioExpress
           <label>Diametro:</label>
           <select
             value={diametro}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setDiametro(e.target.value)}
             disabled={milimetrica}
           >
             <option value="">Selecciona</option>
             <option value="1/4">1/4</option>
+             <option value="5/16">5/16</option>
             <option value="3/8">3/8</option>
             <option value="1/2">1/2</option>
             <option value="5/8">5/8</option>
@@ -274,6 +396,7 @@ const total = servicioExpress
           <input
             type="number"
             value={longitudCm}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setLongitudCm(e.target.value)}
           />
         </div>
@@ -283,6 +406,7 @@ const total = servicioExpress
                   <input
                       type="checkbox"
                       checked={milimetrica}
+                      onKeyDown={pasarAlSiguienteCampo}
                       onChange={(e) => {
                           const checked = e.target.checked;
                           setmilimetrica(checked);
@@ -301,6 +425,7 @@ const total = servicioExpress
                       <input
                           type="number"
                           value={diametroMm}
+                          onKeyDown={pasarAlSiguienteCampo}
                           onChange={(e) => setDiametroMm(e.target.value)}
                           placeholder="Ej. 20"
                       />
@@ -311,6 +436,7 @@ const total = servicioExpress
                   <label>Cable de alta temperatura:</label>
                   <select
                       value={cableAltaTemperatura}
+                      onKeyDown={pasarAlSiguienteCampo}
                       onChange={(e) => {
                           const valor = e.target.value;
                           setCableAltaTemperatura(valor);
@@ -333,6 +459,7 @@ const total = servicioExpress
                   <label>Calibre y grados de cable:</label>
                   <select
                       value={soldarCableSeleccionado?.id || ""}
+                      onKeyDown={pasarAlSiguienteCampo}
                       onChange={(e) => {
                           const id = e.target.value;
 
@@ -365,6 +492,7 @@ const total = servicioExpress
                   <input
                       type="number"
                       value={medidaCableCm}
+                      onKeyDown={pasarAlSiguienteCampo}
                       onChange={(e) => setMedidaCableCm(e.target.value)}
                       disabled={cableAltaTemperatura !== "SI" || !soldarCableSeleccionado}
                   />
@@ -375,6 +503,7 @@ const total = servicioExpress
                   <input
                       type="number"
                       value={cantidadCables}
+                      onKeyDown={pasarAlSiguienteCampo}
                       onChange={(e) => setCantidadCables(e.target.value)}
                       disabled={cableAltaTemperatura !== "SI" || !soldarCableSeleccionado || !medidaCableCm}
                   />
@@ -385,6 +514,7 @@ const total = servicioExpress
           <input
             type="checkbox"
             checked={terminal90}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setterminal90(e.target.checked)}
           />
         </div>
@@ -394,6 +524,7 @@ const total = servicioExpress
           <input
             type="checkbox"
             checked={tubozapa}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => settubozapa(e.target.checked)}
           />
         </div>
@@ -403,6 +534,7 @@ const total = servicioExpress
       <input
         type="checkbox"
         checked={servicioExpress}
+        onKeyDown={pasarAlSiguienteCampo}
         onChange={(e) => setServicioExpress(e.target.checked)}
       />
     </div>
@@ -411,6 +543,7 @@ const total = servicioExpress
         <label>Datos Adicionales:</label>
           <textarea
             value={datosAdicionales}
+            onKeyDown={pasarAlSiguienteCampo}
             onChange={(e) => setDatosAdicionales(e.target.value)}
             placeholder="Ej. salida a 90°"
           />
@@ -462,6 +595,30 @@ const total = servicioExpress
               <button
                 className="btn btn-blue"
                 onClick={() => {
+                // Validaciones obligatorias
+                if (Number(cantidadResistencias) <= 0) {
+                    alert("Debes ingresar una cantidad mayor a cero.");
+                    return;
+                }
+
+                if (milimetrica) {
+                    if (Number(diametroMm) <= 0) {
+                        alert("Debes ingresar un diámetro en milímetros.");
+                        return;
+                    }
+                } else {
+                    if (!diametro) {
+                        alert("Debes seleccionar un diámetro.");
+                        return;
+                    }
+                }
+
+                if (Number(longitudCm) <= 0) {
+                    alert("Debes ingresar una longitud mayor a cero.");
+                    return;
+                }
+                {/*Guardar variables*/}
+
                   onGuardar({
                     id: data?.id || Date.now().toString(),
                     tipo: "CartuchoA",
@@ -504,6 +661,21 @@ const total = servicioExpress
               >
                 {data ? "ACTUALIZAR" : "AGREGAR"}
               </button>
+
+              {resistenciasStock.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12, marginBottom: 20 }}>
+                  {resistenciasStock.map((stock) => (
+                    <button
+                      key={stock.id}
+                      type="button"
+                      onClick={() => aplicarStock(stock)}
+                      style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #ccc", cursor: "pointer", fontWeight: "bold" }}
+                    >
+                      {stock.nombre}
+                    </button>
+                  ))}
+                </div>
+              )}
 
              
               {/* Datos de administrador */}

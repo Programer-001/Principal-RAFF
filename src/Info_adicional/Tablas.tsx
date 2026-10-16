@@ -1,5 +1,5 @@
 // src/Info_adicional/Tablas.tsx
-// Muestra tablas almacenadas en Firebase y la tabla local de Banda, Termopares,cartucho de baja.
+// Muestra tablas almacenadas en Firebase y la tabla local de Banda, Termopares y cartuchos de alta y baja.
 
 import React, { useEffect, useMemo, useState } from "react";
 import { get, ref } from "firebase/database";
@@ -14,6 +14,7 @@ type TipoTabla =
   | "alambre_nicromel"
   | "banda"
   | "cartucho_baja"
+  | "cartucho_alta"
   | "termopar_j"
   | "termopar_k";
 
@@ -34,14 +35,14 @@ type OpcionTabla = {
   ruta?: string;
 };
 
-type DiametroCartuchoBaja = {
+type DiametroCartucho = {
   label: string;
   value: number;
 };
 
-type TablaCartuchoBaja = {
-  nombre: string;
-  diametros: DiametroCartuchoBaja[];
+type TablaCartucho = {
+  nombre?: string;
+  diametros: DiametroCartucho[];
   largos: number[];
   precios: number[][];
 };
@@ -67,6 +68,11 @@ const OPCIONES_TABLAS: OpcionTabla[] = [
   ruta: "cotizador/tabla_cartucho_baja",
 },
 {
+  value: "cartucho_alta",
+  label: "Cartucho Alta",
+  ruta: "cotizador/tabla_cartucho_alta",
+},
+{
   value: "termopar_j",
   label: "Termopar tipo J",
 },
@@ -81,7 +87,7 @@ const Tablas: React.FC = () => {
     useState<TipoTabla>("alambre_kanthal_d");
 
   const [registros, setRegistros] = useState<RegistrosTabla>({});
-  const [tablaCartuchoBaja, setTablaCartuchoBaja] =useState<TablaCartuchoBaja | null>(null);
+  const [tablaCartucho, setTablaCartucho] = useState<TablaCartucho | null>(null);
   const [cargando, setCargando] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
@@ -98,14 +104,14 @@ useEffect(() => {
 if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSeleccionada === "termopar_k") 
   {
       setRegistros({});
-      setTablaCartuchoBaja(null);
+      setTablaCartucho(null);
       setCargando(false);
       return;
     }
 
     if (!opcionActual?.ruta) {
       setRegistros({});
-      setTablaCartuchoBaja(null);
+      setTablaCartucho(null);
       return;
     }
 
@@ -117,14 +123,14 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
 
       if (!snapshot.exists()) {
         setRegistros({});
-        setTablaCartuchoBaja(null);
+        setTablaCartucho(null);
         return;
       }
 
-      if (tablaSeleccionada === "cartucho_baja") {
-        const datos = snapshot.val() as TablaCartuchoBaja;
+      if (tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") {
+        const datos = snapshot.val() as TablaCartucho;
 
-        setTablaCartuchoBaja(datos);
+        setTablaCartucho(datos);
         setRegistros({});
         return;
       }
@@ -132,12 +138,12 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
       const datos = snapshot.val() as RegistrosTabla;
 
       setRegistros(datos);
-      setTablaCartuchoBaja(null);
+      setTablaCartucho(null);
     } catch (error) {
       console.error("Error al cargar la tabla:", error);
       setError("No fue posible cargar los registros.");
       setRegistros({});
-      setTablaCartuchoBaja(null);
+      setTablaCartucho(null);
     } finally {
       setCargando(false);
     }
@@ -267,14 +273,14 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
           </div>
         )}
 
-        {/* Mensajes de Cartucho Baja */}
-        {tablaSeleccionada === "cartucho_baja" && cargando && (
+        {/* Mensajes de Cartucho Alta y Baja */}
+        {(tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") && cargando && (
           <div className="tablas-mensaje">
             Cargando registros...
           </div>
         )}
 
-        {tablaSeleccionada === "cartucho_baja" &&
+        {(tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") &&
           !cargando &&
           error && (
             <div className="tablas-error">
@@ -282,19 +288,19 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
             </div>
         )}
 
-        {tablaSeleccionada === "cartucho_baja" &&
+        {(tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") &&
           !cargando &&
           !error &&
-          !tablaCartuchoBaja && (
+          !tablaCartucho && (
             <div className="tablas-mensaje">
               Esta tabla no contiene registros.
             </div>
         )}
-        {/* Tabla especial de cartucho de baja */}
-        {tablaSeleccionada === "cartucho_baja" &&
+        {/* Tablas de cartucho de alta y baja: mismo formato y desplazamiento */}
+        {(tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") &&
         !cargando &&
         !error &&
-        tablaCartuchoBaja && (
+        tablaCartucho && (
           <div className="tabla-scroll tabla-scroll-cartucho-baja">
             <table className="tabla-firebase tabla-cartucho-baja">
               <thead>
@@ -303,7 +309,7 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
                     Largo / Ø
                   </th>
 
-                  {tablaCartuchoBaja.diametros.map((diametro) => (
+                  {tablaCartucho.diametros.map((diametro) => (
                     <th key={diametro.value}>
                       {diametro.label}
                     </th>
@@ -312,17 +318,17 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
               </thead>
 
               <tbody>
-                {tablaCartuchoBaja.largos.map(
+                {tablaCartucho.largos.map(
                   (largo, indiceLargo) => (
                     <tr key={largo}>
                       <th className="columna-largo">
                         {largo}"
                       </th>
 
-                      {tablaCartuchoBaja.diametros.map(
+                      {tablaCartucho.diametros.map(
                         (diametro, indiceDiametro) => {
                           const precio =
-                            tablaCartuchoBaja.precios[indiceLargo]?.[
+                            tablaCartucho.precios[indiceLargo]?.[
                               indiceDiametro
                             ];
 
@@ -369,7 +375,7 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
           </div>
         )}
         {/* Tablas obtenidas de Firebase */}
-        {tablaSeleccionada !== "banda" && tablaSeleccionada !== "cartucho_baja" && tablaSeleccionada !== "termopar_j" && tablaSeleccionada !== "termopar_k" && (
+        {tablaSeleccionada !== "banda" && tablaSeleccionada !== "cartucho_baja" && tablaSeleccionada !== "cartucho_alta" && tablaSeleccionada !== "termopar_j" && tablaSeleccionada !== "termopar_k" && (
           <>
             {cargando && (
               <div className="tablas-mensaje">

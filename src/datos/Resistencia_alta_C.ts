@@ -1,5 +1,21 @@
 ﻿//src/datos/Resistencia_alta_C.ts
+/*
+====================================================
+TABLA DE PRECIOS ANTERIOR - SOLO REFERENCIA
+16/10/2026
 
+Los precios actuales se obtienen desde Firebase:
+cotizador/tabla_cartucho_alta
+
+NO UTILIZAR ESTA TABLA PARA LOS CÁLCULOS.
+====================================================
+
+export const precios = [
+    [562.43, 495.53, 554.08, 583.34, 750.61],
+    // Resto de precios...
+];
+
+*/
 export const diametros = [
   { label: "1/4", value: 0.25 },
   { label: "3/8", value: 0.375 },

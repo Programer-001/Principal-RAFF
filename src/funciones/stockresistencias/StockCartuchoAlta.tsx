@@ -9,6 +9,7 @@ export type ValoresStockCartuchoAlta = {
   potencia: string;
 
   diametro: string;
+  diametroMm: string;
   longitud: string;
 
   milimetrica: boolean;
@@ -34,6 +35,7 @@ export const valoresCartuchoAltaVacios: ValoresStockCartuchoAlta = {
   potencia: "",
 
   diametro: "",
+  diametroMm: "",
   longitud: "",
 
   milimetrica: false,
@@ -135,6 +137,8 @@ const StockCartuchoAlta: React.FC<Props> = ({
           "Diámetro",
           valores.diametro
         )}
+
+        {valores.milimetrica && renderLectura("Diámetro en mm", valores.diametroMm)}
 
         {renderLectura(
           "Longitud",
@@ -247,7 +251,8 @@ const StockCartuchoAlta: React.FC<Props> = ({
       <div className="res-stock-campo">
         <label>Diámetro</label>
 
-        <select
+          <select
+          disabled={valores.milimetrica}
           value={valores.diametro}
           onChange={(e) =>
             cambiarValor(
@@ -285,6 +290,19 @@ const StockCartuchoAlta: React.FC<Props> = ({
           </option>
         </select>
       </div>
+
+      {valores.milimetrica && (
+        <div className="res-stock-campo">
+          <label>Diámetro en mm</label>
+          <input
+            type="number"
+            min={0}
+            step="any"
+            value={valores.diametroMm}
+            onChange={(e) => cambiarValor("diametroMm", e.target.value)}
+          />
+        </div>
+      )}
 
       {/* LONGITUD */}
 
