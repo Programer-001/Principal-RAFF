@@ -1,4 +1,7 @@
 ﻿//src/datos/Resistencia_alta_C.ts
+// La tabla vigente se carga desde Firebase. La tabla histórica queda en comentarios.
+import { get, ref } from "firebase/database";
+import { db } from "../firebase/config";
 /*
 ====================================================
 TABLA DE PRECIOS ANTERIOR - SOLO REFERENCIA
@@ -27,7 +30,6 @@ export const anchos = [
   2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
   21, 22,
 ];
-
 export const precios = [
     [562.43, 495.53, 554.08, 583.34, 750.61],
     [562.43, 495.53, 554.08, 600.07, 771.52],
@@ -53,6 +55,52 @@ export const precios = [
     [1087.25, 942.98, 1210.61, 1340.24, 1685.24],
     [1156.25, 968.06, 1244.06, 1375.79, 1745.88],
 ];
+
+
+
+type TablaCartuchoAlta = {
+    diametros: { label: string; value: number }[];
+    largos: number[];
+    precios: number[][];
+};
+
+let tablaActual: TablaCartuchoAlta | null = null;
+
+export const cargarTablaCartuchoAlta = async (): Promise<void> => {
+    // Nunca conservar precios anteriores si falla una nueva carga.
+    tablaActual = null;
+    const snapshot = await get(ref(db, "cotizador/tabla_cartucho_alta"));
+    if (!snapshot.exists()) throw new Error("No existe la tabla de Cartucho Alta en Firebase.");
+    const raw = snapshot.val();
+    const diametrosFirebase = raw?.diametros;
+    const largosFirebase = raw?.largos;
+    const preciosFirebase = raw?.precios;
+    if (!Array.isArray(diametrosFirebase) || !Array.isArray(largosFirebase) || !Array.isArray(preciosFirebase)) {
+        throw new Error("La tabla de Cartucho Alta tiene una estructura incorrecta.");
+    }
+    const tabla: TablaCartuchoAlta = {
+        diametros: diametrosFirebase.map((d: any) => ({ label: String(d?.label ?? ""), value: Number(d?.value) })),
+        largos: largosFirebase.map(Number),
+        precios: preciosFirebase.map((fila: any) => Array.isArray(fila) ? fila.map(Number) : []),
+    };
+    if (!tabla.diametros.length || !tabla.largos.length ||
+        tabla.diametros.some(d => !d.label || !Number.isFinite(d.value)) ||
+        tabla.largos.some(l => !Number.isFinite(l) || l <= 0) ||
+        tabla.largos.some((l, i) => i > 0 && l <= tabla.largos[i - 1]) ||
+        tabla.precios.length !== tabla.largos.length ||
+        tabla.precios.some(fila => fila.length !== tabla.diametros.length || fila.some(p => !Number.isFinite(p) || p <= 0))) {
+        throw new Error("La tabla de Cartucho Alta contiene precios o medidas inválidos.");
+    }
+    tablaActual = tabla;
+};
+
+export const obtenerLargosCartuchoAlta = (): number[] => tablaActual?.largos ?? [];
+
+const tablaRequerida = (): TablaCartuchoAlta => {
+    if (!tablaActual) throw new Error("Los precios de Cartucho Alta no están disponibles.");
+    return tablaActual;
+};
+
 /*
 ====================================
 Calcula en pulgadas
@@ -66,16 +114,17 @@ export const obtenerPrecioCartuchoAlta = (
 ): number => {
     const diametroLimpio = diametro.replace(/"/g, "").trim();
 
-    const col = diametros.findIndex((d) => d.label === diametroLimpio);
+    const tabla = tablaRequerida();
+    const col = tabla.diametros.findIndex((d) => d.label === diametroLimpio);
     if (col === -1 || !longitud) return 0;
 
-    const longitudMaxTabla = 22;
+    const longitudMaxTabla = tabla.largos[tabla.largos.length - 1];
     const longitudBase = longitud > longitudMaxTabla ? longitudMaxTabla : longitud;
 
-    const fila = anchos.findIndex((a) => a >= longitudBase);
+    const fila = tabla.largos.findIndex((a) => a >= longitudBase);
     if (fila === -1) return 0;
 
-    let precioProveedor = precios[fila][col] ?? 0;
+    let precioProveedor = tabla.precios[fila]?.[col] ?? 0;
 
     // Excedente después de 22 pulgadas
     if (longitud > longitudMaxTabla) {
@@ -157,14 +206,15 @@ export const convertirDiametroCartuchoAlta = (mm: number): string => {
 export const buscarLongitudComercialCartuchoAlta = (longitudCm: number) => {
     const pulgadasSolicitadas = longitudCm / 2.54;
 
-    const index = anchos.findIndex((pulgadas) => pulgadas >= pulgadasSolicitadas);
+    const largos = tablaRequerida().largos;
+    const index = largos.findIndex((pulgadas) => pulgadas >= pulgadasSolicitadas);
 
-    const fila = index === -1 ? anchos.length - 1 : index;
+    const fila = index === -1 ? largos.length - 1 : index;
 
     return {
         fila,
-        cm: Number((anchos[fila] * 2.54).toFixed(2)),
-        pulgadas: anchos[fila],
+        cm: Number((largos[fila] * 2.54).toFixed(2)),
+        pulgadas: largos[fila],
     };
 };
 
@@ -192,9 +242,10 @@ export const calcularCartuchoAltaProveedor = (datos: {
         diametroParaPrecio = "1/4";
     }
 
-    const col = diametros.findIndex((d) => d.label === diametroParaPrecio);
+    const tabla = tablaRequerida();
+    const col = tabla.diametros.findIndex((d) => d.label === diametroParaPrecio);
 
-    const precioBase = col === -1 ? 0 : precios[longitudComercial.fila][col] ?? 0;
+    const precioBase = col === -1 ? 0 : tabla.precios[longitudComercial.fila]?.[col] ?? 0;
 
     const incrementoMilimetrico =
         datos.tipo === "milimetros" ? precioBase * 0.1 : 0;

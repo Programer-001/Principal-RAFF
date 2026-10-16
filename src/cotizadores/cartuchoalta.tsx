@@ -1,7 +1,7 @@
 ﻿//src/cotizadores/cartuchoalta.tsx
 
 import React, { useState, useEffect } from "react";
-import { obtenerPrecioCartuchoAlta, obtenerPrecioCartuchoAltaMilimetrica, anchos } from "../datos/Resistencia_alta_C";
+import { obtenerPrecioCartuchoAlta, obtenerPrecioCartuchoAltaMilimetrica, cargarTablaCartuchoAlta, obtenerLargosCartuchoAlta } from "../datos/Resistencia_alta_C";
 import { formatearMoneda } from "../funciones/formato_moneda";
 import { FiCopy } from "react-icons/fi";
 import { ItemCotizado } from "../cotizador";
@@ -57,8 +57,38 @@ interface Props {
   const [soldarCableSeleccionado, setSoldarCableSeleccionado] = useState<any>(null);
   const [servicioExpress, setServicioExpress] = useState(false);
   const [resistenciasStock, setResistenciasStock] = useState<ResistenciaStockAlta[]>([]);
+  const [estadoTabla, setEstadoTabla] = useState<"cargando" | "lista" | "error">("cargando");
+  // Todos los campos numéricos: vacío para cero y sin valores negativos.
+  const normalizarNumero = (valor: string, entero = false): string => {
+    if (valor === "" || valor === "0" || valor === "-0") return "";
+    if (valor.includes("-") || valor.includes("+")) return "";
+    if (valor.toLowerCase().includes("e")) return "";
+    if (entero && valor.includes(".")) return "";
+    const numero = Number(valor);
+    if (!Number.isFinite(numero) || numero < 0 || numero === 0) return "";
+    return valor;
+  };
+
+  const impedirNegativos = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (["-", "+", "e", "E"].includes(e.key)) e.preventDefault();
+  };
+
+  const numeroGuardado = (valor: unknown, entero = false): string =>
+    normalizarNumero(String(valor ?? ""), entero);
+
   //Area administracion
   const esAdministracion = perfil?.area === "Administración";
+  // Cargar precios una sola vez al abrir el cotizador.
+  useEffect(() => {
+    let activo = true;
+    cargarTablaCartuchoAlta()
+      .then(() => { if (activo) setEstadoTabla("lista"); })
+      .catch((error) => {
+        console.error("Error cargando precios Cartucho Alta:", error);
+        if (activo) setEstadoTabla("error");
+      });
+    return () => { activo = false; };
+  }, []);
   //-------------------------------------useEffect-------------------------------------------->>
   useEffect(() => {
     const cargarSoldarCable = async () => {
@@ -130,7 +160,8 @@ interface Props {
 //convierto longitud de cm -> pulgadas
     const pulgadasReal =  Number(longitudCm) > 0? Number(longitudCm) / 2.54: 0;
 //convierto diametro de mm -> pulgadas
-const pulgadas =pulgadasReal > 0 ? anchos.reduce((prev, curr) => {
+const largosTabla = estadoTabla === "lista" ? obtenerLargosCartuchoAlta() : [];
+const pulgadas =pulgadasReal > 0 && largosTabla.length > 0 ? largosTabla.reduce((prev, curr) => {
             return Math.abs(curr - pulgadasReal) <
                 Math.abs(prev - pulgadasReal)
                 ? curr
@@ -138,14 +169,14 @@ const pulgadas =pulgadasReal > 0 ? anchos.reduce((prev, curr) => {
         }): 0;
     //sacamos el precio de la tabla
     const precioUnitario =
-        milimetrica && diametroMm
+        estadoTabla === "lista" && milimetrica && diametroMm
             ? obtenerPrecioCartuchoAltaMilimetrica(
                 Number(diametroMm),
                 pulgadas,
                 Number(medidaCableCm),
                 terminal90
             )
-            : diametro && pulgadas
+            : estadoTabla === "lista" && diametro && pulgadas
                 ? obtenerPrecioCartuchoAlta(diametro, pulgadas, Number(medidaCableCm),terminal90)
                 : 0;
 
@@ -162,12 +193,12 @@ const pulgadas =pulgadasReal > 0 ? anchos.reduce((prev, curr) => {
     const totalTuboZapa = tubozapa ? 130 : 0;
 //prueba para que salgan los valores 
     const precioNormal =
-        diametro && pulgadas
+        estadoTabla === "lista" && diametro && pulgadas
             ? obtenerPrecioCartuchoAlta(diametro, pulgadas, Number(medidaCableCm),terminal90)
             : 0;
 
     const precioMilimetrico =
-        milimetrica && diametroMm
+        estadoTabla === "lista" && milimetrica && diametroMm
             ? obtenerPrecioCartuchoAltaMilimetrica(
                 Number(diametroMm),
                 pulgadas,
@@ -175,9 +206,7 @@ const pulgadas =pulgadasReal > 0 ? anchos.reduce((prev, curr) => {
                 terminal90
             )
             : 0;
-
-  
-
+            
   // total por UNA resistencia
   const totalPorResistencia =
     precioUnitario +
@@ -198,18 +227,18 @@ const datosValidos =
   Number(cantidadResistencias) > 0 &&
   Number(longitudCm) > 0 &&
   (milimetrica ? Number(diametroMm) > 0 : diametro !== "");
-const total = datosValidos ? (servicioExpress ? totalBase * 1.3 : totalBase) : 0;
+const total = datosValidos && estadoTabla === "lista" ? (servicioExpress ? totalBase * 1.3 : totalBase) : 0;
 
   // Aplica plantilla sin cambiar cantidad ni servicio express.
   const aplicarStock = (stock: ResistenciaStockAlta) => {
     const v = stock.valores;
-    setVoltaje(String(v.voltaje ?? ""));
-    setWatts(String(v.potencia ?? ""));
-    setLongitudCm(String(v.longitud ?? ""));
+    setVoltaje(numeroGuardado(v.voltaje));
+    setWatts(numeroGuardado(v.potencia));
+    setLongitudCm(numeroGuardado(v.longitud));
     const esMilimetrica = v.milimetrica === true;
     setmilimetrica(esMilimetrica);
     setDiametro(esMilimetrica ? "" : String(v.diametro ?? ""));
-    setDiametroMm(esMilimetrica ? String(v.diametroMm ?? "") : "");
+    setDiametroMm(esMilimetrica ? numeroGuardado(v.diametroMm) : "");
 
     const usarCable = String(v.cableAltaTemperatura ?? "").toUpperCase();
     setCableAltaTemperatura(usarCable);
@@ -220,8 +249,8 @@ const total = datosValidos ? (servicioExpress ? totalBase * 1.3 : totalBase) : 0
         String(item.tipo).trim().toLowerCase() === texto
       );
       setSoldarCableSeleccionado(opcion || null);
-      setMedidaCableCm(opcion ? String(v.longitudCable ?? "") : "");
-      setCantidadCables(opcion ? String(v.cantidadCables ?? "") : "");
+      setMedidaCableCm(opcion ? numeroGuardado(v.longitudCable) : "");
+      setCantidadCables(opcion ? numeroGuardado(v.cantidadCables, true) : "");
       if (texto && !opcion) {
         alert(`No se encontró el cable "${v.calibreGradosCable}" en el catálogo. Selecciónalo manualmente.`);
       }
@@ -290,20 +319,20 @@ const total = datosValidos ? (servicioExpress ? totalBase * 1.3 : totalBase) : 0
     if (data) {
       const d = data.datos || {};
 
-      setCantidadResistencias(d.cantidadResistencias || "");
-      setVoltaje(d.voltaje || "");
-      setWatts(d.watts || "");
+      setCantidadResistencias(numeroGuardado(d.cantidadResistencias, true));
+      setVoltaje(numeroGuardado(d.voltaje));
+      setWatts(numeroGuardado(d.watts));
       setDiametro(d.diametro || "");
-      setLongitudCm(d.longitudCm || "");
+      setLongitudCm(numeroGuardado(d.longitudCm));
 
     setmilimetrica(!!d.milimetrica);
-    setDiametroMm(d.diametroMm || "");
+    setDiametroMm(numeroGuardado(d.diametroMm));
       setterminal90(!!d.terminal90);
       settubozapa(!!d.tubozapa);
 
       setCableAltaTemperatura(d.cableAltaTemperatura || "");
-      setMedidaCableCm(d.medidaCableCm || "");
-      setCantidadCables(d.cantidadCables || "");
+      setMedidaCableCm(numeroGuardado(d.medidaCableCm));
+      setCantidadCables(numeroGuardado(d.cantidadCables, true));
       setServicioExpress(!!d.servicioExpress);
 
       setDatosAdicionales(d.datosAdicionales || "");
@@ -348,8 +377,8 @@ const pasarAlSiguienteCampo = (
           <input
             type="number"
             value={cantidadResistencias}
-            onKeyDown={pasarAlSiguienteCampo}
-            onChange={(e) => setCantidadResistencias(e.target.value)}
+            onKeyDown={(e) => { impedirNegativos(e); pasarAlSiguienteCampo(e); }}
+            onChange={(e) => setCantidadResistencias(normalizarNumero(e.target.value, true))}
           />
         </div>
 
@@ -358,8 +387,8 @@ const pasarAlSiguienteCampo = (
           <input
             type="number"
             value={voltaje}
-            onKeyDown={pasarAlSiguienteCampo}
-            onChange={(e) => setVoltaje(e.target.value)}
+            onKeyDown={(e) => { impedirNegativos(e); pasarAlSiguienteCampo(e); }}
+            onChange={(e) => setVoltaje(normalizarNumero(e.target.value))}
           />
         </div>
 
@@ -368,8 +397,8 @@ const pasarAlSiguienteCampo = (
           <input
             type="number"
             value={watts}
-            onKeyDown={pasarAlSiguienteCampo}
-            onChange={(e) => setWatts(e.target.value)}
+            onKeyDown={(e) => { impedirNegativos(e); pasarAlSiguienteCampo(e); }}
+            onChange={(e) => setWatts(normalizarNumero(e.target.value))}
           />
         </div>
 
@@ -396,8 +425,8 @@ const pasarAlSiguienteCampo = (
           <input
             type="number"
             value={longitudCm}
-            onKeyDown={pasarAlSiguienteCampo}
-            onChange={(e) => setLongitudCm(e.target.value)}
+            onKeyDown={(e) => { impedirNegativos(e); pasarAlSiguienteCampo(e); }}
+            onChange={(e) => setLongitudCm(normalizarNumero(e.target.value))}
           />
         </div>
 
@@ -425,8 +454,8 @@ const pasarAlSiguienteCampo = (
                       <input
                           type="number"
                           value={diametroMm}
-                          onKeyDown={pasarAlSiguienteCampo}
-                          onChange={(e) => setDiametroMm(e.target.value)}
+                          onKeyDown={(e) => { impedirNegativos(e); pasarAlSiguienteCampo(e); }}
+                          onChange={(e) => setDiametroMm(normalizarNumero(e.target.value))}
                           placeholder="Ej. 20"
                       />
                   </div>
@@ -492,8 +521,8 @@ const pasarAlSiguienteCampo = (
                   <input
                       type="number"
                       value={medidaCableCm}
-                      onKeyDown={pasarAlSiguienteCampo}
-                      onChange={(e) => setMedidaCableCm(e.target.value)}
+                      onKeyDown={(e) => { impedirNegativos(e); pasarAlSiguienteCampo(e); }}
+                      onChange={(e) => setMedidaCableCm(normalizarNumero(e.target.value))}
                       disabled={cableAltaTemperatura !== "SI" || !soldarCableSeleccionado}
                   />
               </div>
@@ -503,8 +532,8 @@ const pasarAlSiguienteCampo = (
                   <input
                       type="number"
                       value={cantidadCables}
-                      onKeyDown={pasarAlSiguienteCampo}
-                      onChange={(e) => setCantidadCables(e.target.value)}
+                      onKeyDown={(e) => { impedirNegativos(e); pasarAlSiguienteCampo(e); }}
+                      onChange={(e) => setCantidadCables(normalizarNumero(e.target.value, true))}
                       disabled={cableAltaTemperatura !== "SI" || !soldarCableSeleccionado || !medidaCableCm}
                   />
               </div>
@@ -589,12 +618,19 @@ const pasarAlSiguienteCampo = (
               <p style={{ fontSize: "14px" }}>{descripcion}</p>
                </div>
             {/* TOTAL */}
+              {estadoTabla === "cargando" && <p role="status">Cargando precios de Cartucho Alta desde Firebase...</p>}
+              {estadoTabla === "error" && <p role="alert" style={{ color: "#b91c1c" }}>No se pudieron cargar los precios desde Firebase. No es posible agregar la cotización.</p>}
               <h2>Subtotal: {formatearMoneda(total)}</h2>
               <h1>Total: {formatearMoneda(total*1.16)}</h1>
 
               <button
                 className="btn btn-blue"
+                disabled={estadoTabla !== "lista"}
                 onClick={() => {
+                 if (estadoTabla !== "lista" || !Number.isFinite(total) || total <= 0) {
+                   alert("No hay un precio válido de Cartucho Alta disponible.");
+                   return;
+                 }
                 // Validaciones obligatorias
                 if (Number(cantidadResistencias) <= 0) {
                     alert("Debes ingresar una cantidad mayor a cero.");
