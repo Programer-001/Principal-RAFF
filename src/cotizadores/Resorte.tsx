@@ -35,6 +35,7 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
   const [terminalSeleccionada, setTerminalSeleccionada] = useState("");
   const [cantidadTerminales, setCantidadTerminales] = useState("");
   const [servicioExpress, setServicioExpress] = useState(false);
+  const [datosAdicionales, setDatosAdicionales] = useState("");
     //Area administracion
     const esAdministracion = perfil?.area === "Administración";
   //------------------useEffect-------------------------------->>
@@ -198,6 +199,9 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
         }`
       : null,
     servicioExpress ? `/ SERVICIO EXPRESS` : null,
+    datosAdicionales.trim()
+    ? `/ DATOS ADICIONALES: ${datosAdicionales.trim()}`
+    : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -215,6 +219,7 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
     setCantidadTerminales(d.cantidadTerminales || "");
     setTerminalSeleccionada(d.terminalSeleccionada || "");
     setServicioExpress(!!d.servicioExpress);
+    setDatosAdicionales(d.datosAdicionales || "");
   }, [data]);
 
   useEffect(() => {
@@ -320,7 +325,16 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
           onChange={(e) => setServicioExpress(e.target.checked)}
         />
       </div>
-
+      {/* DATOS ADICIONALES */}
+      <div className="form-row textarea-row full-width">
+        <label>Datos Adicionales:</label>
+        <textarea
+          value={datosAdicionales}
+          onChange={(e) => setDatosAdicionales(e.target.value)}
+          placeholder="Escribe información adicional del resorte..."
+          rows={3}
+        />
+      </div>
         {/* DESCRIPCIÓN FORMATEADA PARA COPIAR */}
         <div className="form-row textarea-row full-width descripcion-row">
           <div className="descripcion-box">
@@ -388,6 +402,7 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
               costoFabricacion,
               totalPorResorte,
               servicioExpress,
+              datosAdicionales,
             },
           });
 
@@ -399,6 +414,7 @@ const Resorte = ({ data, onGuardar, setDirty,perfil }: Props) => {
           setTerminalSeleccionada("");
           setCantidadTerminales("");
           setServicioExpress(false);
+          setDatosAdicionales("");
 
           setDirty(false);
         }}

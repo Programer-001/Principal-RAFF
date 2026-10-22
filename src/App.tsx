@@ -1,6 +1,12 @@
 ﻿//src/App.tsx
 //este archivo contiene la logica de las rutas y el menu de navegacion, ademas de la logica de autenticacion con firebase
-import {Routes,Route,Navigate,useLocation,useNavigate} from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 
@@ -26,7 +32,7 @@ import ModificarCaja from "./Facturacion/edicion_caja";
 import Gastos from "./Facturacion/gastos";
 import ModificarPago from "./Facturacion/ModificarPago";
 import MostrarCaja from "./Facturacion/MostrarCaja";
-import Lefor from "./Contabilidad/lefor"
+import Lefor from "./Contabilidad/lefor";
 import GestionProduccion from "./Produccion/GestionProduccion";
 import InvAlmacen from "./Produccion/inv_almacen";
 import Solicitud_compra from "./Produccion/Solicitud_compra";
@@ -34,11 +40,11 @@ import Comisiones from "./Administracion/comisiones";
 import Proveedores from "./Administracion/Proveedores";
 import ComisionesMostrador from "./Administracion/comisiones_mostrador";
 import PagosBanda from "./pagos_banda/PagosBanda";
-import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiales"
-import Tienda from "./Tienda/Tienda"
+import VisorPedidosEspeciales from "./Pedidos_especiales/visor_pedidos_especiales";
+import Tienda from "./Tienda/Tienda";
 import Taller from "./Taller/Taller";
-import GestionTienda from "./Tienda/Gestion_Tienda"
-import TiendaProductos from "./Tienda/TiendaProductos"
+import GestionTienda from "./Tienda/Gestion_Tienda";
+import TiendaProductos from "./Tienda/TiendaProductos";
 import DevolucionesMercancia from "./DevolucionesMercancia/DevolucionesMercancia";
 import Enrolado from "./Enrolado/Enrolado";
 import Tablas from "./Info_adicional/Tablas";
@@ -47,200 +53,208 @@ import ResistenciasStock from "./funciones/ResistenciasStock";
 import Calculadora from "./Calculadora/Calculadora";
 import Checador from "./checador/Checador";
 import Calendario from "./Calendario/Calendario";
-import MostrarTablas from "./Configuracion/Mostrar_tablas"; 
+import MostrarTablas from "./Configuracion/Mostrar_tablas";
 import ReporteOrdenTrabajo from "./Reportes/ReporteOrdenTrabajo";
 import RecetasArmado from "./Produccion/RecetasArmado";
+import ProovedorBanda from "./Administracion/proovedor_banda";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 //import "./styles.css";
 
 function AppLayout() {
-    const location = useLocation();
-    const navigate = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-    const rutaAVista = (pathname: string) => {
-        if (pathname.startsWith("/cotizador")) return "cotizador";
-        if (pathname.startsWith("/consultaot")) return "consultaot";
-        if (pathname.startsWith("/clientes")) return "clientes";
-        if (pathname.startsWith("/envios")) return "envios";
-        if (pathname.startsWith("/compras")) return "compras";
-        if (pathname.startsWith("/productos")) return "productos";
-        if (pathname.startsWith("/empleados")) return "empleados";
-        if (pathname.startsWith("/permisos")) return "permisos";
-        if (pathname.startsWith("/caja")) return "caja";
-        if (pathname.startsWith("/cajacorteporfecha")) return "cajacorteporfecha";
-        if (pathname.startsWith("/consultagastos")) return "consultagastos";
-        if (pathname.startsWith("/contardinero")) return "contardinero";
-        if (pathname.startsWith("/cortedia")) return "cortedia";
-        if (pathname.startsWith("/modificarcaja")) return "modificarcaja";
-        if (pathname.startsWith("/gastos")) return "gastos";
-        if (pathname.startsWith("/modificarpago")) return "modificarpago";
-        if (pathname.startsWith("/mostrarcaja")) return "mostrarcaja";
-        if (pathname.startsWith("/gestionproduccion")) return "gestionproduccion";
-        if (pathname.startsWith("/invalmacen")) return "invalmacen";
-        if (pathname.startsWith("/solicitud_compra")) return "solicitud_compra";
-        if (pathname.startsWith("/lefor")) return "lefor";
-        if (pathname.startsWith("/comisiones")) return "comisiones";
-        if (pathname.startsWith("/comisionesmostrador")) return "comisionesmostrador";
-        if (pathname.startsWith("/proveedores")) return "proveedores";
-        if (pathname.startsWith("/pago_banda")) return "pago_banda";
-        if (pathname.startsWith("/visor_pedidos_especiales")) return "visor_pedidos_especiales";
-        if (pathname.startsWith("/tienda_productos")) return "tienda_productos";
-        if (pathname.startsWith("/tienda")) return "tienda";
-        if (pathname.startsWith("/taller")) return "taller";
-        if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
-        if (pathname.startsWith("/menu_personalizado")) return "menu_personalizado";
-        if (pathname.startsWith("/enrolado")) return "enrolado";
-        if (pathname.startsWith("/tablas")) return "mostrar_tablas";
-        if (pathname.startsWith("/calculadora")) return "calculadora";
-        if (pathname.startsWith("/asistencia")) return "asistencia";
-        if (pathname.startsWith("/devoluciones")) return "devoluciones";
-        if (pathname.startsWith("/paqueterias")) return "paqueterias";
-        if (pathname.startsWith("/calendario")) return "calendario";
-        if (pathname.startsWith("/mostrar_tablas")) return "mostrar_tablas";
-        if (pathname.startsWith("/reporteorden")) return "reporteorden";
-        if (pathname.startsWith("/resistenciasstock ")) return "resistenciasstock";
-        if (pathname.startsWith("/recetasarmado")) return "recetasarmado";
-        if (pathname.startsWith("/perfil")) return "perfil";
-        if (pathname.startsWith("/home")) return "home";
-        
-        return "home";
+  const rutaAVista = (pathname: string) => {
+    if (pathname.startsWith("/cotizador")) return "cotizador";
+    if (pathname.startsWith("/consultaot")) return "consultaot";
+    if (pathname.startsWith("/clientes")) return "clientes";
+    if (pathname.startsWith("/envios")) return "envios";
+    if (pathname.startsWith("/compras")) return "compras";
+    if (pathname.startsWith("/productos")) return "productos";
+    if (pathname.startsWith("/empleados")) return "empleados";
+    if (pathname.startsWith("/permisos")) return "permisos";
+    if (pathname.startsWith("/caja")) return "caja";
+    if (pathname.startsWith("/cajacorteporfecha")) return "cajacorteporfecha";
+    if (pathname.startsWith("/consultagastos")) return "consultagastos";
+    if (pathname.startsWith("/contardinero")) return "contardinero";
+    if (pathname.startsWith("/cortedia")) return "cortedia";
+    if (pathname.startsWith("/modificarcaja")) return "modificarcaja";
+    if (pathname.startsWith("/gastos")) return "gastos";
+    if (pathname.startsWith("/modificarpago")) return "modificarpago";
+    if (pathname.startsWith("/mostrarcaja")) return "mostrarcaja";
+    if (pathname.startsWith("/gestionproduccion")) return "gestionproduccion";
+    if (pathname.startsWith("/invalmacen")) return "invalmacen";
+    if (pathname.startsWith("/solicitud_compra")) return "solicitud_compra";
+    if (pathname.startsWith("/lefor")) return "lefor";
+    if (pathname.startsWith("/comisiones")) return "comisiones";
+    if (pathname.startsWith("/comisionesmostrador"))
+      return "comisionesmostrador";
+    if (pathname.startsWith("/proveedores")) return "proveedores";
+    if (pathname.startsWith("/pago_banda")) return "pago_banda";
+    if (pathname.startsWith("/visor_pedidos_especiales"))
+      return "visor_pedidos_especiales";
+    if (pathname.startsWith("/tienda_productos")) return "tienda_productos";
+    if (pathname.startsWith("/tienda")) return "tienda";
+    if (pathname.startsWith("/taller")) return "taller";
+    if (pathname.startsWith("/gestion_tienda")) return "gestion_tienda";
+    if (pathname.startsWith("/menu_personalizado")) return "menu_personalizado";
+    if (pathname.startsWith("/enrolado")) return "enrolado";
+    if (pathname.startsWith("/tablas")) return "mostrar_tablas";
+    if (pathname.startsWith("/calculadora")) return "calculadora";
+    if (pathname.startsWith("/asistencia")) return "asistencia";
+    if (pathname.startsWith("/devoluciones")) return "devoluciones";
+    if (pathname.startsWith("/paqueterias")) return "paqueterias";
+    if (pathname.startsWith("/calendario")) return "calendario";
+    if (pathname.startsWith("/mostrar_tablas")) return "mostrar_tablas";
+    if (pathname.startsWith("/reporteorden")) return "reporteorden";
+    if (pathname.startsWith("/resistenciasstock ")) return "resistenciasstock";
+    if (pathname.startsWith("/recetasarmado")) return "recetasarmado";
+    if (pathname.startsWith("/banda_proovedor")) return "banda_proovedor";
+    if (pathname.startsWith("/perfil")) return "perfil";
+    if (pathname.startsWith("/home")) return "home";
+
+    return "home";
+  };
+
+  const vista = rutaAVista(location.pathname);
+
+  const setVista = (v: string) => {
+    const mapa: Record<string, string> = {
+      cotizador: "/cotizador",
+      consultaot: "/consultaot",
+      clientes: "/clientes",
+      envios: "/envios",
+      compras: "/compras",
+      productos: "/productos",
+      empleados: "/empleados",
+      permisos: "/permisos",
+      caja: "/caja",
+      cajacorteporfecha: "/cajacorteporfecha",
+      consultagastos: "/consultagastos",
+      contardinero: "/contardinero",
+      cortedia: "/cortedia",
+      modificarcaja: "/modificarcaja",
+      gastos: "/gastos",
+      modificarpago: "/modificarpago",
+      mostrarcaja: "/mostrarcaja",
+      lefor: "/lefor",
+      gestionproduccion: "/gestionproduccion",
+      invalmacen: "/invalmacen",
+      solicitud_compra: "/solicitud_compra",
+      comisiones: "/comisiones",
+      comisionesmostrador: "/comisionesmostrador",
+      proveedores: "/proveedores",
+      pago_banda: "/pago_banda",
+      visor_pedidos_especiales: "/visor_pedidos_especiales",
+      tienda_productos: "/tienda_productos",
+      tienda: "/tienda",
+      taller: "/taller",
+      gestion_tienda: "/gestion_tienda",
+      asistencia: "/asistencia",
+      calendario: "/calendario",
+      devoluciones: "/devoluciones",
+      perfil: "/perfil",
+      home: "/home",
+      mostrar_tablas: "/mostrar_tablas",
+      calculadora: "/calculadora",
+      enrolado: "/enrolado",
+      tablas: "/tablas",
+      menu_personalizado: "/menu_personalizado",
+      paqueterias: "/paqueterias",
+      resistenciasstock: "/resistenciasstock",
+      recetasarmado: "/recetasarmado",
+      banda_proovedor: "/banda_proovedor",
+      reporteorden: "/reporteorden",
     };
 
-    const vista = rutaAVista(location.pathname);
+    navigate(mapa[v] || "/home");
+  };
 
-    const setVista = (v: string) => {
-        const mapa: Record<string, string> = {
-            cotizador: "/cotizador",
-            consultaot: "/consultaot",
-            clientes: "/clientes",
-            envios: "/envios",
-            compras: "/compras",
-            productos: "/productos",
-            empleados: "/empleados",
-            permisos: "/permisos",
-            caja: "/caja",
-            cajacorteporfecha: "/cajacorteporfecha",
-            consultagastos: "/consultagastos",
-            contardinero: "/contardinero",
-            cortedia: "/cortedia",
-            modificarcaja: "/modificarcaja",
-            gastos: "/gastos",
-            modificarpago: "/modificarpago",
-            mostrarcaja: "/mostrarcaja",
-            lefor: "/lefor",
-            gestionproduccion: "/gestionproduccion",
-            invalmacen: "/invalmacen",
-            solicitud_compra: "/solicitud_compra",
-            comisiones: "/comisiones",
-            comisionesmostrador: "/comisionesmostrador",
-            proveedores: "/proveedores",
-            pago_banda: "/pago_banda",
-            visor_pedidos_especiales: "/visor_pedidos_especiales",
-            tienda_productos: "/tienda_productos",
-            tienda: "/tienda",
-            taller: "/taller",
-            gestion_tienda: "/gestion_tienda",
-            asistencia: "/asistencia",
-            calendario: "/calendario",
-            devoluciones: "/devoluciones",
-            perfil: "/perfil",
-            home: "/home",
-            mostrar_tablas: "/mostrar_tablas",
-            calculadora: "/calculadora",
-            enrolado: "/enrolado",
-            tablas: "/tablas",
-            menu_personalizado:"/menu_personalizado",
-            paqueterias: "/paqueterias",
-            resistenciasstock: "/resistenciasstock",
-            recetasarmado: "/recetasarmado",
-            reporteorden: "/reporteorden"
+  return (
+    <div className="App">
+      <Menu vista={vista} setVista={setVista} />
 
-        };
-
-        navigate(mapa[v] || "/home");
-    };
-
-    return (
-        <div className="App">
-            <Menu vista={vista} setVista={setVista} />
-
-            <Routes>
-                <Route path="/" element={<Navigate to="/home" replace />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/cotizador" element={<Cotizador />} />
-                <Route path="/consultaot" element={<GestionOT />} />
-                <Route path="/clientes" element={<BuscarClientes />} />
-                <Route path="/envios" element={<Envios />} />
-                <Route path="/compras" element={<Orden_compra />} />
-                <Route path="/productos" element={<Productos_editor />} />
-                <Route path="/empleados" element={<Empleados />} />
-                <Route path="/permisos" element={<Permisos />} />
-                <Route path="/caja" element={<CorteCaja />} />
-                <Route path="/cajacorteporfecha" element={<CorteCajaPorFecha />} />
-                <Route path="/consultagastos" element={<ConsultaGastos />} />
-                <Route path="/contardinero" element={<ContarDinero />} />
-                <Route path="/cortedia" element={<CorteDia />} />
-                <Route path="/modificarcaja" element={<ModificarCaja />} />
-                <Route path="/gastos" element={<Gastos />} />
-                <Route path="/modificarpago" element={<ModificarPago />} />
-                <Route path="/mostrarcaja" element={<MostrarCaja />} />
-                <Route path="/lefor" element={<Lefor />} />
-                <Route path="/gestionproduccion" element={<GestionProduccion />} />
-                <Route path="/invalmacen" element={<InvAlmacen />} />
-                <Route path="/comisiones" element={<Comisiones />} />
-                <Route path="/comisionesmostrador" element={<ComisionesMostrador />} />
-                <Route path="/proveedores" element={<Proveedores />} />
-                <Route path="/pago_banda" element={<PagosBanda />} />
-                <Route path="/visor_pedidos_especiales" element={<VisorPedidosEspeciales />} />
-                <Route path="/tienda_productos" element={<TiendaProductos />} />
-                <Route path="/asistencia" element={<Checador />} />
-                <Route path="/tienda" element={<Tienda />} />
-                <Route path="/taller" element={<Taller />} />
-                <Route path="/gestion_tienda" element={<GestionTienda />} />
-                <Route path="/calendario" element={<Calendario />} />
-                <Route path="/perfil" element={<Perfil />} />
-                <Route path="/mostrar_tablas" element={<MostrarTablas />} />
-                <Route path="/solicitud_compra" element={<Solicitud_compra />} />
-                <Route path="/calculadora" element={<Calculadora />} />
-                <Route path="/enrolado" element={<Enrolado />} />
-                <Route path="/tablas" element={<Tablas />} />
-                <Route path="/devoluciones" element={<DevolucionesMercancia />} />
-                <Route path="/menu_personalizado" element={<PermisosMenu />} />
-                <Route path="/paqueterias" element={<Paqueterias />} />
-                <Route path="/resistenciasstock" element={<ResistenciasStock />} />
-                <Route path="/recetasarmado" element={<RecetasArmado />} />
-                <Route path="/reporteorden" element={<ReporteOrdenTrabajo />} />
-            </Routes>
-        </div>
-    );
+      <Routes>
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/cotizador" element={<Cotizador />} />
+        <Route path="/consultaot" element={<GestionOT />} />
+        <Route path="/clientes" element={<BuscarClientes />} />
+        <Route path="/envios" element={<Envios />} />
+        <Route path="/compras" element={<Orden_compra />} />
+        <Route path="/productos" element={<Productos_editor />} />
+        <Route path="/empleados" element={<Empleados />} />
+        <Route path="/permisos" element={<Permisos />} />
+        <Route path="/caja" element={<CorteCaja />} />
+        <Route path="/cajacorteporfecha" element={<CorteCajaPorFecha />} />
+        <Route path="/consultagastos" element={<ConsultaGastos />} />
+        <Route path="/contardinero" element={<ContarDinero />} />
+        <Route path="/cortedia" element={<CorteDia />} />
+        <Route path="/modificarcaja" element={<ModificarCaja />} />
+        <Route path="/gastos" element={<Gastos />} />
+        <Route path="/modificarpago" element={<ModificarPago />} />
+        <Route path="/mostrarcaja" element={<MostrarCaja />} />
+        <Route path="/lefor" element={<Lefor />} />
+        <Route path="/gestionproduccion" element={<GestionProduccion />} />
+        <Route path="/invalmacen" element={<InvAlmacen />} />
+        <Route path="/comisiones" element={<Comisiones />} />
+        <Route path="/comisionesmostrador" element={<ComisionesMostrador />} />
+        <Route path="/proveedores" element={<Proveedores />} />
+        <Route path="/pago_banda" element={<PagosBanda />} />
+        <Route
+          path="/visor_pedidos_especiales"
+          element={<VisorPedidosEspeciales />}
+        />
+        <Route path="/tienda_productos" element={<TiendaProductos />} />
+        <Route path="/asistencia" element={<Checador />} />
+        <Route path="/tienda" element={<Tienda />} />
+        <Route path="/taller" element={<Taller />} />
+        <Route path="/gestion_tienda" element={<GestionTienda />} />
+        <Route path="/calendario" element={<Calendario />} />
+        <Route path="/perfil" element={<Perfil />} />
+        <Route path="/mostrar_tablas" element={<MostrarTablas />} />
+        <Route path="/solicitud_compra" element={<Solicitud_compra />} />
+        <Route path="/calculadora" element={<Calculadora />} />
+        <Route path="/enrolado" element={<Enrolado />} />
+        <Route path="/tablas" element={<Tablas />} />
+        <Route path="/devoluciones" element={<DevolucionesMercancia />} />
+        <Route path="/menu_personalizado" element={<PermisosMenu />} />
+        <Route path="/paqueterias" element={<Paqueterias />} />
+        <Route path="/resistenciasstock" element={<ResistenciasStock />} />
+        <Route path="/recetasarmado" element={<RecetasArmado />} />
+        <Route path="/reporteorden" element={<ReporteOrdenTrabajo />} />
+        <Route path="/banda_proovedor" element={<ProovedorBanda />} />
+      </Routes>
+    </div>
+  );
 }
 
 export default function App() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const unsub = onAuthStateChanged(auth, (usuario) => {
-            setUser(usuario);
-            setLoading(false);
-        });
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (usuario) => {
+      setUser(usuario);
+      setLoading(false);
+    });
 
-        return () => unsub();
-    }, []);
+    return () => unsub();
+  }, []);
 
-    if (loading) {
-        return <div style={{ padding: 20 }}>Cargando...</div>;
-    }
+  if (loading) {
+    return <div style={{ padding: 20 }}>Cargando...</div>;
+  }
 
-    if (!user) {
-        return (
-            <Routes>
-                <Route path="*" element={<Login />} />
-            </Routes>
-        );
-    }
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="*" element={<Login />} />
+      </Routes>
+    );
+  }
 
-    return <AppLayout />;
+  return <AppLayout />;
 }

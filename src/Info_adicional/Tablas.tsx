@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { get, ref } from "firebase/database";
 import { db } from "../firebase/config";
 import { formatearMoneda } from "../funciones/formato_moneda";
-import { diametros, anchos, precios } from "../datos/tabla";//tabla de banda
+import { diametros, anchos, precios } from "../datos/tabla"; //tabla de banda
 import { termoparJ, termoparK } from "../datos/Termopares";
 import "../css/info-adicional.css";
 
@@ -13,6 +13,7 @@ type TipoTabla =
   | "alambre_kanthal_d"
   | "alambre_nicromel"
   | "banda"
+  | "banda_proovedor"
   | "cartucho_baja"
   | "cartucho_alta"
   | "termopar_j"
@@ -63,23 +64,28 @@ const OPCIONES_TABLAS: OpcionTabla[] = [
     label: "Banda",
   },
   {
-  value: "cartucho_baja",
-  label: "Cartucho Baja",
-  ruta: "cotizador/tabla_cartucho_baja",
-},
-{
-  value: "cartucho_alta",
-  label: "Cartucho Alta",
-  ruta: "cotizador/tabla_cartucho_alta",
-},
-{
-  value: "termopar_j",
-  label: "Termopar tipo J",
-},
-{
-  value: "termopar_k",
-  label: "Termopar tipo K",
-},
+    value: "banda_proovedor",
+    label: "Banda Proovedor",
+    ruta: "cotizador/Tabla_banda_proovedor",
+  },
+  {
+    value: "cartucho_baja",
+    label: "Cartucho Baja",
+    ruta: "cotizador/tabla_cartucho_baja",
+  },
+  {
+    value: "cartucho_alta",
+    label: "Cartucho Alta",
+    ruta: "cotizador/tabla_cartucho_alta",
+  },
+  {
+    value: "termopar_j",
+    label: "Termopar tipo J",
+  },
+  {
+    value: "termopar_k",
+    label: "Termopar tipo K",
+  },
 ];
 
 const Tablas: React.FC = () => {
@@ -87,70 +93,76 @@ const Tablas: React.FC = () => {
     useState<TipoTabla>("alambre_kanthal_d");
 
   const [registros, setRegistros] = useState<RegistrosTabla>({});
-  const [tablaCartucho, setTablaCartucho] = useState<TablaCartucho | null>(null);
+  const [tablaCartucho, setTablaCartucho] = useState<TablaCartucho | null>(
+    null,
+  );
   const [cargando, setCargando] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
   const opcionActual = useMemo(() => {
-    return OPCIONES_TABLAS.find(
-      (opcion) => opcion.value === tablaSeleccionada
-    );
+    return OPCIONES_TABLAS.find((opcion) => opcion.value === tablaSeleccionada);
   }, [tablaSeleccionada]);
 
-useEffect(() => {
-  const cargarTabla = async () => {
-    setError("");
+  useEffect(() => {
+    const cargarTabla = async () => {
+      setError("");
 
-if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSeleccionada === "termopar_k") 
-  {
-      setRegistros({});
-      setTablaCartucho(null);
-      setCargando(false);
-      return;
-    }
+      if (
+        tablaSeleccionada === "banda" ||
+        tablaSeleccionada === "termopar_j" ||
+        tablaSeleccionada === "termopar_k"
+      ) {
+        setRegistros({});
+        setTablaCartucho(null);
+        setCargando(false);
+        return;
+      }
 
-    if (!opcionActual?.ruta) {
-      setRegistros({});
-      setTablaCartucho(null);
-      return;
-    }
-
-    try {
-      setCargando(true);
-
-      const referenciaTabla = ref(db, opcionActual.ruta);
-      const snapshot = await get(referenciaTabla);
-
-      if (!snapshot.exists()) {
+      if (!opcionActual?.ruta) {
         setRegistros({});
         setTablaCartucho(null);
         return;
       }
 
-      if (tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") {
-        const datos = snapshot.val() as TablaCartucho;
+      try {
+        setCargando(true);
 
-        setTablaCartucho(datos);
+        const referenciaTabla = ref(db, opcionActual.ruta);
+        const snapshot = await get(referenciaTabla);
+
+        if (!snapshot.exists()) {
+          setRegistros({});
+          setTablaCartucho(null);
+          return;
+        }
+
+        if (
+          tablaSeleccionada === "cartucho_baja" ||
+          tablaSeleccionada === "cartucho_alta"
+        ) {
+          const datos = snapshot.val() as TablaCartucho;
+
+          setTablaCartucho(datos);
+          setRegistros({});
+          return;
+        }
+
+        const datos = snapshot.val() as RegistrosTabla;
+
+        setRegistros(datos);
+        setTablaCartucho(null);
+      } catch (error) {
+        console.error("Error al cargar la tabla:", error);
+        setError("No fue posible cargar los registros.");
         setRegistros({});
-        return;
+        setTablaCartucho(null);
+      } finally {
+        setCargando(false);
       }
+    };
 
-      const datos = snapshot.val() as RegistrosTabla;
-
-      setRegistros(datos);
-      setTablaCartucho(null);
-    } catch (error) {
-      console.error("Error al cargar la tabla:", error);
-      setError("No fue posible cargar los registros.");
-      setRegistros({});
-      setTablaCartucho(null);
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  cargarTabla();
-}, [tablaSeleccionada, opcionActual]);
+    cargarTabla();
+  }, [tablaSeleccionada, opcionActual]);
 
   const filas = useMemo<FilaTabla[]>(() => {
     return Object.entries(registros).map(([id, datos]) => ({
@@ -159,28 +171,47 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
     }));
   }, [registros]);
 
+  // Medidas de la tabla Banda Proovedor: desde 1.5 hasta 15 en pasos de 0.5.
+  // Se usan en ambos ejes para mostrar la misma cuadrícula que Banda.
+  const medidasBandaProveedor = useMemo(
+    () => Array.from({ length: 28 }, (_, i) => 1.5 + i * 0.5),
+    [],
+  );
+
+  // Busca un precio de Banda Proovedor en los datos cargados desde Firebase.
+  // Convierte las medidas decimales a claves válidas (ej. 10.5 -> "10_5").
+  // Si no existe el precio o no es numérico, devuelve undefined.
+  const obtenerPrecioBandaProveedor = (
+    diametro: number,
+    ancho: number,
+  ): number | undefined => {
+    const claveDiametro = String(diametro).replace(".", "_");
+    const claveAncho = String(ancho).replace(".", "_");
+    const valor = registros[claveDiametro]?.[claveAncho];
+
+    if (valor === undefined || valor === null || valor === "") {
+      return undefined;
+    }
+
+    const precio = Number(valor);
+    return Number.isFinite(precio) ? precio : undefined;
+  };
+
   const columnas = useMemo<string[]>(() => {
     if (tablaSeleccionada === "alambre_nicromel") {
-      return [
-        "Tipo",
-        "Diametro",
-        "Resistencia",
-        "Aumento",
-        "Precio",
-      ];
+      return ["Tipo", "Diametro", "Resistencia", "Aumento", "Precio"];
     }
 
     if (tablaSeleccionada === "alambre_kanthal_d") {
       return ["Tipo", "Resistencia", "Precio"];
     }
-    
 
     return [];
   }, [tablaSeleccionada]);
 
   const mostrarValor = (
     valor: ValorFirebase | undefined,
-    columna: string
+    columna: string,
   ): string => {
     if (valor === undefined || valor === null || valor === "") {
       return "--";
@@ -211,9 +242,7 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
           <select
             id="tabla"
             value={tablaSeleccionada}
-            onChange={(e) =>
-              setTablaSeleccionada(e.target.value as TipoTabla)
-            }
+            onChange={(e) => setTablaSeleccionada(e.target.value as TipoTabla)}
           >
             {OPCIONES_TABLAS.map((opcion) => (
               <option key={opcion.value} value={opcion.value}>
@@ -233,14 +262,10 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
             <table className="tabla-firebase tabla-banda">
               <thead>
                 <tr>
-                  <th className="celda-diametro-ancho">
-                    Ø / Ancho
-                  </th>
+                  <th className="celda-diametro-ancho">Ø / Ancho</th>
 
                   {anchos.map((ancho) => (
-                    <th key={`ancho-${ancho}`}>
-                      {ancho}
-                    </th>
+                    <th key={`ancho-${ancho}`}>{ancho}</th>
                   ))}
                 </tr>
               </thead>
@@ -248,18 +273,13 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
               <tbody>
                 {diametros.map((diametro, indiceDiametro) => (
                   <tr key={`diametro-${diametro}`}>
-                    <th className="columna-diametro">
-                      {diametro}
-                    </th>
+                    <th className="columna-diametro">{diametro}</th>
 
                     {anchos.map((ancho, indiceAncho) => {
-                      const precio =
-                        precios[indiceDiametro]?.[indiceAncho];
+                      const precio = precios[indiceDiametro]?.[indiceAncho];
 
                       return (
-                        <td
-                          key={`${diametro}-${ancho}`}
-                        >
+                        <td key={`${diametro}-${ancho}`}>
                           {precio !== undefined
                             ? formatearMoneda(precio)
                             : "--"}
@@ -273,57 +293,101 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
           </div>
         )}
 
+        {/* Tabla Banda Proovedor: misma presentación que Banda, pero precios desde Firebase */}
+        {tablaSeleccionada === "banda_proovedor" && (
+          <>
+            {cargando && (
+              <div className="tablas-mensaje">Cargando registros...</div>
+            )}
+
+            {!cargando && error && <div className="tablas-error">{error}</div>}
+
+            {!cargando && !error && Object.keys(registros).length === 0 && (
+              <div className="tablas-mensaje">
+                Esta tabla no contiene registros.
+              </div>
+            )}
+
+            {!cargando && !error && Object.keys(registros).length > 0 && (
+              <div className="tabla-scroll tabla-scroll-banda">
+                <table className="tabla-firebase tabla-banda">
+                  <thead>
+                    <tr>
+                      <th className="celda-diametro-ancho">Ø / Ancho</th>
+                      {medidasBandaProveedor.map((ancho) => (
+                        <th key={`proveedor-ancho-${ancho}`}>{ancho}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {medidasBandaProveedor.map((diametro) => (
+                      <tr key={`proveedor-diametro-${diametro}`}>
+                        <th className="columna-diametro">{diametro}</th>
+                        {medidasBandaProveedor.map((ancho) => {
+                          const precio = obtenerPrecioBandaProveedor(
+                            diametro,
+                            ancho,
+                          );
+                          return (
+                            <td key={`${diametro}-${ancho}`}>
+                              {precio !== undefined
+                                ? formatearMoneda(precio)
+                                : "--"}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+
         {/* Mensajes de Cartucho Alta y Baja */}
-        {(tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") && cargando && (
-          <div className="tablas-mensaje">
-            Cargando registros...
-          </div>
-        )}
+        {(tablaSeleccionada === "cartucho_baja" ||
+          tablaSeleccionada === "cartucho_alta") &&
+          cargando && (
+            <div className="tablas-mensaje">Cargando registros...</div>
+          )}
 
-        {(tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") &&
+        {(tablaSeleccionada === "cartucho_baja" ||
+          tablaSeleccionada === "cartucho_alta") &&
           !cargando &&
-          error && (
-            <div className="tablas-error">
-              {error}
-            </div>
-        )}
+          error && <div className="tablas-error">{error}</div>}
 
-        {(tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") &&
+        {(tablaSeleccionada === "cartucho_baja" ||
+          tablaSeleccionada === "cartucho_alta") &&
           !cargando &&
           !error &&
           !tablaCartucho && (
             <div className="tablas-mensaje">
               Esta tabla no contiene registros.
             </div>
-        )}
+          )}
         {/* Tablas de cartucho de alta y baja: mismo formato y desplazamiento */}
-        {(tablaSeleccionada === "cartucho_baja" || tablaSeleccionada === "cartucho_alta") &&
-        !cargando &&
-        !error &&
-        tablaCartucho && (
-          <div className="tabla-scroll tabla-scroll-cartucho-baja">
-            <table className="tabla-firebase tabla-cartucho-baja">
-              <thead>
-                <tr>
-                  <th className="celda-largo-diametro">
-                    Largo / Ø
-                  </th>
+        {(tablaSeleccionada === "cartucho_baja" ||
+          tablaSeleccionada === "cartucho_alta") &&
+          !cargando &&
+          !error &&
+          tablaCartucho && (
+            <div className="tabla-scroll tabla-scroll-cartucho-baja">
+              <table className="tabla-firebase tabla-cartucho-baja">
+                <thead>
+                  <tr>
+                    <th className="celda-largo-diametro">Largo / Ø</th>
 
-                  {tablaCartucho.diametros.map((diametro) => (
-                    <th key={diametro.value}>
-                      {diametro.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+                    {tablaCartucho.diametros.map((diametro) => (
+                      <th key={diametro.value}>{diametro.label}</th>
+                    ))}
+                  </tr>
+                </thead>
 
-              <tbody>
-                {tablaCartucho.largos.map(
-                  (largo, indiceLargo) => (
+                <tbody>
+                  {tablaCartucho.largos.map((largo, indiceLargo) => (
                     <tr key={largo}>
-                      <th className="columna-largo">
-                        {largo}"
-                      </th>
+                      <th className="columna-largo">{largo}"</th>
 
                       {tablaCartucho.diametros.map(
                         (diametro, indiceDiametro) => {
@@ -339,16 +403,15 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
                                 : "--"}
                             </td>
                           );
-                        }
+                        },
                       )}
                     </tr>
-                  )
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-       {/*Tablas de termopares*/}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        {/*Tablas de termopares*/}
         {(tablaSeleccionada === "termopar_j" ||
           tablaSeleccionada === "termopar_k") && (
           <div className="tabla-scroll">
@@ -375,60 +438,54 @@ if (tablaSeleccionada === "banda" ||tablaSeleccionada === "termopar_j" ||tablaSe
           </div>
         )}
         {/* Tablas obtenidas de Firebase */}
-        {tablaSeleccionada !== "banda" && tablaSeleccionada !== "cartucho_baja" && tablaSeleccionada !== "cartucho_alta" && tablaSeleccionada !== "termopar_j" && tablaSeleccionada !== "termopar_k" && (
-          <>
-            {cargando && (
-              <div className="tablas-mensaje">
-                Cargando registros...
-              </div>
-            )}
+        {tablaSeleccionada !== "banda" &&
+          tablaSeleccionada !== "banda_proovedor" &&
+          tablaSeleccionada !== "cartucho_baja" &&
+          tablaSeleccionada !== "cartucho_alta" &&
+          tablaSeleccionada !== "termopar_j" &&
+          tablaSeleccionada !== "termopar_k" && (
+            <>
+              {cargando && (
+                <div className="tablas-mensaje">Cargando registros...</div>
+              )}
 
-            {!cargando && error && (
-              <div className="tablas-error">
-                {error}
-              </div>
-            )}
+              {!cargando && error && (
+                <div className="tablas-error">{error}</div>
+              )}
 
-            {!cargando && !error && filas.length === 0 && (
-              <div className="tablas-mensaje">
-                Esta tabla no contiene registros.
-              </div>
-            )}
+              {!cargando && !error && filas.length === 0 && (
+                <div className="tablas-mensaje">
+                  Esta tabla no contiene registros.
+                </div>
+              )}
 
-            {!cargando && !error && filas.length > 0 && (
-              <div className="tabla-scroll">
-                <table className="tabla-firebase">
-                  <thead>
-                    <tr>
-                      {columnas.map((columna) => (
-                        <th key={columna}>
-                          {columna}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filas.map((fila) => (
-                      <tr key={fila.id}>
+              {!cargando && !error && filas.length > 0 && (
+                <div className="tabla-scroll">
+                  <table className="tabla-firebase">
+                    <thead>
+                      <tr>
                         {columnas.map((columna) => (
-                          <td
-                            key={`${fila.id}-${columna}`}
-                          >
-                            {mostrarValor(
-                              fila[columna],
-                              columna
-                            )}
-                          </td>
+                          <th key={columna}>{columna}</th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        )}
+                    </thead>
+
+                    <tbody>
+                      {filas.map((fila) => (
+                        <tr key={fila.id}>
+                          {columnas.map((columna) => (
+                            <td key={`${fila.id}-${columna}`}>
+                              {mostrarValor(fila[columna], columna)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
       </div>
     </div>
   );
