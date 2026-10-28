@@ -1,7 +1,7 @@
 ﻿//src/cotizadores/cartuchoalta.tsx
 
 import React, { useState, useEffect } from "react";
-import { obtenerPrecioCartuchoAlta, obtenerPrecioCartuchoAltaMilimetrica, cargarTablaCartuchoAlta, obtenerLargosCartuchoAlta } from "../datos/Resistencia_alta_C";
+import { calcularCartuchoAltaProveedor, cargarTablaCartuchoAlta } from "../datos/Resistencia_alta_C";
 import { formatearMoneda } from "../funciones/formato_moneda";
 import { FiCopy } from "react-icons/fi";
 import { ItemCotizado } from "../cotizador";
@@ -157,77 +157,40 @@ interface Props {
   const totalCable =
     calcularPrecioCable(precioSoldarCable, Number(medidaCableCm)) *
     (Number(cantidadCables) || 0);
-//convierto longitud de cm -> pulgadas
-    const pulgadasReal =  Number(longitudCm) > 0? Number(longitudCm) / 2.54: 0;
-//convierto diametro de mm -> pulgadas
-const largosTabla = estadoTabla === "lista" ? obtenerLargosCartuchoAlta() : [];
-const pulgadas =pulgadasReal > 0 && largosTabla.length > 0 ? largosTabla.reduce((prev, curr) => {
-            return Math.abs(curr - pulgadasReal) <
-                Math.abs(prev - pulgadasReal)
-                ? curr
-                : prev;
-        }): 0;
-    //sacamos el precio de la tabla
-    const precioUnitario =
-        estadoTabla === "lista" && milimetrica && diametroMm
-            ? obtenerPrecioCartuchoAltaMilimetrica(
-                Number(diametroMm),
-                pulgadas,
-                Number(medidaCableCm),
-                terminal90
-            )
-            : estadoTabla === "lista" && diametro && pulgadas
-                ? obtenerPrecioCartuchoAlta(diametro, pulgadas, Number(medidaCableCm),terminal90)
-                : 0;
+  // El costo se calcula exclusivamente con el motor existente del proveedor.
+  // No se aplica el descuento opcional del 30% del proveedor.
+  const datosValidos =
+    Number(cantidadResistencias) > 0 &&
+    Number.isInteger(Number(cantidadResistencias)) &&
+    Number(longitudCm) > 0 &&
+    (milimetrica ? Number(diametroMm) > 0 : diametro !== "");
 
-    const extraMilimetrica = milimetrica ? precioUnitario * 0.1 : 0;
-    //precio del cabble si excede los 25cm
-    const convertidorcable = (cableCm: number): number => {
-        // Excedente después de 25 cm
-        if (cableCm > 25) {
-            return (cableCm - 25) * 1.7;
-        }
-        return 0;
-    };
-  const totalTerminal90 = terminal90 ? 170 : 0;//preguntar si se queda o se omite porque ya cobra con el precio del proveedor
-    const totalTuboZapa = tubozapa ? 130 : 0;
-//prueba para que salgan los valores 
-    const precioNormal =
-        estadoTabla === "lista" && diametro && pulgadas
-            ? obtenerPrecioCartuchoAlta(diametro, pulgadas, Number(medidaCableCm),terminal90)
-            : 0;
+  const resultadoProveedor = estadoTabla === "lista" && datosValidos
+    ? calcularCartuchoAltaProveedor({
+        tipo: milimetrica ? "milimetros" : "pulgadas",
+        diametro: milimetrica ? "" : diametro,
+        mm: milimetrica ? Number(diametroMm) : 0,
+        longitudCm: Number(longitudCm),
+        cableCm: cableAltaTemperatura === "SI" ? Number(medidaCableCm) : 0,
+        terminal90,
+        descuento30: true,
+      })
+    : null;
 
-    const precioMilimetrico =
-        estadoTabla === "lista" && milimetrica && diametroMm
-            ? obtenerPrecioCartuchoAltaMilimetrica(
-                Number(diametroMm),
-                pulgadas,
-                Number(medidaCableCm),
-                terminal90
-            )
-            : 0;
-            
-  // total por UNA resistencia
-  const totalPorResistencia =
-    precioUnitario +
-    //extraMilimetrica +
-    (precioMilimetrico*.10) +
-    convertidorcable(Number(medidaCableCm)) +
-    //totalCable +
-    totalTerminal90 +
-    totalTuboZapa;
-const subtotal = totalPorResistencia * 0.7;
-
-// total general
-const totalBase =
-  subtotal * (Number(cantidadResistencias) || 0) * 1.7;
-
-// Servicio Express +30%
-const datosValidos =
-  Number(cantidadResistencias) > 0 &&
-  Number(longitudCm) > 0 &&
-  (milimetrica ? Number(diametroMm) > 0 : diametro !== "");
-const total = datosValidos && estadoTabla === "lista" ? (servicioExpress ? totalBase * 1.3 : totalBase) : 0;
+  // El tubo zapa no está incluido en la función del proveedor.
+  // Se conserva el cargo que ya utilizaba este cotizador.
+  const totalTuboZapa = tubozapa ? 130 : 0;
+  const precioUnitario = resultadoProveedor?.precioBase ?? 0;
+  const extraMilimetrica = resultadoProveedor?.incrementoMilimetrico ?? 0;
+  const totalTerminal90 = resultadoProveedor?.terminal ?? 0;
+  const precioNormal = !milimetrica ? precioUnitario : 0;
+  const precioMilimetrico = milimetrica ? precioUnitario : 0;
+  const totalPorResistencia = (resultadoProveedor?.total ?? 0) + totalTuboZapa;
+  const subtotalProveedor = totalPorResistencia * (Number(cantidadResistencias) || 0);
+  const totalBase = subtotalProveedor * 1.70;
+  const total = resultadoProveedor
+    ? (servicioExpress ? totalBase * 1.30 : totalBase)
+    : 0;
 
   // Aplica plantilla sin cambiar cantidad ni servicio express.
   const aplicarStock = (stock: ResistenciaStockAlta) => {
@@ -730,12 +693,12 @@ const pasarAlSiguienteCampo = (
 
                       <p>
                         <strong>Precio normal:</strong>{" "}
-                        {formatearMoneda(precioNormal * 0.7)}
+                        {formatearMoneda(precioNormal)}
                       </p>
 
                       <p>
                         <strong>Precio milimétrica:</strong>{" "}
-                        {formatearMoneda(precioMilimetrico * 0.7)}
+                        {formatearMoneda(precioMilimetrico)}
                       </p>
 
                       <hr />
@@ -772,8 +735,9 @@ const pasarAlSiguienteCampo = (
                         {formatearMoneda(totalPorResistencia)}
                       </p>
 
+                      <p><strong>Subtotal proveedor (cantidad):</strong>{" "}{formatearMoneda(subtotalProveedor)}</p>
                       <p>
-                        <strong>Subtotal:</strong>{" "}
+                        <strong>Subtotal de venta:</strong>{" "}
                         {formatearMoneda(total)}
                       </p>
 
