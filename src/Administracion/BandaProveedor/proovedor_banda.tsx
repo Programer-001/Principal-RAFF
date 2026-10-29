@@ -3,7 +3,8 @@
 // Lee la matriz de precios de Firebase y permite crear, editar y finalizar partidas.
 import React, { useEffect, useMemo, useState } from "react";
 import { get, push, ref, set } from "firebase/database";
-import { db } from "../firebase/config";
+import { db } from "../../firebase/config";
+import { generarPDFPagoBandaProveedor } from "../../plantillas/plantila_pago_banda_proveedor";
 
 type ProductoExtra = {
   id: string;
@@ -16,6 +17,7 @@ type Partida = {
   tipo: "banda_proovedor";
   descripcion: string;
   total: number;
+  ot?: string;
   datos: {
     diametro: number;
     ancho: number;
@@ -98,12 +100,13 @@ const estiloBoton: React.CSSProperties = {
 };
 
 const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
+  const [numeroOT, setNumeroOT] = useState(""); // Solo dígitos; OT- es un prefijo fijo.
   const [tabla, setTabla] = useState<Tabla>({});
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [diametro, setDiametro] = useState("");
   const [ancho, setAncho] = useState("");
-  const [cantidad, setCantidad] = useState(1);
+  const [cantidad, setCantidad] = useState<number | "">("");
   const [barreno, setBarreno] = useState(false);
   const [cantidadBarreno, setCantidadBarreno] = useState(1);
   const [resaque, setResaque] = useState(false);
@@ -115,6 +118,7 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
   const [partidas, setPartidas] = useState<Partida[]>([]);
   const [editando, setEditando] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [generandoPDF, setGenerandoPDF] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
   // Descarga una sola vez la tabla del proveedor desde Firebase Realtime Database.
@@ -145,9 +149,9 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
     if (!data?.datos) return;
     const d = data.datos;
     setEditando(data.id);
-    setDiametro(String(d.diametro));
-    setAncho(String(d.ancho));
-    setCantidad(d.cantidad || 1);
+    setDiametro(d.diametro > 0 ? String(d.diametro) : "");
+    setAncho(d.ancho > 0 ? String(d.ancho) : "");
+    setCantidad(d.cantidad || "");
     setBarreno(d.barreno > 0);
     setCantidadBarreno(d.barreno || 1);
     setResaque(d.resaque > 0);
@@ -162,6 +166,9 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
     () => consultarPrecio(tabla, Number(diametro), Number(ancho)),
     [tabla, diametro, ancho],
   );
+  const mostrarExtras = Number(diametro) > 0 && Number(ancho) > 0 && Number(cantidad) > 0;
+  const soloProductos = !diametro.trim() && !ancho.trim() && usarProductos && productos.length > 0;
+  const precioValido = precioBase !== null || soloProductos;
   const extrasFijos =
     (barreno ? cantidadBarreno * 10 : 0) + (resaque ? cantidadResaque * 10 : 0);
   const incremento440 =
@@ -173,14 +180,14 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
     : 0;
   const precioUnitario =
     (precioBase ?? 0) + extrasFijos + incremento440 + extrasProductos;
-  const totalActual = precioUnitario * cantidad;
+  const totalActual = soloProductos ? extrasProductos : precioUnitario * (Number(cantidad) || 0);
   const totalPartidas = partidas.reduce((s, p) => s + p.total, 0);
 
   // Reinicia todos los campos tras agregar o actualizar una partida.
   const limpiar = () => {
     setDiametro("");
     setAncho("");
-    setCantidad(1);
+    setCantidad("");
     setBarreno(false);
     setCantidadBarreno(1);
     setResaque(false);
@@ -195,15 +202,14 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
 
   // Construye una partida compatible con el resumen del cotizador principal.
   const agregar = () => {
-    if (cargando || error || precioBase === null) {
+    if (((cargando || !!error) && !soloProductos) || !precioValido) {
       alert(
         "Ingresa medidas válidas en incrementos de 0.5 y verifica la tabla de Firebase.",
       );
       return;
     }
     if (
-      !Number.isInteger(cantidad) ||
-      cantidad < 1 ||
+      (!soloProductos && (!Number.isInteger(cantidad) || Number(cantidad) < 1)) ||
       (barreno &&
         (!Number.isInteger(cantidadBarreno) || cantidadBarreno < 1)) ||
       (resaque && (!Number.isInteger(cantidadResaque) || cantidadResaque < 1))
@@ -227,14 +233,18 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
       );
       return;
     }
+    if (!onGuardar && !/^\d+$/.test(numeroOT)) {
+      alert("Ingresa los dígitos de la OT antes de agregar.");
+      return;
+    }
     const descripcion = [
-      `BANDA PROOVEDOR - Ø ${diametro}\" X ANCHO ${ancho}\" - ${cantidad} PZA(S)`,
-      barreno ? `BARRENOS (${cantidadBarreno})` : "",
-      resaque ? `RESAQUES (${cantidadResaque})` : "",
-      voltaje440 ? "440V (+10%)" : "",
+      !soloProductos ? `BANDA - Ø ${diametro}\" X ANCHO ${ancho}\" - ${cantidad} PZA(S)` : "",
+      !soloProductos && barreno ? `BARRENOS (${cantidadBarreno})` : "",
+      !soloProductos && resaque ? `RESAQUES (${cantidadResaque})` : "",
+      !soloProductos && voltaje440 ? "440V (+10%)" : "",
       ...(usarProductos
         ? productos.map(
-            (p, i) => `PRODUCTO ${i + 1}: ${p.descripcion} (${p.cantidad})`,
+            (p, i) => soloProductos ? `${p.descripcion} (${p.cantidad})` : `PRODUCTO ${i + 1}: ${p.descripcion} (${p.cantidad})`,
           )
         : []),
       notas.trim() ? `NOTAS: ${notas.trim()}` : "",
@@ -246,16 +256,17 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
       tipo: "banda_proovedor",
       descripcion,
       total: totalActual,
+      ...(!onGuardar ? { ot: `OT-${numeroOT}` } : {}),
       datos: {
         diametro: Number(diametro),
         ancho: Number(ancho),
-        cantidad,
+        cantidad: soloProductos ? 1 : Number(cantidad),
         barreno: barreno ? cantidadBarreno : 0,
         resaque: resaque ? cantidadResaque : 0,
         voltaje440,
         productosExtras: usarProductos ? productos.map((p) => ({ ...p })) : [],
         notas,
-        precioBase,
+        precioBase: precioBase ?? 0,
         subtotalExtras: extrasFijos + extrasProductos,
         incremento440,
         precioUnitario,
@@ -269,15 +280,17 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
           : [...prev, partida],
       );
     limpiar();
+    setNumeroOT("");
     setMensaje("");
   };
 
   // Permite recuperar cualquier partida del resumen para corregir sus datos.
   const editar = (p: Partida) => {
     setEditando(p.id);
+    setNumeroOT(p.ot?.replace(/^OT-/, "") || "");
     const d = p.datos;
-    setDiametro(String(d.diametro));
-    setAncho(String(d.ancho));
+    setDiametro(d.diametro > 0 ? String(d.diametro) : "");
+    setAncho(d.ancho > 0 ? String(d.ancho) : "");
     setCantidad(d.cantidad);
     setBarreno(d.barreno > 0);
     setCantidadBarreno(d.barreno || 1);
@@ -293,6 +306,10 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
   // Solo limpia el resumen cuando Firebase confirma que el guardado fue exitoso.
   const finalizar = async () => {
     if (!partidas.length || guardando) return;
+    if (partidas.some((p) => !p.ot || !/^OT-\d+$/.test(p.ot))) {
+      alert("Hay órdenes sin OT válida. Edita esas órdenes antes de finalizar.");
+      return;
+    }
     setGuardando(true);
     setMensaje("");
     try {
@@ -305,6 +322,7 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
         total: totalPartidas,
       });
       setPartidas([]);
+      setNumeroOT("");
       limpiar();
       setMensaje(
         `Guardado correctamente en ${RUTA_COTIZACIONES}/${destino.key}`,
@@ -319,19 +337,37 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
     }
   };
 
+  const descargarRelacionPago = async () => {
+    if (!partidas.length || generandoPDF || guardando) return;
+    setGenerandoPDF(true);
+    try {
+      await generarPDFPagoBandaProveedor({ ordenes: partidas });
+    } catch (e) {
+      console.error("Error al generar relación de pago:", e);
+      alert("No se pudo generar el PDF. Revisa la consola y el logotipo.");
+    } finally {
+      setGenerandoPDF(false);
+    }
+  };
+
   const actualizarProducto = (id: string, cambio: Partial<ProductoExtra>) => {
     setProductos((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...cambio } : p)),
     );
     setDirty?.(true);
   };
+  const evitarRueda = (e: React.WheelEvent<HTMLInputElement>) => {
+    // Evita cambiar valores numéricos accidentalmente al desplazar la página.
+    e.currentTarget.blur();
+  };
+
   const inputNumero = (
     valor: string,
-    cambio: (n: number) => void,
+    cambio: (n: number | "") => void,
     minimo = 1,
   ) => {
     const n = Number(valor);
-    cambio(valor === "" ? 0 : Math.max(minimo, n));
+    cambio(valor === "" ? "" : Math.max(minimo, n));
     setDirty?.(true);
   };
 
@@ -351,6 +387,28 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
     >
       <section style={{ minWidth: 0 }}>
         <h2>Banda Proovedor</h2>
+        {!onGuardar && (
+          <label style={{ display: "block", marginBottom: 16 }}>
+            <strong>Número de Orden de Trabajo (OT) *</strong>
+            <div style={{ display: "flex", marginTop: 6, alignItems: "stretch" }}>
+              <span style={{ padding: "9px 12px", border: "1px solid #cbd5e1", borderRight: 0, borderRadius: "6px 0 0 6px", background: "#f1f5f9", fontWeight: 700 }}>OT-</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                aria-label="Dígitos de la orden de trabajo"
+                style={{ ...estiloCampo, borderRadius: "0 6px 6px 0" }}
+                value={numeroOT}
+                placeholder="Ej. 01085"
+                maxLength={20}
+                onChange={(e) => {
+                  setNumeroOT(e.target.value.replace(/\D/g, ""));
+                  setDirty?.(true);
+                }}
+              />
+            </div>
+            <small>Captura manual. No se busca ni se genera una OT.</small>
+          </label>
+        )}
         {cargando && <p>Cargando tabla de precios...</p>}
         {error && <p style={{ color: "#b91c1c" }}>Error: {error}</p>}
         <div
@@ -365,6 +423,7 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
             <input
               style={estiloCampo}
               type="number"
+              onWheel={evitarRueda}
               min="1.5"
               step="0.5"
               value={diametro}
@@ -380,6 +439,7 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
             <input
               style={estiloCampo}
               type="number"
+              onWheel={evitarRueda}
               min="1.5"
               step="0.5"
               value={ancho}
@@ -395,6 +455,7 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
             <input
               style={estiloCampo}
               type="number"
+              onWheel={evitarRueda}
               min="1"
               step="1"
               value={cantidad}
@@ -402,9 +463,10 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
             />
           </label>
         </div>
-        <h3>Extras</h3>
-        <div style={{ display: "grid", gap: 12 }}>
-          <label>
+        <h3>Extras de fabricación</h3>
+        {mostrarExtras && (
+        <div style={{ display: "grid", gap: 12 }}> 
+          <label style={{ display: "inline-flex", alignItems: "center", width: "fit-content", gap: 6 }}>
             <input
               type="checkbox"
               checked={barreno}
@@ -420,16 +482,18 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
               Cantidad de barrenos{" "}
               <input
                 type="number"
+              onWheel={evitarRueda}
                 min="1"
                 step="1"
                 value={cantidadBarreno}
                 onChange={(e) =>
-                  inputNumero(e.target.value, setCantidadBarreno)
+                   inputNumero(e.target.value, (valor) =>
+    setCantidadBarreno(valor === "" ? 0 : valor))
                 }
               />
             </label>
           )}
-          <label>
+          <label style={{ display: "inline-flex", alignItems: "center", width: "fit-content", gap: 6 }}>
             <input
               type="checkbox"
               checked={resaque}
@@ -445,16 +509,18 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
               Cantidad de resaques{" "}
               <input
                 type="number"
+              onWheel={evitarRueda}
                 min="1"
                 step="1"
                 value={cantidadResaque}
                 onChange={(e) =>
-                  inputNumero(e.target.value, setCantidadResaque)
+                   inputNumero(e.target.value, (valor) =>
+                    setCantidadResaque(valor === "" ? 0 : valor ))
                 }
               />
             </label>
           )}
-          <label>
+          <label style={{ display: "inline-flex", alignItems: "center", width: "fit-content", gap: 6 }}>
             <input
               type="checkbox"
               checked={voltaje440}
@@ -466,8 +532,9 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
             440 V (+10% del precio base y extras fijos)
           </label>
         </div>
+        )}
         <h3>Productos extras</h3>
-        <label>
+        <label style={{ display: "inline-flex", alignItems: "center", width: "fit-content", gap: 6 }}>
           <input
             type="checkbox"
             checked={usarProductos}
@@ -504,6 +571,7 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
                   aria-label="Cantidad"
                   style={estiloCampo}
                   type="number"
+              onWheel={evitarRueda}
                   min="1"
                   step="1"
                   value={p.cantidad}
@@ -517,6 +585,7 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
                   aria-label="Precio"
                   style={estiloCampo}
                   type="number"
+              onWheel={evitarRueda}
                   min="0"
                   step="0.01"
                   placeholder="Precio"
@@ -577,14 +646,14 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
           <p>
             Precio unitario:{" "}
             <strong>
-              {precioBase === null ? "--" : moneda(precioUnitario)}
+              {precioValido ? moneda(soloProductos ? extrasProductos : precioUnitario) : "--"}
             </strong>
           </p>
-          <h3>Total: {precioBase === null ? "--" : moneda(totalActual)}</h3>
+          <h3>Total: {precioValido ? moneda(totalActual) : "--"}</h3>
           <button
             type="button"
             style={estiloBoton}
-            disabled={cargando || !!error || precioBase === null}
+            disabled={!precioValido || (!soloProductos && (cargando || !!error))}
             onClick={agregar}
           >
             {editando ? "Actualizar" : "Agregar"}
@@ -609,17 +678,23 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
             padding: 16,
             position: "sticky",
             top: 12,
+            height: "min(760px, calc(100vh - 24px))",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
           }}
         >
           <h2>Resumen</h2>
-          <h3>Bandas agregadas</h3>
-          {!partidas.length && <p>Aún no hay partidas agregadas.</p>}
+          <h3>Órdenes agregadas</h3>
+          <div style={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto", paddingRight: 6 }}>
+          {!partidas.length && <p>Aún no hay órdenes agregadas.</p>}
           {partidas.map((p, i) => (
             <div
               key={p.id}
               style={{ borderBottom: "1px solid #ddd", padding: "12px 0" }}
             >
-              <strong>Partida {i + 1}</strong>
+              <strong>Orden {i + 1}</strong>
+              {p.ot && <div style={{ color: "#475569", fontWeight: 700, marginTop: 4 }}>{p.ot}</div>}
               <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
                 {p.descripcion}
               </p>
@@ -645,10 +720,9 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
               </div>
             </div>
           ))}
-          <h3>Total a pagar: {moneda(totalPartidas)}</h3>
-          <p style={{ fontSize: 12, color: "#64748b" }}>
-            Importes sin IVA. No se genera una OT desde esta pantalla.
-          </p>
+          </div>
+          <div style={{ flexShrink: 0, borderTop: "1px solid #ddd", paddingTop: 12 }}>
+          <h3 style={{ marginTop: 0 }}>Total a pagar: {moneda(totalPartidas)}</h3>
           <button
             type="button"
             style={{ ...estiloBoton, background: "#16a34a" }}
@@ -657,7 +731,16 @@ const ProovedorBanda: React.FC<Props> = ({ onGuardar, data, setDirty }) => {
           >
             {guardando ? "Guardando..." : "Finalizar y guardar en Firebase"}
           </button>
+          <button
+            type="button"
+            style={{ ...estiloBoton, background: "#334155", marginTop: 10 }}
+            disabled={!partidas.length || generandoPDF || guardando}
+            onClick={descargarRelacionPago}
+          >
+            {generandoPDF ? "Generando PDF..." : "Descargar relación de pago (PDF)"}
+          </button>
           {mensaje && <p role="status">{mensaje}</p>}
+          </div>
         </aside>
       )}
     </div>

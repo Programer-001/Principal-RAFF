@@ -56,7 +56,7 @@ import Calendario from "./Calendario/Calendario";
 import MostrarTablas from "./Configuracion/Mostrar_tablas";
 import ReporteOrdenTrabajo from "./Reportes/ReporteOrdenTrabajo";
 import RecetasArmado from "./Produccion/RecetasArmado";
-import ProovedorBanda from "./Administracion/proovedor_banda";
+import ProovedorBanda from "./Administracion/BandaProveedor/index";
 import Perfil from "./navbar/perfil";
 import Home from "./Home/Home";
 //import "./styles.css";

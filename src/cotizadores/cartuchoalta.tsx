@@ -188,9 +188,7 @@ interface Props {
   const totalPorResistencia = (resultadoProveedor?.total ?? 0) + totalTuboZapa;
   const subtotalProveedor = totalPorResistencia * (Number(cantidadResistencias) || 0);
   const totalBase = subtotalProveedor * 1.70;
-  const total = resultadoProveedor
-    ? (servicioExpress ? totalBase * 1.30 : totalBase)
-    : 0;
+  const total = resultadoProveedor? (servicioExpress ? totalBase * 1.30 : totalBase): 0;
 
   // Aplica plantilla sin cambiar cantidad ni servicio express.
   const aplicarStock = (stock: ResistenciaStockAlta) => {
