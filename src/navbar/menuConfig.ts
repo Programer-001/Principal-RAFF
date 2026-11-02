@@ -253,7 +253,8 @@ const MENUS_POR_ROL: MenuPorRol[] = [
             MENU_BASE.devoluciones,
             MENU_BASE.tablas,
             MENU_BASE.reporteorden,
-            MENU_BASE.pago_banda_proovedor
+            MENU_BASE.pago_banda_proovedor,
+            MENU_BASE.produccion
         ],
     },
     {
